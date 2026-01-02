@@ -216,6 +216,51 @@ export const appointmentLabels = {
 }
 
 // =============================================================================
+// MEASUREMENT HISTORY DIALOG
+// =============================================================================
+
+export const measurementHistoryLabels = {
+  // Dialog
+  title: 'Historial de mediciones',
+  description: 'Evolución de tus medidas corporales a lo largo del tiempo',
+
+  // Tabs
+  weight: 'Peso',
+  bodyFat: '% Grasa',
+  muscleMass: 'Masa muscular',
+  bmi: 'IMC',
+
+  // Chart
+  chartTitle: 'Evolución',
+  noDataForChart: 'No hay suficientes datos para mostrar la gráfica',
+
+  // Table
+  tableTitle: 'Historial completo',
+  dateColumn: 'Fecha',
+  heightColumn: 'Altura (cm)',
+  weightColumn: 'Peso (kg)',
+  bodyFatColumn: '% Grasa',
+  muscleMassColumn: 'Masa muscular (kg)',
+  waistColumn: 'Cintura (cm)',
+  hipColumn: 'Cadera (cm)',
+  bmiColumn: 'IMC',
+
+  // Empty states
+  noMeasurements: 'Sin mediciones registradas',
+  noMeasurementsDescription: 'Aún no hay mediciones registradas para este miembro.',
+  addFirstMeasurement: 'Agregar primera medición',
+
+  // Actions
+  close: 'Cerrar',
+  viewHistory: 'Ver historial de mediciones',
+
+  // Units
+  kg: 'kg',
+  cm: 'cm',
+  percent: '%',
+}
+
+// =============================================================================
 // LOADING & ERROR STATES
 // =============================================================================
 

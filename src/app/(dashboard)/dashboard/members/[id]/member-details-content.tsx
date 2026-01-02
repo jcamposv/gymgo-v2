@@ -16,6 +16,7 @@ import {
   FitnessReportsCard,
   AppointmentCard,
   MeasurementFormDialog,
+  MeasurementHistoryDialog,
 } from '@/components/members'
 import { useMemberMeasurements } from '@/hooks'
 import { memberLabels, loadingLabels, toastMessages } from '@/lib/i18n'
@@ -43,9 +44,11 @@ export function MemberDetailsContent({
   pastAppointments,
 }: MemberDetailsContentProps) {
   const [measurementDialogOpen, setMeasurementDialogOpen] = useState(false)
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false)
 
   // Use the hook to fetch and manage measurements
   const {
+    measurements,
     latestMeasurement,
     isLoading: isMeasurementsLoading,
     error: measurementsError,
@@ -107,6 +110,7 @@ export function MemberDetailsContent({
             <MemberMedicalInfoCard
               measurement={latestMeasurement}
               onAddMeasurement={() => setMeasurementDialogOpen(true)}
+              onViewHistory={() => setHistoryDialogOpen(true)}
             />
           )}
         </div>
@@ -133,6 +137,16 @@ export function MemberDetailsContent({
         onOpenChange={setMeasurementDialogOpen}
         memberId={member.id}
         onSubmit={handleAddMeasurement}
+      />
+
+      {/* Measurement History Dialog */}
+      <MeasurementHistoryDialog
+        open={historyDialogOpen}
+        onOpenChange={setHistoryDialogOpen}
+        measurements={measurements}
+        memberName={member.full_name}
+        isLoading={isMeasurementsLoading}
+        onAddMeasurement={() => setMeasurementDialogOpen(true)}
       />
     </div>
   )
