@@ -33,6 +33,8 @@ export type UserRole = 'owner' | 'admin' | 'instructor' | 'member'
 
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
 
+export type NoteType = 'notes' | 'trainer_comments' | 'progress' | 'medical' | 'general'
+
 // =============================================================================
 // DATABASE TYPES
 // =============================================================================
@@ -228,8 +230,16 @@ export type Database = {
           avatar_url: string | null
           date_of_birth: string | null
           gender: string | null
+          // Address fields
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          state: string | null
+          postal_code: string | null
+          country: string | null
           emergency_contact_name: string | null
           emergency_contact_phone: string | null
+          emergency_contact_relation: string | null
           medical_conditions: string | null
           injuries: string | null
           fitness_goals: string[] | null
@@ -256,8 +266,16 @@ export type Database = {
           avatar_url?: string | null
           date_of_birth?: string | null
           gender?: string | null
+          // Address fields
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          state?: string | null
+          postal_code?: string | null
+          country?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
+          emergency_contact_relation?: string | null
           medical_conditions?: string | null
           injuries?: string | null
           fitness_goals?: string[] | null
@@ -282,8 +300,16 @@ export type Database = {
           avatar_url?: string | null
           date_of_birth?: string | null
           gender?: string | null
+          // Address fields
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          state?: string | null
+          postal_code?: string | null
+          country?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
+          emergency_contact_relation?: string | null
           medical_conditions?: string | null
           injuries?: string | null
           fitness_goals?: string[] | null
@@ -690,6 +716,168 @@ export type Database = {
           generated_at?: string
         }
       }
+      member_measurements: {
+        Row: {
+          id: string
+          member_id: string
+          organization_id: string
+          measured_at: string
+          // Body measurements (Imperial)
+          body_height_ft: number | null
+          body_height_in: number | null
+          body_weight_lbs: number | null
+          // Body measurements (Metric)
+          body_height_cm: number | null
+          body_weight_kg: number | null
+          // Calculated
+          body_mass_index: number | null
+          body_fat_percentage: number | null
+          muscle_mass_kg: number | null
+          // Vital signs
+          heart_rate_bpm: number | null
+          blood_pressure_systolic: number | null
+          blood_pressure_diastolic: number | null
+          respiratory_rate: number | null
+          // Blood work
+          cholesterol_mg_dl: number | null
+          blood_sugar_mg_dl: number | null
+          hemoglobin_g_dl: number | null
+          // Body circumference (cm)
+          waist_cm: number | null
+          hip_cm: number | null
+          chest_cm: number | null
+          arm_cm: number | null
+          thigh_cm: number | null
+          notes: string | null
+          recorded_by_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          member_id: string
+          organization_id: string
+          measured_at?: string
+          body_height_ft?: number | null
+          body_height_in?: number | null
+          body_weight_lbs?: number | null
+          body_height_cm?: number | null
+          body_weight_kg?: number | null
+          body_mass_index?: number | null
+          body_fat_percentage?: number | null
+          muscle_mass_kg?: number | null
+          heart_rate_bpm?: number | null
+          blood_pressure_systolic?: number | null
+          blood_pressure_diastolic?: number | null
+          respiratory_rate?: number | null
+          cholesterol_mg_dl?: number | null
+          blood_sugar_mg_dl?: number | null
+          hemoglobin_g_dl?: number | null
+          waist_cm?: number | null
+          hip_cm?: number | null
+          chest_cm?: number | null
+          arm_cm?: number | null
+          thigh_cm?: number | null
+          notes?: string | null
+          recorded_by_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          measured_at?: string
+          body_height_ft?: number | null
+          body_height_in?: number | null
+          body_weight_lbs?: number | null
+          body_height_cm?: number | null
+          body_weight_kg?: number | null
+          body_mass_index?: number | null
+          body_fat_percentage?: number | null
+          muscle_mass_kg?: number | null
+          heart_rate_bpm?: number | null
+          blood_pressure_systolic?: number | null
+          blood_pressure_diastolic?: number | null
+          respiratory_rate?: number | null
+          cholesterol_mg_dl?: number | null
+          blood_sugar_mg_dl?: number | null
+          hemoglobin_g_dl?: number | null
+          waist_cm?: number | null
+          hip_cm?: number | null
+          chest_cm?: number | null
+          arm_cm?: number | null
+          thigh_cm?: number | null
+          notes?: string | null
+          recorded_by_id?: string | null
+          updated_at?: string
+        }
+      }
+      member_notes: {
+        Row: {
+          id: string
+          member_id: string
+          organization_id: string
+          type: NoteType
+          title: string
+          content: string
+          created_by_id: string | null
+          created_by_name: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          member_id: string
+          organization_id: string
+          type?: NoteType
+          title: string
+          content: string
+          created_by_id?: string | null
+          created_by_name?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          type?: NoteType
+          title?: string
+          content?: string
+          created_by_id?: string | null
+          created_by_name?: string | null
+          updated_at?: string
+        }
+      }
+      member_reports: {
+        Row: {
+          id: string
+          member_id: string
+          organization_id: string
+          title: string
+          file_url: string
+          file_type: string
+          file_size_bytes: number | null
+          uploaded_by_id: string | null
+          uploaded_by_name: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          member_id: string
+          organization_id: string
+          title: string
+          file_url: string
+          file_type?: string
+          file_size_bytes?: number | null
+          uploaded_by_id?: string | null
+          uploaded_by_name?: string | null
+          created_at?: string
+        }
+        Update: {
+          title?: string
+          file_url?: string
+          file_type?: string
+          file_size_bytes?: number | null
+          uploaded_by_id?: string | null
+          uploaded_by_name?: string | null
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -718,6 +906,7 @@ export type Database = {
       booking_status: BookingStatus
       user_role: UserRole
       payment_status: PaymentStatus
+      note_type: NoteType
     }
     CompositeTypes: {
       [_ in never]: never
@@ -763,6 +952,7 @@ export const Constants = {
       booking_status: ['confirmed', 'cancelled', 'attended', 'no_show', 'waitlist'] as const,
       user_role: ['owner', 'admin', 'instructor', 'member'] as const,
       payment_status: ['pending', 'paid', 'failed', 'refunded'] as const,
+      note_type: ['notes', 'trainer_comments', 'progress', 'medical', 'general'] as const,
     },
   },
 } as const
