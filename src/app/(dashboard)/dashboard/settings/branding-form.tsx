@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 
 import { updateOrganizationBranding } from '@/actions/organization.actions'
+import { useOrganizationContext } from '@/providers'
 import { ImageUpload } from '@/components/shared/image-upload'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,6 +21,7 @@ interface BrandingFormProps {
 }
 
 export function BrandingForm({ organizationId, initialData }: BrandingFormProps) {
+  const { refresh: refreshOrganization } = useOrganizationContext()
   const [saving, setSaving] = useState(false)
   const [logoUrl, setLogoUrl] = useState(initialData.logo_url)
   const [primaryColor, setPrimaryColor] = useState(initialData.primary_color)
@@ -37,6 +39,8 @@ export function BrandingForm({ organizationId, initialData }: BrandingFormProps)
 
     if (result.success) {
       toast.success(result.message)
+      // Refresh organization context to update logo in sidebar
+      await refreshOrganization()
     } else {
       toast.error(result.message)
     }

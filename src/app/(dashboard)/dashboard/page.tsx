@@ -48,14 +48,6 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {organization?.name || 'Dashboard'}
-          </h1>
-          <p className="text-muted-foreground">
-            Vista general de tu gimnasio
-          </p>
-        </div>
         <div className="flex gap-2">
           <Button asChild>
             <Link href="/dashboard/members/new">

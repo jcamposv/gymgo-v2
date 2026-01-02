@@ -1,7 +1,5 @@
 'use client'
 
-import Link from 'next/link'
-import { Dumbbell } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -13,6 +11,7 @@ import {
 } from '@/components/ui/sheet'
 import { SidebarNav } from './sidebar-nav'
 import { SidebarUserMenu } from './sidebar-user-menu'
+import { AppLogo } from './app-logo'
 import { mainNavigation, bottomNavigation } from '@/config/navigation'
 
 interface MobileSidebarProps {
@@ -31,14 +30,7 @@ export function MobileSidebar({ user, open, onOpenChange }: MobileSidebarProps) 
       <SheetContent side="left" className="w-72 p-0">
         <SheetHeader className="border-b px-4 py-3">
           <SheetTitle asChild>
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-2"
-              onClick={handleItemClick}
-            >
-              <Dumbbell className="h-6 w-6" />
-              <span className="font-bold text-lg">GymGo</span>
-            </Link>
+            <AppLogo onClick={handleItemClick} />
           </SheetTitle>
         </SheetHeader>
 

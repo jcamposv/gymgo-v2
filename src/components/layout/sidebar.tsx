@@ -1,7 +1,5 @@
 'use client'
 
-import Link from 'next/link'
-import { Dumbbell } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 
 import { cn } from '@/lib/utils'
@@ -9,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { useSidebar } from './sidebar-context'
 import { SidebarNav } from './sidebar-nav'
 import { SidebarUserMenu } from './sidebar-user-menu'
+import { AppLogo } from './app-logo'
 import { mainNavigation, bottomNavigation } from '@/config/navigation'
 
 interface SidebarProps {
@@ -29,16 +28,7 @@ export function Sidebar({ user, className }: SidebarProps) {
     >
       {/* Logo */}
       <div className="flex h-14 items-center border-b px-3">
-        <Link
-          href="/dashboard"
-          className={cn(
-            'flex items-center gap-2',
-            collapsed && 'justify-center w-full'
-          )}
-        >
-          <Dumbbell className="h-6 w-6 shrink-0" />
-          {!collapsed && <span className="font-bold text-lg">GymGo</span>}
-        </Link>
+        <AppLogo collapsed={collapsed} />
       </div>
 
       {/* Main Navigation */}

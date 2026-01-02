@@ -1,4 +1,5 @@
 export { AppShell } from './app-shell'
+export { AppLogo } from './app-logo'
 export { Sidebar } from './sidebar'
 export { SidebarNav } from './sidebar-nav'
 export { SidebarUserMenu } from './sidebar-user-menu'
