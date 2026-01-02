@@ -89,13 +89,40 @@ export const classSchema = z.object({
 export const classUpdateSchema = classSchema.partial()
 
 export const classSearchSchema = z.object({
+  query: z.string().optional(),
   start_date: z.string().optional(),
   end_date: z.string().optional(),
   class_type: z.string().optional(),
   instructor_id: z.string().uuid().optional(),
+  status: z.enum(['active', 'cancelled', 'finished']).optional(),
   page: z.coerce.number().min(1).default(1),
   per_page: z.coerce.number().min(1).max(100).default(50),
+  sort_by: z.string().optional(),
+  sort_dir: z.enum(['asc', 'desc']).optional(),
 })
+
+// Class type labels for UI
+export const classTypeLabels: Record<string, string> = {
+  crossfit: 'CrossFit',
+  yoga: 'Yoga',
+  pilates: 'Pilates',
+  spinning: 'Spinning',
+  hiit: 'HIIT',
+  strength: 'Fuerza',
+  cardio: 'Cardio',
+  functional: 'Funcional',
+  boxing: 'Box',
+  mma: 'MMA',
+  stretching: 'Estiramiento',
+  open_gym: 'Open Gym',
+  personal: 'Personal',
+  other: 'Otro',
+}
+
+export const classTypes = Object.entries(classTypeLabels).map(([value, label]) => ({
+  value,
+  label,
+}))
 
 export const classCancelSchema = z.object({
   cancellation_reason: z.string().max(500).optional(),

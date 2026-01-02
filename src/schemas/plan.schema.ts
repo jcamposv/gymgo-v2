@@ -54,6 +54,8 @@ export const planSearchSchema = z.object({
   billing_period: z.enum(['monthly', 'quarterly', 'yearly', 'one_time']).optional(),
   page: z.coerce.number().min(1).default(1),
   per_page: z.coerce.number().min(1).max(100).default(20),
+  sort_by: z.string().optional(),
+  sort_dir: z.enum(['asc', 'desc']).optional(),
 })
 
 export type PlanFormData = z.infer<typeof planSchema>
@@ -67,3 +69,8 @@ export const billingPeriodLabels: Record<string, string> = {
   yearly: 'Anual',
   one_time: 'Pago unico',
 }
+
+export const billingPeriods = Object.entries(billingPeriodLabels).map(([value, label]) => ({
+  value,
+  label,
+}))

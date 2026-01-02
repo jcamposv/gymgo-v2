@@ -21,7 +21,7 @@ export default async function NewPlanPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Nuevo plan</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Nuevo plan</h1>
           <p className="text-muted-foreground">
             Crea un nuevo plan de membresia
           </p>

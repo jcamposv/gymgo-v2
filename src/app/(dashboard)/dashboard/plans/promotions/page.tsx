@@ -10,7 +10,7 @@ export default function PromotionsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Promociones</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Promociones</h1>
         <p className="text-muted-foreground">
           Gestiona cupones y ofertas especiales
         </p>

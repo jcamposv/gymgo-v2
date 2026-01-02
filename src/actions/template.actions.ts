@@ -78,11 +78,14 @@ async function getOrganization(orgId: string): Promise<Organization | null> {
 // =============================================================================
 
 export async function getClassTemplates(params?: {
+  query?: string
   is_active?: boolean
   day_of_week?: number
   class_type?: string
   page?: number
   per_page?: number
+  sort_by?: string
+  sort_dir?: 'asc' | 'desc'
 }): Promise<{ data: Tables<'class_templates'>[] | null; count: number; error: string | null }> {
   const { profile, error: profileError } = await getUserProfile()
   if (profileError || !profile) {
@@ -94,29 +97,39 @@ export async function getClassTemplates(params?: {
   const from = (page - 1) * perPage
   const to = from + perPage - 1
 
+  // Handle sorting
+  const sortBy = params?.sort_by || 'day_of_week'
+  const sortDir = params?.sort_dir || 'asc'
+  const ascending = sortDir === 'asc'
+
   const supabase = await createClient()
 
-  let query = supabase
+  let dbQuery = supabase
     .from('class_templates')
     .select('*', { count: 'exact' })
     .eq('organization_id', profile.organization_id)
-    .order('day_of_week', { ascending: true })
+    .order(sortBy, { ascending })
     .order('start_time', { ascending: true })
     .range(from, to)
 
+  // Search by name
+  if (params?.query) {
+    dbQuery = dbQuery.ilike('name', `%${params.query}%`)
+  }
+
   if (params?.is_active !== undefined) {
-    query = query.eq('is_active', params.is_active)
+    dbQuery = dbQuery.eq('is_active', params.is_active)
   }
 
   if (params?.day_of_week !== undefined) {
-    query = query.eq('day_of_week', params.day_of_week)
+    dbQuery = dbQuery.eq('day_of_week', params.day_of_week)
   }
 
   if (params?.class_type) {
-    query = query.eq('class_type', params.class_type)
+    dbQuery = dbQuery.eq('class_type', params.class_type)
   }
 
-  const { data, count, error } = await query
+  const { data, count, error } = await dbQuery
 
   if (error) {
     return { data: null, count: 0, error: error.message }

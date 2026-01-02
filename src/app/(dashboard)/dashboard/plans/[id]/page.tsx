@@ -51,7 +51,7 @@ export default async function PlanDetailPage({ params }: PageProps) {
           </Button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-bold tracking-tight">{plan.name}</h1>
+              <h1 className="text-2xl font-bold tracking-tight">{plan.name}</h1>
               {plan.is_featured && (
                 <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
               )}

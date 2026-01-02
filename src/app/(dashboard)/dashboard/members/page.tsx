@@ -1,17 +1,5 @@
-import Link from 'next/link'
-import { Plus, Search } from 'lucide-react'
-
 import { getMembers } from '@/actions/member.actions'
-import { MembersTable } from '@/components/members'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { MembersDataTable } from '@/components/members'
 
 export const metadata = {
   title: 'Miembros | GymGo',
@@ -19,78 +7,52 @@ export const metadata = {
 
 interface PageProps {
   searchParams: Promise<{
-    query?: string
-    status?: string
+    search?: string
     page?: string
+    pageSize?: string
+    sortBy?: string
+    sortDir?: 'asc' | 'desc'
+    filter_status?: 'active' | 'inactive' | 'suspended' | 'cancelled'
+    filter_experience_level?: 'beginner' | 'intermediate' | 'advanced'
   }>
 }
 
 export default async function MembersPage({ searchParams }: PageProps) {
   const params = await searchParams
+  const page = params.page ? parseInt(params.page) : 1
+  const pageSize = params.pageSize ? parseInt(params.pageSize) : 20
+
   const { data: members, count, error } = await getMembers({
-    query: params.query,
-    status: params.status as 'active' | 'inactive' | 'suspended' | 'cancelled' | undefined,
-    page: params.page ? parseInt(params.page) : 1,
-    per_page: 20,
+    query: params.search,
+    status: params.filter_status,
+    experience_level: params.filter_experience_level,
+    page,
+    per_page: pageSize,
+    sort_by: params.sortBy,
+    sort_dir: params.sortDir,
   })
 
+  if (error) {
+    return (
+      <div className="p-8 text-center">
+        <p className="text-destructive">{error}</p>
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Miembros</h1>
-          <p className="text-muted-foreground">
-            Gestiona los miembros de tu gimnasio
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/dashboard/members/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo miembro
-          </Link>
-        </Button>
+    <div className="space-y-4">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Miembros</h1>
+        <p className="text-muted-foreground">
+          Gestiona los miembros de tu gimnasio
+        </p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4">
-        <form className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              name="query"
-              placeholder="Buscar por nombre o email..."
-              className="pl-8"
-              defaultValue={params.query}
-            />
-          </div>
-        </form>
-        <Select name="status" defaultValue={params.status ?? 'all'}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filtrar por estado" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="active">Activos</SelectItem>
-            <SelectItem value="inactive">Inactivos</SelectItem>
-            <SelectItem value="suspended">Suspendidos</SelectItem>
-            <SelectItem value="cancelled">Cancelados</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {error ? (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
-          <p className="text-sm text-destructive">{error}</p>
-        </div>
-      ) : (
-        <>
-          <MembersTable members={members ?? []} />
-          {count > 0 && (
-            <p className="text-sm text-muted-foreground">
-              Mostrando {members?.length} de {count} miembros
-            </p>
-          )}
-        </>
-      )}
+      <MembersDataTable
+        members={members || []}
+        totalItems={count || 0}
+      />
     </div>
   )
 }

@@ -80,6 +80,8 @@ export async function getPlans(params?: {
   billing_period?: string
   page?: number
   per_page?: number
+  sort_by?: string
+  sort_dir?: 'asc' | 'desc'
 }): Promise<{ data: MembershipPlan[] | null; count: number; error: string | null }> {
   const { profile, error: profileError } = await getUserProfile()
   if (profileError || !profile) {
@@ -91,29 +93,33 @@ export async function getPlans(params?: {
   const from = (page - 1) * perPage
   const to = from + perPage - 1
 
+  // Handle sorting
+  const sortBy = params?.sort_by || 'sort_order'
+  const sortDir = params?.sort_dir || 'asc'
+  const ascending = sortDir === 'asc'
+
   const supabase = await createClient()
 
-  let query = supabase
+  let dbQuery = supabase
     .from('membership_plans')
     .select('*', { count: 'exact' })
     .eq('organization_id', profile.organization_id)
-    .order('sort_order', { ascending: true })
-    .order('created_at', { ascending: false })
+    .order(sortBy, { ascending })
     .range(from, to)
 
   if (params?.query) {
-    query = query.or(`name.ilike.%${params.query}%,description.ilike.%${params.query}%`)
+    dbQuery = dbQuery.or(`name.ilike.%${params.query}%,description.ilike.%${params.query}%`)
   }
 
   if (params?.is_active !== undefined) {
-    query = query.eq('is_active', params.is_active)
+    dbQuery = dbQuery.eq('is_active', params.is_active)
   }
 
   if (params?.billing_period) {
-    query = query.eq('billing_period', params.billing_period)
+    dbQuery = dbQuery.eq('billing_period', params.billing_period)
   }
 
-  const { data, count, error } = await query
+  const { data, count, error } = await dbQuery
 
   if (error) {
     return { data: null, count: 0, error: error.message }

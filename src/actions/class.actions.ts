@@ -56,12 +56,16 @@ async function getUserProfile(): Promise<{ profile: UserProfile | null; error: s
 // =============================================================================
 
 export async function getClasses(params?: {
+  query?: string
   start_date?: string
   end_date?: string
   class_type?: string
   instructor_id?: string
+  status?: 'active' | 'cancelled' | 'finished'
   page?: number
   per_page?: number
+  sort_by?: string
+  sort_dir?: 'asc' | 'desc'
 }): Promise<{ data: Tables<'classes'>[] | null; count: number; error: string | null }> {
   const { profile, error: profileError } = await getUserProfile()
   if (profileError || !profile) {
@@ -72,32 +76,54 @@ export async function getClasses(params?: {
   const from = (page - 1) * perPage
   const to = from + perPage - 1
 
+  // Handle sorting
+  const sortBy = params?.sort_by || 'start_time'
+  const sortDir = params?.sort_dir || 'asc'
+  const ascending = sortDir === 'asc'
+
   const supabase = await createClient()
 
-  let query = supabase
+  let dbQuery = supabase
     .from('classes')
     .select('*', { count: 'exact' })
     .eq('organization_id', profile.organization_id)
-    .order('start_time', { ascending: true })
+    .order(sortBy, { ascending })
     .range(from, to)
 
+  // Search by name
+  if (params?.query) {
+    dbQuery = dbQuery.ilike('name', `%${params.query}%`)
+  }
+
   if (params?.start_date) {
-    query = query.gte('start_time', params.start_date)
+    dbQuery = dbQuery.gte('start_time', params.start_date)
   }
 
   if (params?.end_date) {
-    query = query.lte('start_time', params.end_date)
+    dbQuery = dbQuery.lte('start_time', params.end_date)
   }
 
   if (params?.class_type) {
-    query = query.eq('class_type', params.class_type)
+    dbQuery = dbQuery.eq('class_type', params.class_type)
   }
 
   if (params?.instructor_id) {
-    query = query.eq('instructor_id', params.instructor_id)
+    dbQuery = dbQuery.eq('instructor_id', params.instructor_id)
   }
 
-  const { data, count, error } = await query
+  // Filter by status
+  if (params?.status) {
+    const now = new Date().toISOString()
+    if (params.status === 'cancelled') {
+      dbQuery = dbQuery.eq('is_cancelled', true)
+    } else if (params.status === 'finished') {
+      dbQuery = dbQuery.eq('is_cancelled', false).lt('start_time', now)
+    } else if (params.status === 'active') {
+      dbQuery = dbQuery.eq('is_cancelled', false).gte('start_time', now)
+    }
+  }
+
+  const { data, count, error } = await dbQuery
 
   if (error) {
     return { data: null, count: 0, error: error.message }

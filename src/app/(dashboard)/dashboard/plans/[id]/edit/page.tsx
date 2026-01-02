@@ -31,7 +31,7 @@ export default async function EditPlanPage({ params }: PageProps) {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Editar plan</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Editar plan</h1>
           <p className="text-muted-foreground">
             Modifica los datos del plan {plan.name}
           </p>

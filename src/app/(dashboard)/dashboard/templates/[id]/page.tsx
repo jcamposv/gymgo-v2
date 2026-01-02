@@ -45,7 +45,7 @@ export default async function TemplateDetailPage({ params }: TemplateDetailPageP
           </Button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-bold tracking-tight">{template.name}</h1>
+              <h1 className="text-2xl font-bold tracking-tight">{template.name}</h1>
               <Badge variant={template.is_active ? 'default' : 'secondary'}>
                 {template.is_active ? 'Activa' : 'Inactiva'}
               </Badge>

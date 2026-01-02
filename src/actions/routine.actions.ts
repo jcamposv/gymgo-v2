@@ -88,44 +88,49 @@ export async function getRoutines(params?: RoutineSearchParams): Promise<{
   const from = (page - 1) * perPage
   const to = from + perPage - 1
 
+  // Handle sorting
+  const sortBy = params?.sort_by || 'created_at'
+  const sortDir = params?.sort_dir || 'desc'
+  const ascending = sortDir === 'asc'
+
   const supabase = await createClient()
 
-  let query = supabase
+  let dbQuery = supabase
     .from('workouts')
     .select(`
       *,
       member:members!assigned_to_member_id(id, full_name, email)
     `, { count: 'exact' })
     .eq('organization_id', profile.organization_id)
-    .order('created_at', { ascending: false })
+    .order(sortBy, { ascending })
     .range(from, to)
 
   // Apply filters
   if (params?.query) {
-    query = query.ilike('name', `%${params.query}%`)
+    dbQuery = dbQuery.ilike('name', `%${params.query}%`)
   }
 
   if (params?.workout_type) {
-    query = query.eq('workout_type', params.workout_type)
+    dbQuery = dbQuery.eq('workout_type', params.workout_type)
   }
 
   if (params?.is_template !== undefined) {
-    query = query.eq('is_template', params.is_template)
+    dbQuery = dbQuery.eq('is_template', params.is_template)
   }
 
   if (params?.assigned_to_member_id) {
-    query = query.eq('assigned_to_member_id', params.assigned_to_member_id)
+    dbQuery = dbQuery.eq('assigned_to_member_id', params.assigned_to_member_id)
   }
 
   if (params?.scheduled_date) {
-    query = query.eq('scheduled_date', params.scheduled_date)
+    dbQuery = dbQuery.eq('scheduled_date', params.scheduled_date)
   }
 
   if (params?.is_active !== undefined) {
-    query = query.eq('is_active', params.is_active)
+    dbQuery = dbQuery.eq('is_active', params.is_active)
   }
 
-  const { data, count, error } = await query
+  const { data, count, error } = await dbQuery
 
   if (error) {
     return { data: null, count: 0, error: error.message }

@@ -80,11 +80,39 @@ export const memberUpdateSchema = memberSchema.partial()
 export const memberSearchSchema = z.object({
   query: z.string().optional(),
   status: z.enum(['active', 'inactive', 'suspended', 'cancelled']).optional(),
+  experience_level: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
   plan_id: z.string().uuid().optional(),
   page: z.coerce.number().min(1).default(1),
   per_page: z.coerce.number().min(1).max(100).default(20),
+  sort_by: z.string().optional(),
+  sort_dir: z.enum(['asc', 'desc']).optional(),
 })
 
 export type MemberFormData = z.infer<typeof memberSchema>
 export type MemberUpdateData = z.infer<typeof memberUpdateSchema>
 export type MemberSearchParams = z.infer<typeof memberSearchSchema>
+
+// Status labels
+export const memberStatusLabels: Record<string, string> = {
+  active: 'Activo',
+  inactive: 'Inactivo',
+  suspended: 'Suspendido',
+  cancelled: 'Cancelado',
+}
+
+export const memberStatuses = Object.entries(memberStatusLabels).map(([value, label]) => ({
+  value,
+  label,
+}))
+
+// Experience level labels
+export const experienceLevelLabels: Record<string, string> = {
+  beginner: 'Principiante',
+  intermediate: 'Intermedio',
+  advanced: 'Avanzado',
+}
+
+export const experienceLevels = Object.entries(experienceLevelLabels).map(([value, label]) => ({
+  value,
+  label,
+}))

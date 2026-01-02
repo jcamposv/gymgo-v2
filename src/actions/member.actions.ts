@@ -58,8 +58,11 @@ async function getUserProfile(): Promise<{ profile: UserProfile | null; error: s
 export async function getMembers(params?: {
   query?: string
   status?: MemberStatus
+  experience_level?: 'beginner' | 'intermediate' | 'advanced'
   page?: number
   per_page?: number
+  sort_by?: string
+  sort_dir?: 'asc' | 'desc'
 }): Promise<{ data: Tables<'members'>[] | null; count: number; error: string | null }> {
   const { profile, error: profileError } = await getUserProfile()
   if (profileError || !profile) {
@@ -71,24 +74,33 @@ export async function getMembers(params?: {
   const from = (page - 1) * perPage
   const to = from + perPage - 1
 
+  // Handle sorting
+  const sortBy = params?.sort_by || 'created_at'
+  const sortDir = params?.sort_dir || 'desc'
+  const ascending = sortDir === 'asc'
+
   const supabase = await createClient()
 
-  let query = supabase
+  let dbQuery = supabase
     .from('members')
     .select('*', { count: 'exact' })
     .eq('organization_id', profile.organization_id)
-    .order('created_at', { ascending: false })
+    .order(sortBy, { ascending })
     .range(from, to)
 
   if (params?.query) {
-    query = query.or(`full_name.ilike.%${params.query}%,email.ilike.%${params.query}%`)
+    dbQuery = dbQuery.or(`full_name.ilike.%${params.query}%,email.ilike.%${params.query}%`)
   }
 
   if (params?.status) {
-    query = query.eq('status', params.status)
+    dbQuery = dbQuery.eq('status', params.status)
   }
 
-  const { data, count, error } = await query
+  if (params?.experience_level) {
+    dbQuery = dbQuery.eq('experience_level', params.experience_level)
+  }
+
+  const { data, count, error } = await dbQuery
 
   if (error) {
     return { data: null, count: 0, error: error.message }

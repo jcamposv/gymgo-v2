@@ -18,7 +18,7 @@ export default function NewMemberPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Nuevo Miembro</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Nuevo Miembro</h1>
           <p className="text-muted-foreground">
             Agrega un nuevo miembro a tu gimnasio
           </p>

@@ -78,10 +78,15 @@ export async function getExercises(params?: ExerciseSearchParams): Promise<{
 
   const supabase = await createClient()
 
+  // Handle sorting
+  const sortBy = params?.sort_by || 'name'
+  const sortDir = params?.sort_dir || 'asc'
+  const ascending = sortDir === 'asc'
+
   let query = supabase
     .from('exercises')
     .select('*', { count: 'exact' })
-    .order('name', { ascending: true })
+    .order(sortBy, { ascending })
     .range(from, to)
 
   // Filter by organization OR global

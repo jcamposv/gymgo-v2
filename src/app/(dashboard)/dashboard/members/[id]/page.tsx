@@ -68,7 +68,7 @@ export default async function MemberDetailPage({ params }: PageProps) {
               <AvatarFallback className="text-lg">{initials}</AvatarFallback>
             </Avatar>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">{member.full_name}</h1>
+              <h1 className="text-2xl font-bold tracking-tight">{member.full_name}</h1>
               <div className="flex items-center gap-2 mt-1">
                 <Badge variant={statusVariants[member.status]}>
                   {statusLabels[member.status]}

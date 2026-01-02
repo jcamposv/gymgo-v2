@@ -48,7 +48,7 @@ export default async function RoutinePage({ params }: RoutinePageProps) {
           </Button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-bold tracking-tight">{routine.name}</h1>
+              <h1 className="text-2xl font-bold tracking-tight">{routine.name}</h1>
               {routine.is_template && (
                 <Badge variant="outline">Plantilla</Badge>
               )}

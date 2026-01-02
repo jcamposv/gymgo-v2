@@ -18,7 +18,7 @@ export default function NewExercisePage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Nuevo Ejercicio</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Nuevo Ejercicio</h1>
           <p className="text-muted-foreground">
             Agrega un ejercicio a tu biblioteca
           </p>

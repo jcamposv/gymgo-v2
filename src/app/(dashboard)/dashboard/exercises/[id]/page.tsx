@@ -50,7 +50,7 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
           </Button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-bold tracking-tight">{exercise.name}</h1>
+              <h1 className="text-2xl font-bold tracking-tight">{exercise.name}</h1>
               {exercise.is_global && (
                 <Badge variant="outline" className="flex items-center gap-1">
                   <Globe className="h-3 w-3" />

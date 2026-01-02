@@ -28,7 +28,7 @@ export default async function CheckInPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Check-in</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Check-in</h1>
         <p className="text-muted-foreground">
           Registra la entrada de los miembros al gimnasio
         </p>

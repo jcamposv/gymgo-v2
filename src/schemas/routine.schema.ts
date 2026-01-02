@@ -74,6 +74,8 @@ export const routineSearchSchema = z.object({
   is_active: z.coerce.boolean().optional(),
   page: z.coerce.number().min(1).default(1),
   per_page: z.coerce.number().min(1).max(100).default(20),
+  sort_by: z.string().optional(),
+  sort_dir: z.enum(['asc', 'desc']).optional(),
 })
 
 export type RoutineFormData = z.infer<typeof routineSchema>

@@ -18,7 +18,7 @@ export default function NewClassPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Nueva Clase</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Nueva Clase</h1>
           <p className="text-muted-foreground">
             Programa una nueva clase para tu gimnasio
           </p>

@@ -91,6 +91,8 @@ export const exerciseSearchSchema = z.object({
   include_global: z.coerce.boolean().default(true),
   page: z.coerce.number().min(1).default(1),
   per_page: z.coerce.number().min(1).max(100).default(20),
+  sort_by: z.string().optional(),
+  sort_dir: z.enum(['asc', 'desc']).optional(),
 })
 
 export type ExerciseFormData = z.infer<typeof exerciseSchema>

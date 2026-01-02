@@ -1,3 +1,5 @@
 export { TemplateForm } from './template-form'
 export { TemplatesTable } from './templates-table'
 export { GenerateClassesDialog } from './generate-dialog'
+export { TemplatesDataTable } from './templates-data-table'
+export { templateColumns } from './templates-columns'

@@ -69,7 +69,7 @@ export default async function ClassDetailPage({ params }: PageProps) {
           </Button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-bold tracking-tight">{classData.name}</h1>
+              <h1 className="text-2xl font-bold tracking-tight">{classData.name}</h1>
               {classData.is_cancelled ? (
                 <Badge variant="destructive">Cancelada</Badge>
               ) : isPast ? (

@@ -18,7 +18,7 @@ export default function NewTemplatePage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Nueva Plantilla</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Nueva Plantilla</h1>
           <p className="text-muted-foreground">
             Crear un nuevo horario semanal recurrente
           </p>

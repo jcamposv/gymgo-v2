@@ -35,7 +35,7 @@ export default async function EditTemplatePage({ params }: EditTemplatePageProps
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Editar Plantilla</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Editar Plantilla</h1>
           <p className="text-muted-foreground">{template.name}</p>
         </div>
       </div>

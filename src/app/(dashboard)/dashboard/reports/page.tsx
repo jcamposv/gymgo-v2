@@ -63,7 +63,7 @@ export default async function ReportsPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Reportes</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Reportes</h1>
           <p className="text-muted-foreground">
             Analisis y estadisticas de tu gimnasio
           </p>
@@ -81,7 +81,7 @@ export default async function ReportsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Reportes</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Reportes</h1>
           <p className="text-muted-foreground">
             Analisis y estadisticas de tu gimnasio
           </p>

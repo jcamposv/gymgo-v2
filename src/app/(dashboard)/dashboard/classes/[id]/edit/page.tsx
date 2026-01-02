@@ -31,7 +31,7 @@ export default async function EditClassPage({ params }: PageProps) {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Editar Clase</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Editar Clase</h1>
           <p className="text-muted-foreground">
             {classData.name}
           </p>

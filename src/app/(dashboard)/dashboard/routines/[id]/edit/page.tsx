@@ -51,7 +51,7 @@ export default async function EditRoutinePage({ params }: EditRoutinePageProps) 
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Editar Rutina</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Editar Rutina</h1>
           <p className="text-muted-foreground">{routine.name}</p>
         </div>
       </div>
