@@ -3,7 +3,6 @@ import { notFound } from 'next/navigation'
 import { getMember } from '@/actions/member.actions'
 import { MemberDetailsContent } from './member-details-content'
 import {
-  mockNotes,
   mockReports,
   mockUpcomingAppointments,
   mockPastAppointments,
@@ -37,9 +36,9 @@ export default async function MemberDetailPage({ params }: PageProps) {
   }
 
   // TODO: These will be replaced with real API calls in the future
-  // For now, using mock data for notes, reports, and appointments
-  // Measurements are now fetched via useMemberMeasurements hook in the client component
-  const notes = mockNotes
+  // For now, using mock data for reports and appointments
+  // Notes are now fetched via useMemberNotes hook in the client component
+  // Measurements are fetched via useMemberMeasurements hook in the client component
   const reports = mockReports
   const upcomingAppointments = mockUpcomingAppointments
   const pastAppointments = mockPastAppointments
@@ -47,7 +46,6 @@ export default async function MemberDetailPage({ params }: PageProps) {
   return (
     <MemberDetailsContent
       member={memberExtended}
-      notes={notes}
       reports={reports}
       upcomingAppointments={upcomingAppointments}
       pastAppointments={pastAppointments}

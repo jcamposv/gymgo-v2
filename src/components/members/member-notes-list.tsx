@@ -1,66 +1,120 @@
 'use client'
 
+import { Plus } from 'lucide-react'
+
 import { cn } from '@/lib/utils'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-import { notesLabels, formatNoteDate } from '@/lib/i18n'
+import { notesLabels, noteTypeLabels, formatNoteDate } from '@/lib/i18n'
 import type { MemberNote } from '@/types/member.types'
+
+// =============================================================================
+// TYPES
+// =============================================================================
 
 interface MemberNotesListProps {
   notes: MemberNote[]
   className?: string
+  isLoading?: boolean
+  onAddNote?: () => void
   onViewAll?: () => void
 }
 
-const noteTypeStyles: Record<string, string> = {
-  notes: 'border-l-gray-400',
-  trainer_comments: 'border-l-blue-400',
-  progress: 'border-l-green-400',
-  medical: 'border-l-red-400',
-  general: 'border-l-gray-400',
-}
+// =============================================================================
+// COMPONENT
+// =============================================================================
 
-export function MemberNotesList({ notes, className, onViewAll }: MemberNotesListProps) {
+export function MemberNotesList({
+  notes,
+  className,
+  isLoading = false,
+  onAddNote,
+  onViewAll,
+}: MemberNotesListProps) {
   return (
     <div className={cn('space-y-3', className)}>
+      {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-base font-semibold">{notesLabels.title}</h3>
-        <Button variant="ghost" size="sm" onClick={onViewAll}>
-          {notesLabels.viewAll}
-        </Button>
-      </div>
-
-      <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex gap-4 pb-4">
-          {notes.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4">{notesLabels.noNotes}</p>
-          ) : (
-            notes.map((note) => (
-              <Card
-                key={note.id}
-                className={cn(
-                  'min-w-[260px] max-w-[280px] border-l-4 shrink-0',
-                  noteTypeStyles[note.type]
-                )}
-              >
-                <CardHeader className="pb-2 pt-4 px-4">
-                  <p className="text-xs text-muted-foreground">
-                    {formatNoteDate(note.created_at)}
-                  </p>
-                  <CardTitle className="text-sm font-semibold">{note.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="px-4 pb-4">
-                  <p className="text-sm text-muted-foreground whitespace-normal line-clamp-3">
-                    {note.content}
-                  </p>
-                </CardContent>
-              </Card>
-            ))
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={onAddNote}>
+            <Plus className="h-4 w-4 mr-1" />
+            {notesLabels.addNote}
+          </Button>
+          {notes.length > 0 && (
+            <Button variant="ghost" size="sm" onClick={onViewAll}>
+              {notesLabels.viewAll}
+            </Button>
           )}
         </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+      </div>
+
+      {/* Content */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-8">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      ) : notes.length === 0 ? (
+        <EmptyState onAddNote={onAddNote} />
+      ) : (
+        <ScrollArea className="w-full whitespace-nowrap">
+          <div className="flex gap-4 pb-4">
+            {notes.map((note) => (
+              <NoteCard key={note.id} note={note} />
+            ))}
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      )}
+    </div>
+  )
+}
+
+// =============================================================================
+// NOTE CARD
+// =============================================================================
+
+interface NoteCardProps {
+  note: MemberNote
+}
+
+function NoteCard({ note }: NoteCardProps) {
+  return (
+    <div className="min-w-[260px] max-w-[280px] shrink-0 rounded-lg bg-muted/50 p-4 space-y-2">
+      <p className="text-xs text-muted-foreground">
+        {formatNoteDate(note.created_at)}
+      </p>
+      <p className="text-sm font-semibold">{note.title}</p>
+      <p className="text-sm text-muted-foreground whitespace-normal line-clamp-3">
+        {note.content}
+      </p>
+      {note.created_by_name && (
+        <p className="text-xs text-muted-foreground">
+          {notesLabels.by} {note.created_by_name}
+        </p>
+      )}
+    </div>
+  )
+}
+
+// =============================================================================
+// EMPTY STATE
+// =============================================================================
+
+interface EmptyStateProps {
+  onAddNote?: () => void
+}
+
+function EmptyState({ onAddNote }: EmptyStateProps) {
+  return (
+    <div className="flex flex-col items-center justify-center py-8 gap-3">
+      <p className="text-sm text-muted-foreground">{notesLabels.noNotesDescription}</p>
+      {onAddNote && (
+        <Button variant="outline" size="sm" onClick={onAddNote}>
+          <Plus className="h-4 w-4 mr-2" />
+          {notesLabels.addFirstNote}
+        </Button>
+      )}
     </div>
   )
 }

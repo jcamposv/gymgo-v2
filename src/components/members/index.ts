@@ -17,3 +17,8 @@ export { MeasurementFormDialog } from './measurement-form-dialog'
 export { MeasurementHistoryDialog } from './measurement-history-dialog'
 export { MeasurementHistoryChart } from './measurement-history-chart'
 export { MeasurementHistoryTable } from './measurement-history-table'
+
+// Note components
+export { NoteFormDialog } from './note-form-dialog'
+export { NoteHistoryDialog } from './note-history-dialog'
+export { NoteHistoryTable } from './note-history-table'

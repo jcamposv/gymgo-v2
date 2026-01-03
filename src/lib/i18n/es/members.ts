@@ -84,13 +84,22 @@ export const goalLabels: Record<string, string> = {
 }
 
 // =============================================================================
-// NOTES LIST
+// NOTES CARD & LIST
 // =============================================================================
 
 export const notesLabels = {
-  title: 'Notas del cliente',
+  // Card
+  title: 'Notas del entrenador',
   viewAll: 'Ver todas',
+  addNote: 'Agregar nota',
+
+  // Empty states
   noNotes: 'Sin notas registradas',
+  noNotesDescription: 'Aún no hay notas registradas para este miembro.',
+  addFirstNote: 'Agregar primera nota',
+
+  // Note card fields
+  by: 'por',
 }
 
 // =============================================================================
@@ -275,4 +284,71 @@ export const loadingLabels = {
 export const toastMessages = {
   measurementSuccess: 'Medición registrada correctamente',
   measurementError: 'Error al guardar la medición',
+  noteSuccess: 'Nota guardada correctamente',
+  noteError: 'Error al guardar la nota',
+}
+
+// =============================================================================
+// NOTE FORM DIALOG
+// =============================================================================
+
+export const noteFormLabels = {
+  // Dialog
+  title: 'Agregar nota del entrenador',
+  editTitle: 'Editar nota',
+  description: 'Registra observaciones, comentarios de progreso o recomendaciones para este miembro.',
+
+  // Fields
+  noteType: 'Tipo de nota',
+  noteTitle: 'Título',
+  noteTitlePlaceholder: 'Ej: Progreso en sentadillas',
+  noteContent: 'Contenido',
+  noteContentPlaceholder: 'Escribe tu observación, comentario o recomendación...',
+
+  // Actions
+  save: 'Guardar nota',
+  cancel: 'Cancelar',
+  saving: 'Guardando...',
+}
+
+export const noteTypeLabels: Record<string, string> = {
+  notes: 'Nota general',
+  trainer_comments: 'Comentario del entrenador',
+  progress: 'Progreso',
+  medical: 'Médico',
+  general: 'General',
+}
+
+export const noteValidation = {
+  titleRequired: 'El título es obligatorio',
+  titleTooLong: 'El título no puede exceder 200 caracteres',
+  contentRequired: 'El contenido es obligatorio',
+  contentTooShort: 'La nota es muy corta, agrega un poco más de detalle',
+  contentTooLong: 'El contenido no puede exceder 5000 caracteres',
+  typeRequired: 'El tipo de nota es obligatorio',
+}
+
+// =============================================================================
+// NOTE HISTORY DIALOG
+// =============================================================================
+
+export const noteHistoryLabels = {
+  // Dialog
+  title: 'Historial de notas',
+  description: 'Todas las notas registradas para este miembro',
+
+  // Table columns
+  dateColumn: 'Fecha',
+  typeColumn: 'Tipo',
+  titleColumn: 'Título',
+  authorColumn: 'Autor',
+  contentColumn: 'Contenido',
+
+  // Empty states
+  noNotes: 'Sin notas registradas',
+  noNotesDescription: 'Aún no hay notas registradas para este miembro.',
+  addFirstNote: 'Agregar primera nota',
+
+  // Actions
+  close: 'Cerrar',
 }

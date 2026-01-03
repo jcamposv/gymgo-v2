@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { statusLabels, memberLabels } from '@/lib/i18n'
 import type { MemberExtended } from '@/types/member.types'
 
@@ -17,10 +16,10 @@ interface MemberHeaderCardProps {
 }
 
 const statusStyles: Record<string, string> = {
-  active: 'bg-lime-100 text-lime-700 hover:bg-lime-100',
-  inactive: 'bg-gray-100 text-gray-700 hover:bg-gray-100',
-  suspended: 'bg-red-100 text-red-700 hover:bg-red-100',
-  cancelled: 'bg-gray-200 text-gray-600 hover:bg-gray-200',
+  active: 'bg-primary text-primary-foreground hover:bg-primary/90',
+  inactive: 'bg-gray-500 text-white hover:bg-gray-500/90',
+  suspended: 'bg-amber-500 text-white hover:bg-amber-500/90',
+  cancelled: 'bg-red-500 text-white hover:bg-red-500/90',
 }
 
 function getInitials(name: string): string {
@@ -37,19 +36,16 @@ export function MemberHeaderCard({ member, className }: MemberHeaderCardProps) {
     <Card className={cn('', className)}>
       <CardContent className="flex items-center justify-between p-6">
         <div className="flex items-center gap-4">
-          <Avatar className="h-14 w-14 bg-lime-200">
-            <AvatarImage src={member.avatar_url || undefined} alt={member.full_name} />
-            <AvatarFallback className="bg-lime-200 text-lime-800 text-lg font-medium">
+          {/* Square avatar with rounded corners */}
+          <div className="h-16 w-16 rounded-xl bg-lime-200 flex items-center justify-center shrink-0">
+            <span className="text-lime-800 text-xl font-medium">
               {getInitials(member.full_name)}
-            </AvatarFallback>
-          </Avatar>
+            </span>
+          </div>
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-xl font-semibold">{member.full_name}</h1>
-              <Badge
-                variant="secondary"
-                className={cn('text-xs', statusStyles[member.status])}
-              >
+              <Badge className={cn('text-xs font-medium', statusStyles[member.status])}>
                 {statusLabels[member.status]}
               </Badge>
             </div>
@@ -59,12 +55,12 @@ export function MemberHeaderCard({ member, className }: MemberHeaderCardProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="h-9 w-9">
-            <MessageCircle className="h-4 w-4" />
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="icon" className="h-10 w-10 rounded-full">
+            <MessageCircle className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-9 w-9">
-            <Phone className="h-4 w-4" />
+          <Button variant="outline" size="icon" className="h-10 w-10 rounded-full">
+            <Phone className="h-5 w-5" />
           </Button>
           <Button asChild>
             <Link href={`/dashboard/members/${member.id}/edit`}>{memberLabels.editData}</Link>

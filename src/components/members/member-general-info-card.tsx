@@ -5,7 +5,6 @@ import { MoreHorizontal } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 import {
   generalInfoLabels,
   genderLabels,
@@ -31,6 +30,21 @@ function calculateAge(dateOfBirth: string): number {
   return age
 }
 
+interface InfoRowProps {
+  label: string
+  value: string | number | null | undefined
+  fallback?: string
+}
+
+function InfoRow({ label, value, fallback = '-' }: InfoRowProps) {
+  return (
+    <div className="flex justify-between gap-4">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className="text-sm font-medium text-right">{value || fallback}</span>
+    </div>
+  )
+}
+
 export function MemberGeneralInfoCard({ member, className }: MemberGeneralInfoCardProps) {
   const age = member.date_of_birth ? calculateAge(member.date_of_birth) : member.age
   const primaryGoal = member.fitness_goals?.[0]
@@ -44,45 +58,36 @@ export function MemberGeneralInfoCard({ member, className }: MemberGeneralInfoCa
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+        <div className="flex gap-6">
           {/* Left column */}
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">{generalInfoLabels.gender}</span>
-              <span className="text-sm font-medium">
-                {member.gender ? genderLabels[member.gender] || member.gender : '-'}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">{generalInfoLabels.age}</span>
-              <span className="text-sm font-medium">{age ? `${age} ${generalInfoLabels.yearsOld}` : '-'}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">{generalInfoLabels.dateOfBirth}</span>
-              <span className="text-sm font-medium">
-                {member.date_of_birth
-                  ? formatBirthDate(member.date_of_birth)
-                  : '-'}
-              </span>
-            </div>
+          <div className="flex-1 space-y-3">
+            <InfoRow
+              label={generalInfoLabels.gender}
+              value={member.gender ? genderLabels[member.gender] || member.gender : null}
+            />
+            <InfoRow
+              label={generalInfoLabels.age}
+              value={age ? `${age} ${generalInfoLabels.yearsOld}` : null}
+            />
+            <InfoRow
+              label={generalInfoLabels.dateOfBirth}
+              value={member.date_of_birth ? formatBirthDate(member.date_of_birth) : null}
+            />
           </div>
 
-
+          {/* Vertical divider */}
+          <div className="w-px bg-border self-stretch" />
 
           {/* Right column */}
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">{generalInfoLabels.fitnessLevel}</span>
-              <span className="text-sm font-medium">
-                {levelLabels[member.experience_level] || member.experience_level}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">{generalInfoLabels.goal}</span>
-              <span className="text-sm font-medium">
-                {primaryGoal ? goalLabels[primaryGoal] || primaryGoal : '-'}
-              </span>
-            </div>
+          <div className="flex-1 space-y-3">
+            <InfoRow
+              label={generalInfoLabels.fitnessLevel}
+              value={levelLabels[member.experience_level] || member.experience_level}
+            />
+            <InfoRow
+              label={generalInfoLabels.goal}
+              value={primaryGoal ? goalLabels[primaryGoal] || primaryGoal : null}
+            />
           </div>
         </div>
       </CardContent>

@@ -17,20 +17,21 @@ import {
   AppointmentCard,
   MeasurementFormDialog,
   MeasurementHistoryDialog,
+  NoteFormDialog,
+  NoteHistoryDialog,
 } from '@/components/members'
-import { useMemberMeasurements } from '@/hooks'
+import { useMemberMeasurements, useMemberNotes } from '@/hooks'
 import { memberLabels, loadingLabels, toastMessages } from '@/lib/i18n'
 import type {
   MemberExtended,
-  MemberNote,
   MemberReport,
   MemberAppointment,
   MeasurementFormData,
 } from '@/types/member.types'
+import type { NoteFormData } from '@/actions/note.actions'
 
 interface MemberDetailsContentProps {
   member: MemberExtended
-  notes: MemberNote[]
   reports: MemberReport[]
   upcomingAppointments: MemberAppointment[]
   pastAppointments: MemberAppointment[]
@@ -38,15 +39,19 @@ interface MemberDetailsContentProps {
 
 export function MemberDetailsContent({
   member,
-  notes,
   reports,
   upcomingAppointments,
   pastAppointments,
 }: MemberDetailsContentProps) {
+  // Measurement state
   const [measurementDialogOpen, setMeasurementDialogOpen] = useState(false)
-  const [historyDialogOpen, setHistoryDialogOpen] = useState(false)
+  const [measurementHistoryOpen, setMeasurementHistoryOpen] = useState(false)
 
-  // Use the hook to fetch and manage measurements
+  // Note state
+  const [noteDialogOpen, setNoteDialogOpen] = useState(false)
+  const [noteHistoryOpen, setNoteHistoryOpen] = useState(false)
+
+  // Measurements hook
   const {
     measurements,
     latestMeasurement,
@@ -55,6 +60,16 @@ export function MemberDetailsContent({
     addMeasurement,
   } = useMemberMeasurements(member.id)
 
+  // Notes hook
+  const {
+    notes,
+    recentNotes,
+    isLoading: isNotesLoading,
+    error: notesError,
+    addNote,
+  } = useMemberNotes(member.id)
+
+  // Measurement handlers
   const handleAddMeasurement = async (data: MeasurementFormData) => {
     const result = await addMeasurement(data)
 
@@ -62,10 +77,22 @@ export function MemberDetailsContent({
       toast.success(toastMessages.measurementSuccess)
       setMeasurementDialogOpen(false)
     } else {
-      // Don't close the dialog on error - let the dialog handle showing the error
       toast.error(result.error ?? toastMessages.measurementError)
       throw new Error(result.error ?? toastMessages.measurementError)
     }
+  }
+
+  // Note handlers
+  const handleAddNote = async (data: NoteFormData) => {
+    const result = await addNote(data)
+
+    if (result.success) {
+      toast.success(toastMessages.noteSuccess)
+    } else {
+      toast.error(result.error ?? toastMessages.noteError)
+    }
+
+    return result
   }
 
   return (
@@ -94,7 +121,12 @@ export function MemberDetailsContent({
           </div>
 
           {/* Client Notes */}
-          <MemberNotesList notes={notes} onViewAll={() => {}} />
+          <MemberNotesList
+            notes={recentNotes}
+            isLoading={isNotesLoading}
+            onAddNote={() => setNoteDialogOpen(true)}
+            onViewAll={() => setNoteHistoryOpen(true)}
+          />
 
           {/* Medical Info - with loading state */}
           {isMeasurementsLoading ? (
@@ -110,7 +142,7 @@ export function MemberDetailsContent({
             <MemberMedicalInfoCard
               measurement={latestMeasurement}
               onAddMeasurement={() => setMeasurementDialogOpen(true)}
-              onViewHistory={() => setHistoryDialogOpen(true)}
+              onViewHistory={() => setMeasurementHistoryOpen(true)}
             />
           )}
         </div>
@@ -141,12 +173,30 @@ export function MemberDetailsContent({
 
       {/* Measurement History Dialog */}
       <MeasurementHistoryDialog
-        open={historyDialogOpen}
-        onOpenChange={setHistoryDialogOpen}
+        open={measurementHistoryOpen}
+        onOpenChange={setMeasurementHistoryOpen}
         measurements={measurements}
         memberName={member.full_name}
         isLoading={isMeasurementsLoading}
         onAddMeasurement={() => setMeasurementDialogOpen(true)}
+      />
+
+      {/* Note Form Dialog */}
+      <NoteFormDialog
+        open={noteDialogOpen}
+        onOpenChange={setNoteDialogOpen}
+        memberId={member.id}
+        onSubmit={handleAddNote}
+      />
+
+      {/* Note History Dialog */}
+      <NoteHistoryDialog
+        open={noteHistoryOpen}
+        onOpenChange={setNoteHistoryOpen}
+        notes={notes}
+        memberName={member.full_name}
+        isLoading={isNotesLoading}
+        onAddNote={() => setNoteDialogOpen(true)}
       />
     </div>
   )
