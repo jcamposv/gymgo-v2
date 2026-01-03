@@ -49,7 +49,7 @@ export function FitnessReportsCard({ reports, className }: FitnessReportsCardPro
           <MoreHorizontal className="h-5 w-5" />
         </Button>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 pb-6">
         {reports.length === 0 ? (
           <div className="rounded-xl bg-white p-6 text-center">
             <FileText className="h-10 w-10 mx-auto text-muted-foreground/40 mb-2" />
