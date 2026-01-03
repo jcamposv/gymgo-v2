@@ -142,7 +142,7 @@ export function MemberMedicalInfoCard({
   }
 
   return (
-    <Card className={cn('', className)}>
+    <Card className={cn('shadow-none', className)}>
       <CardHeader className="flex flex-row items-center justify-between pb-4">
         <CardTitle className="text-base font-semibold">{measurementsCardLabels.title}</CardTitle>
         <div className="flex items-center gap-2">

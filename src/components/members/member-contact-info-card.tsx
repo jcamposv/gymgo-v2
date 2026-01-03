@@ -23,7 +23,7 @@ export function MemberContactInfoCard({ member, className }: MemberContactInfoCa
     .join('\n')
 
   return (
-    <Card className={cn('', className)}>
+    <Card className={cn('bg-muted/50 border-0 shadow-none', className)}>
       <CardHeader className="flex flex-row items-center justify-between pb-4">
         <CardTitle className="text-base font-semibold">{contactInfoLabels.title}</CardTitle>
         <Button variant="ghost" size="icon" className="h-8 w-8">

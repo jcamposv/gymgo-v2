@@ -33,7 +33,7 @@ function getInitials(name: string): string {
 
 export function MemberHeaderCard({ member, className }: MemberHeaderCardProps) {
   return (
-    <Card className={cn('', className)}>
+    <Card className={cn('bg-muted/50 border-0 shadow-none', className)}>
       <CardContent className="flex items-center justify-between p-6">
         <div className="flex items-center gap-4">
           {/* Square avatar with rounded corners */}

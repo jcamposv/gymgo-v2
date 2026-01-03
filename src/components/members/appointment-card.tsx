@@ -62,7 +62,7 @@ export function AppointmentCard({
   className,
 }: AppointmentCardProps) {
   return (
-    <Card className={cn('', className)}>
+    <Card className={cn('bg-muted/50 border-0 shadow-none', className)}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-base font-semibold">{appointmentLabels.title}</CardTitle>
         <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -71,7 +71,7 @@ export function AppointmentCard({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Upcoming Workouts */}
-        <div>
+        <div className="rounded-xl bg-white p-6">
           <h4 className="text-sm font-medium text-muted-foreground mb-2">{appointmentLabels.upcomingWorkouts}</h4>
           {upcomingAppointments.length === 0 ? (
             <p className="text-sm text-muted-foreground py-2">{appointmentLabels.noUpcoming}</p>
@@ -85,12 +85,12 @@ export function AppointmentCard({
         </div>
 
         {/* History */}
-        <div>
+        <div className="rounded-xl bg-white p-6">
           <h4 className="text-sm font-medium text-muted-foreground mb-2">{appointmentLabels.history}</h4>
           {pastAppointments.length === 0 ? (
             <p className="text-sm text-muted-foreground py-2">{appointmentLabels.noPast}</p>
           ) : (
-            <div className="divide-y">
+            <div>
               {pastAppointments.slice(0, 3).map((appt) => (
                 <AppointmentItem key={appt.id} appointment={appt} />
               ))}

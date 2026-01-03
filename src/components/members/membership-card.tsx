@@ -38,9 +38,9 @@ export function MembershipCard({ member, className }: MembershipCardProps) {
     : '-'
 
   return (
-    <Card className={cn('overflow-hidden', className)}>
+    <Card className={cn('overflow-hidden border-0 shadow-none', className)}>
       <CardContent className={cn('p-0')}>
-        <div className={cn('bg-gradient-to-br p-5 text-white', colors.bg)}>
+        <div className={cn('bg-gradient-to-br p-5 text-white rounded-xl', colors.bg)}>
           {/* Header */}
           <div className="flex items-center gap-2 mb-6">
             <Sparkles className="h-5 w-5" />
