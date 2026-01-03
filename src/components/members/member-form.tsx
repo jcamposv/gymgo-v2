@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
@@ -8,6 +9,7 @@ import { Loader2 } from 'lucide-react'
 
 import type { Tables } from '@/types/database.types'
 import { createMemberData, updateMemberData } from '@/actions/member.actions'
+import { getActivePlans } from '@/actions/plan.actions'
 import { memberSchema, type MemberFormData } from '@/schemas/member.schema'
 
 import { Button } from '@/components/ui/button'
@@ -31,19 +33,66 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
 
+// =============================================================================
+// TYPES
+// =============================================================================
+
+interface MembershipPlan {
+  id: string
+  name: string
+  price: number
+  currency: string
+  billing_period: string
+  duration_days: number
+}
+
 interface MemberFormProps {
   member?: Tables<'members'>
   mode: 'create' | 'edit'
 }
 
+// =============================================================================
+// HELPERS
+// =============================================================================
+
+function formatPrice(price: number, currency: string): string {
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: currency,
+  }).format(price)
+}
+
+function getBillingPeriodLabel(period: string): string {
+  const labels: Record<string, string> = {
+    monthly: 'Mensual',
+    quarterly: 'Trimestral',
+    yearly: 'Anual',
+    one_time: 'Pago único',
+  }
+  return labels[period] || period
+}
+
+function calculateEndDate(startDate: string, durationDays: number): string {
+  const start = new Date(startDate)
+  start.setDate(start.getDate() + durationDays)
+  return start.toISOString().split('T')[0]
+}
+
+// =============================================================================
+// COMPONENT
+// =============================================================================
+
 export function MemberForm({ member, mode }: MemberFormProps) {
   const router = useRouter()
+  const [plans, setPlans] = useState<MembershipPlan[]>([])
+  const [isLoadingPlans, setIsLoadingPlans] = useState(true)
 
   const form = useForm<MemberFormData>({
     resolver: zodResolver(memberSchema),
@@ -60,8 +109,46 @@ export function MemberForm({ member, mode }: MemberFormProps) {
       experience_level: (member?.experience_level as MemberFormData['experience_level']) ?? 'beginner',
       status: (member?.status as MemberFormData['status']) ?? 'active',
       internal_notes: member?.internal_notes ?? '',
+      current_plan_id: member?.current_plan_id ?? undefined,
+      membership_start_date: member?.membership_start_date ?? '',
+      membership_end_date: member?.membership_end_date ?? '',
     },
   })
+
+  // Load active plans
+  useEffect(() => {
+    async function loadPlans() {
+      setIsLoadingPlans(true)
+      const { data } = await getActivePlans()
+      if (data) {
+        setPlans(data as MembershipPlan[])
+      }
+      setIsLoadingPlans(false)
+    }
+    loadPlans()
+  }, [])
+
+  // Watch plan selection to auto-calculate end date
+  const selectedPlanId = form.watch('current_plan_id')
+  const startDate = form.watch('membership_start_date')
+
+  useEffect(() => {
+    if (selectedPlanId && startDate) {
+      const selectedPlan = plans.find(p => p.id === selectedPlanId)
+      if (selectedPlan) {
+        const endDate = calculateEndDate(startDate, selectedPlan.duration_days)
+        form.setValue('membership_end_date', endDate)
+      }
+    }
+  }, [selectedPlanId, startDate, plans, form])
+
+  // Auto-set start date to today when selecting a plan
+  useEffect(() => {
+    if (selectedPlanId && !startDate) {
+      const today = new Date().toISOString().split('T')[0]
+      form.setValue('membership_start_date', today)
+    }
+  }, [selectedPlanId, startDate, form])
 
   const onSubmit = async (data: MemberFormData) => {
     try {
@@ -92,14 +179,16 @@ export function MemberForm({ member, mode }: MemberFormProps) {
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="space-y-6">
           <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="basic">Informacion Basica</TabsTrigger>
+              <TabsTrigger value="membership">Membresia</TabsTrigger>
               <TabsTrigger value="contact">Contacto Emergencia</TabsTrigger>
               <TabsTrigger value="fitness">Fitness & Salud</TabsTrigger>
             </TabsList>
 
+            {/* TAB 1: Basic Info */}
             <TabsContent value="basic" className="space-y-4 mt-4">
-              <Card className="bg-muted/50 border-0 shadow-none p-4">
+              <Card>
                 <CardHeader>
                   <CardTitle>Datos personales</CardTitle>
                   <CardDescription>
@@ -239,8 +328,133 @@ export function MemberForm({ member, mode }: MemberFormProps) {
               </Card>
             </TabsContent>
 
+            {/* TAB 2: Membership */}
+            <TabsContent value="membership" className="space-y-4 mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Plan de membresia</CardTitle>
+                  <CardDescription>
+                    Selecciona el plan y configura las fechas de la membresia
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="current_plan_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Plan de membresia *</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value ?? undefined}
+                          disabled={isLoadingPlans}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={isLoadingPlans ? 'Cargando planes...' : 'Selecciona un plan'} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {plans.map((plan) => (
+                              <SelectItem key={plan.id} value={plan.id}>
+                                <div className="flex flex-col">
+                                  <span>{plan.name}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatPrice(plan.price, plan.currency)} - {getBillingPeriodLabel(plan.billing_period)}
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Selecciona el plan de membresia para este miembro
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="membership_start_date"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Fecha de inicio</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="date"
+                              {...field}
+                              value={field.value ?? ''}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Fecha en que inicia la membresia
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="membership_end_date"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Fecha de vencimiento</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="date"
+                              {...field}
+                              value={field.value ?? ''}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Se calcula automaticamente segun el plan
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {selectedPlanId && (
+                    <div className="rounded-lg bg-muted/50 p-4">
+                      <h4 className="font-medium text-sm mb-2">Resumen del plan seleccionado</h4>
+                      {(() => {
+                        const plan = plans.find(p => p.id === selectedPlanId)
+                        if (!plan) return null
+                        return (
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">Plan:</span>{' '}
+                              <span className="font-medium">{plan.name}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Precio:</span>{' '}
+                              <span className="font-medium">{formatPrice(plan.price, plan.currency)}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Periodo:</span>{' '}
+                              <span className="font-medium">{getBillingPeriodLabel(plan.billing_period)}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Duracion:</span>{' '}
+                              <span className="font-medium">{plan.duration_days} dias</span>
+                            </div>
+                          </div>
+                        )
+                      })()}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* TAB 3: Emergency Contact */}
             <TabsContent value="contact" className="space-y-4 mt-4">
-              <Card className="bg-muted/50 border-0 shadow-none p-4">
+              <Card>
                 <CardHeader>
                   <CardTitle>Contacto de emergencia</CardTitle>
                   <CardDescription>
@@ -290,8 +504,9 @@ export function MemberForm({ member, mode }: MemberFormProps) {
               </Card>
             </TabsContent>
 
+            {/* TAB 4: Fitness & Health */}
             <TabsContent value="fitness" className="space-y-4 mt-4">
-              <Card className="bg-muted/50 border-0 shadow-none p-4">
+              <Card>
                 <CardHeader>
                   <CardTitle>Informacion de fitness</CardTitle>
                   <CardDescription>
@@ -327,7 +542,7 @@ export function MemberForm({ member, mode }: MemberFormProps) {
                 </CardContent>
               </Card>
 
-              <Card className="bg-muted/50 border-0 shadow-none p-4">
+              <Card>
                 <CardHeader>
                   <CardTitle>Informacion medica</CardTitle>
                   <CardDescription>
@@ -375,7 +590,7 @@ export function MemberForm({ member, mode }: MemberFormProps) {
                 </CardContent>
               </Card>
 
-              <Card className="bg-muted/50 border-0 shadow-none p-4">
+              <Card>
                 <CardHeader>
                   <CardTitle>Notas internas</CardTitle>
                   <CardDescription>

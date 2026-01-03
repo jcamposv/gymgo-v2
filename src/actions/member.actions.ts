@@ -136,6 +136,41 @@ export async function getMember(id: string): Promise<{ data: Tables<'members'> |
 }
 
 // =============================================================================
+// GET MEMBER WITH PLAN
+// =============================================================================
+
+export interface MemberWithPlan extends Tables<'members'> {
+  current_plan: Tables<'membership_plans'> | null
+  organization: { name: string } | null
+}
+
+export async function getMemberWithPlan(id: string): Promise<{ data: MemberWithPlan | null; error: string | null }> {
+  const { profile, error: profileError } = await getUserProfile()
+  if (profileError || !profile) {
+    return { data: null, error: profileError ?? 'No profile found' }
+  }
+
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('members')
+    .select(`
+      *,
+      current_plan:membership_plans(*),
+      organization:organizations(name)
+    `)
+    .eq('id', id)
+    .eq('organization_id', profile.organization_id)
+    .single()
+
+  if (error) {
+    return { data: null, error: error.message }
+  }
+
+  return { data: data as MemberWithPlan, error: null }
+}
+
+// =============================================================================
 // CREATE MEMBER
 // =============================================================================
 

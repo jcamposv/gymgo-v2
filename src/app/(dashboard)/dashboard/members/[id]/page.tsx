@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 
-import { getMember } from '@/actions/member.actions'
+import { getMemberWithPlan } from '@/actions/member.actions'
 import { MemberDetailsContent } from './member-details-content'
 import {
   mockReports,
@@ -19,20 +19,20 @@ interface PageProps {
 
 export default async function MemberDetailPage({ params }: PageProps) {
   const { id } = await params
-  const { data: member, error } = await getMember(id)
+  const { data: member, error } = await getMemberWithPlan(id)
 
   if (error || !member) {
     notFound()
   }
 
-  // Extend the member with additional computed/mock fields
+  // Extend the member with additional computed fields
   const memberExtended: MemberExtended = {
     ...member,
     // Computed fields (not in DB)
     client_id: parseInt(member.access_code?.replace(/\D/g, '') || '0') || undefined,
-    // Membership info (not in DB - will come from organization/plan later)
-    membership_tier: 'blue',
-    gym_name: 'WellNest GymGo',
+    // Gym name from organization
+    gym_name: member.organization?.name || 'GymGo',
+    // Plan data comes from the query (current_plan is already included)
   }
 
   // TODO: These will be replaced with real API calls in the future

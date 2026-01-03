@@ -188,8 +188,9 @@ export const measurementValidation = {
 
 export const membershipLabels = {
   validUntil: 'Válido hasta',
+  noPlan: 'SIN PLAN ASIGNADO',
 
-  // Tiers
+  // Tiers (legacy - now using plan names)
   basicMember: 'MIEMBRO BÁSICO',
   blueMember: 'MIEMBRO BLUE',
   goldMember: 'MIEMBRO GOLD',
