@@ -62,7 +62,7 @@ export function AppointmentCard({
   className,
 }: AppointmentCardProps) {
   return (
-    <Card className={cn('bg-muted/50 border-0 shadow-none', className)}>
+    <Card className={cn('bg-muted/50 border-0 shadow-none py-4', className)}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-base font-semibold">{appointmentLabels.title}</CardTitle>
         <Button variant="ghost" size="icon" className="h-8 w-8">

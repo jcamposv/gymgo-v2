@@ -99,7 +99,7 @@ export function MemberForm({ member, mode }: MemberFormProps) {
             </TabsList>
 
             <TabsContent value="basic" className="space-y-4 mt-4">
-              <Card>
+              <Card className="bg-muted/50 border-0 shadow-none p-4">
                 <CardHeader>
                   <CardTitle>Datos personales</CardTitle>
                   <CardDescription>
@@ -240,7 +240,7 @@ export function MemberForm({ member, mode }: MemberFormProps) {
             </TabsContent>
 
             <TabsContent value="contact" className="space-y-4 mt-4">
-              <Card>
+              <Card className="bg-muted/50 border-0 shadow-none p-4">
                 <CardHeader>
                   <CardTitle>Contacto de emergencia</CardTitle>
                   <CardDescription>
@@ -291,7 +291,7 @@ export function MemberForm({ member, mode }: MemberFormProps) {
             </TabsContent>
 
             <TabsContent value="fitness" className="space-y-4 mt-4">
-              <Card>
+              <Card className="bg-muted/50 border-0 shadow-none p-4">
                 <CardHeader>
                   <CardTitle>Informacion de fitness</CardTitle>
                   <CardDescription>
@@ -327,7 +327,7 @@ export function MemberForm({ member, mode }: MemberFormProps) {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-muted/50 border-0 shadow-none p-4">
                 <CardHeader>
                   <CardTitle>Informacion medica</CardTitle>
                   <CardDescription>
@@ -375,7 +375,7 @@ export function MemberForm({ member, mode }: MemberFormProps) {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-muted/50 border-0 shadow-none p-4">
                 <CardHeader>
                   <CardTitle>Notas internas</CardTitle>
                   <CardDescription>

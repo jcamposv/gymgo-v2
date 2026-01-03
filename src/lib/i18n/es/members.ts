@@ -211,7 +211,7 @@ export const reportsLabels = {
 // =============================================================================
 
 export const appointmentLabels = {
-  title: 'Citas',
+  title: 'Agenda',
   upcomingWorkouts: 'Próximos entrenamientos',
   history: 'Historial',
   noUpcoming: 'Sin entrenamientos programados',
