@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
@@ -8,7 +9,7 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { Eye, Pencil, Trash2, UserCheck, UserX } from 'lucide-react'
 
 import type { Tables, MemberStatus } from '@/types/database.types'
-import { deleteMember, updateMemberStatus } from '@/actions/member.actions'
+import { updateMemberStatus } from '@/actions/member.actions'
 import {
   memberStatusLabels,
   experienceLevelLabels,
@@ -20,6 +21,7 @@ import {
   DataTableRowActions,
   StatusBadge,
 } from '@/components/data-table'
+import { DeleteMemberDialog } from './delete-member-dialog'
 
 type Member = Tables<'members'>
 
@@ -141,16 +143,7 @@ export const memberColumns: ColumnDef<Member>[] = [
 
 function MemberRowActions({ member }: { member: Member }) {
   const router = useRouter()
-
-  const handleDelete = async () => {
-    const result = await deleteMember(member.id)
-    if (result.success) {
-      toast.success('Miembro eliminado exitosamente')
-      router.refresh()
-    } else {
-      toast.error(result.message)
-    }
-  }
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   const handleStatusChange = async (status: MemberStatus) => {
     const result = await updateMemberStatus(member.id, status)
@@ -193,10 +186,24 @@ function MemberRowActions({ member }: { member: Member }) {
       id: 'delete',
       label: 'Eliminar',
       icon: Trash2,
-      onClick: handleDelete,
+      onClick: () => setShowDeleteDialog(true),
       variant: 'destructive' as const,
     },
   ]
 
-  return <DataTableRowActions row={member} actions={actions} />
+  return (
+    <>
+      <DataTableRowActions row={member} actions={actions} />
+      <DeleteMemberDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        member={{
+          id: member.id,
+          full_name: member.full_name,
+          email: member.email,
+          profile_id: member.profile_id,
+        }}
+      />
+    </>
+  )
 }

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { memberSchema, memberUpdateSchema, type MemberFormData } from '@/schemas/member.schema'
 import type { Tables, TablesInsert, MemberStatus } from '@/types/database.types'
 import {
@@ -279,6 +280,68 @@ export async function deleteMember(id: string): Promise<ActionState> {
 
   revalidatePath('/dashboard/members')
   return successResult('Miembro eliminado exitosamente')
+}
+
+// =============================================================================
+// DELETE MEMBER AND AUTH USER
+// =============================================================================
+
+export async function deleteMemberAndAuthUser(id: string): Promise<ActionState> {
+  const { authorized, user, error } = await requirePermission('manage_members')
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
+  }
+
+  const supabase = await createClient()
+
+  // First, get the member to check if they have a profile_id (linked auth user)
+  const { data: member, error: fetchError } = await supabase
+    .from('members')
+    .select('id, profile_id')
+    .eq('id', id)
+    .eq('organization_id', user!.organizationId)
+    .single()
+
+  if (fetchError || !member) {
+    return errorResult('No se pudo encontrar el miembro')
+  }
+
+  const profileId = (member as { id: string; profile_id: string | null }).profile_id
+
+  // If the member has a profile_id, delete the auth user first
+  if (profileId) {
+    const adminClient = createAdminClient()
+
+    const { error: authError } = await adminClient.auth.admin.deleteUser(
+      profileId
+    )
+
+    if (authError) {
+      // Log the error but don't fail - profile might be orphaned or already deleted
+      console.error('Error deleting auth user:', authError.message)
+      // Continue with member deletion even if auth user deletion fails
+    }
+  }
+
+  // Delete the member record
+  const { error: dbError } = await supabase
+    .from('members')
+    .delete()
+    .eq('id', id)
+    .eq('organization_id', user!.organizationId)
+
+  if (dbError) {
+    return errorResult(dbError.message)
+  }
+
+  revalidatePath('/dashboard/members')
+
+  const message = profileId
+    ? 'Miembro y cuenta de usuario eliminados exitosamente'
+    : 'Miembro eliminado exitosamente'
+
+  return successResult(message)
 }
 
 // =============================================================================
