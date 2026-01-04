@@ -5,14 +5,17 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Mail } from 'lucide-react'
 
 import type { Tables } from '@/types/database.types'
 import { createMemberData, updateMemberData } from '@/actions/member.actions'
 import { getActivePlans } from '@/actions/plan.actions'
+import { sendMemberInvitation } from '@/actions/invitation.actions'
 import { memberSchema, type MemberFormData } from '@/schemas/member.schema'
 
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -93,6 +96,7 @@ export function MemberForm({ member, mode }: MemberFormProps) {
   const router = useRouter()
   const [plans, setPlans] = useState<MembershipPlan[]>([])
   const [isLoadingPlans, setIsLoadingPlans] = useState(true)
+  const [sendInvitation, setSendInvitation] = useState(mode === 'create')
 
   const form = useForm<MemberFormData>({
     resolver: zodResolver(memberSchema),
@@ -157,7 +161,20 @@ export function MemberForm({ member, mode }: MemberFormProps) {
         : await updateMemberData(member!.id, data)
 
       if (result.success) {
-        toast.success(result.message)
+        // If creating and invitation toggle is on, send invitation
+        if (mode === 'create' && sendInvitation && result.data) {
+          const memberId = (result.data as { id: string }).id
+          const inviteResult = await sendMemberInvitation(memberId)
+
+          if (inviteResult.success) {
+            toast.success('Miembro creado e invitación enviada correctamente')
+          } else {
+            toast.success('Miembro creado')
+            toast.error(`Error al enviar invitación: ${inviteResult.message}`)
+          }
+        } else {
+          toast.success(result.message)
+        }
         router.push('/dashboard/members')
       } else {
         toast.error(result.message)
@@ -620,6 +637,32 @@ export function MemberForm({ member, mode }: MemberFormProps) {
             </TabsContent>
           </Tabs>
 
+          {/* Invitation Toggle - Only show in create mode */}
+          {mode === 'create' && (
+            <Card className="border-lime-200 bg-lime-50/50">
+              <CardContent className="flex items-center justify-between py-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-lime-100">
+                    <Mail className="h-5 w-5 text-lime-700" />
+                  </div>
+                  <div>
+                    <Label htmlFor="send-invitation" className="font-medium cursor-pointer">
+                      Enviar invitación por correo
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      El miembro recibirá un correo para crear su contraseña y acceder al sistema
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id="send-invitation"
+                  checked={sendInvitation}
+                  onCheckedChange={setSendInvitation}
+                />
+              </CardContent>
+            </Card>
+          )}
+
           <div className="flex justify-end gap-4">
             <Button
               type="button"
@@ -636,7 +679,7 @@ export function MemberForm({ member, mode }: MemberFormProps) {
                   {mode === 'create' ? 'Creando...' : 'Guardando...'}
                 </>
               ) : mode === 'create' ? (
-                'Crear miembro'
+                sendInvitation ? 'Crear y enviar invitación' : 'Crear miembro'
               ) : (
                 'Guardar cambios'
               )}

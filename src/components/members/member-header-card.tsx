@@ -1,13 +1,22 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
-import { MessageCircle, Phone } from 'lucide-react'
+import { MessageCircle, Phone, Mail, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { cn } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { statusLabels, memberLabels } from '@/lib/i18n'
+import { resendMemberInvitation } from '@/actions/invitation.actions'
 import type { MemberExtended } from '@/types/member.types'
 
 interface MemberHeaderCardProps {
@@ -32,6 +41,30 @@ function getInitials(name: string): string {
 }
 
 export function MemberHeaderCard({ member, className }: MemberHeaderCardProps) {
+  const [isSendingInvitation, setIsSendingInvitation] = useState(false)
+
+  const handleResendInvitation = async () => {
+    if (!member.email) {
+      toast.error('El miembro no tiene email registrado')
+      return
+    }
+
+    setIsSendingInvitation(true)
+    try {
+      const result = await resendMemberInvitation(member.id)
+
+      if (result.success) {
+        toast.success('Invitación enviada correctamente')
+      } else {
+        toast.error(result.message)
+      }
+    } catch {
+      toast.error('Error al enviar la invitación')
+    } finally {
+      setIsSendingInvitation(false)
+    }
+  }
+
   return (
     <Card className={cn('bg-muted/50 border-0 shadow-none', className)}>
       <CardContent className="flex items-center justify-between p-6">
@@ -56,6 +89,30 @@ export function MemberHeaderCard({ member, className }: MemberHeaderCardProps) {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Resend Invitation Button */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-10 w-10 rounded-full"
+                disabled={isSendingInvitation}
+              >
+                {isSendingInvitation ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Mail className="h-5 w-5" />
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleResendInvitation} disabled={isSendingInvitation}>
+                <Mail className="mr-2 h-4 w-4" />
+                {isSendingInvitation ? 'Enviando...' : 'Reenviar invitación por correo'}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button variant="outline" size="icon" className="h-10 w-10 rounded-full">
             <MessageCircle className="h-5 w-5" />
           </Button>
