@@ -52,7 +52,7 @@ export function ExerciseSelector({ onSelect, selectedIds = [], trigger }: Exerci
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [loading, setLoading] = useState(false)
   const [query, setQuery] = useState('')
-  const [category, setCategory] = useState<string>('')
+  const [category, setCategory] = useState<string>('all')
 
   useEffect(() => {
     if (open) {
@@ -64,7 +64,7 @@ export function ExerciseSelector({ onSelect, selectedIds = [], trigger }: Exerci
     setLoading(true)
     const { data } = await getExercises({
       query: query || undefined,
-      category: category || undefined,
+      category: category === 'all' ? undefined : category,
       is_active: true,
       include_global: true,
       page: 1,
@@ -112,7 +112,7 @@ export function ExerciseSelector({ onSelect, selectedIds = [], trigger }: Exerci
               <SelectValue placeholder="Categoria" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todas</SelectItem>
+              <SelectItem value="all">Todas</SelectItem>
               {Object.entries(categoryLabels).map(([value, label]) => (
                 <SelectItem key={value} value={value}>
                   {label}
