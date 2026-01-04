@@ -29,11 +29,26 @@ export type MembershipStatus = 'active' | 'expired' | 'cancelled' | 'frozen'
 
 export type BookingStatus = 'confirmed' | 'cancelled' | 'attended' | 'no_show' | 'waitlist'
 
-export type UserRole = 'owner' | 'admin' | 'instructor' | 'member'
+// Legacy roles + new expanded roles
+// Legacy: 'owner', 'admin', 'instructor', 'member'
+// New: 'super_admin', 'assistant', 'trainer', 'nutritionist', 'client'
+export type UserRole =
+  | 'owner'
+  | 'admin'
+  | 'instructor'
+  | 'member'
+  | 'super_admin'
+  | 'assistant'
+  | 'trainer'
+  | 'nutritionist'
+  | 'client'
 
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
 
 export type NoteType = 'notes' | 'trainer_comments' | 'progress' | 'medical' | 'general'
+
+// Preferred view for users with both dashboard and member access
+export type PreferredView = 'dashboard' | 'member'
 
 // =============================================================================
 // DATABASE TYPES
@@ -139,6 +154,7 @@ export type Database = {
           avatar_url: string | null
           phone: string | null
           role: UserRole
+          preferred_view: PreferredView
           created_at: string
           updated_at: string
         }
@@ -150,6 +166,7 @@ export type Database = {
           avatar_url?: string | null
           phone?: string | null
           role?: UserRole
+          preferred_view?: PreferredView
           created_at?: string
           updated_at?: string
         }
@@ -160,6 +177,7 @@ export type Database = {
           avatar_url?: string | null
           phone?: string | null
           role?: UserRole
+          preferred_view?: PreferredView
           updated_at?: string
         }
       }
@@ -224,6 +242,7 @@ export type Database = {
           id: string
           organization_id: string
           profile_id: string | null
+          user_id: string | null
           email: string
           full_name: string
           phone: string | null
@@ -253,6 +272,9 @@ export type Database = {
           check_in_count: number
           last_check_in: string | null
           internal_notes: string | null
+          // Invitation tracking
+          invitation_sent_at: string | null
+          invitation_accepted_at: string | null
           created_at: string
           updated_at: string
         }
@@ -260,6 +282,7 @@ export type Database = {
           id?: string
           organization_id: string
           profile_id?: string | null
+          user_id?: string | null
           email: string
           full_name: string
           phone?: string | null
@@ -289,11 +312,15 @@ export type Database = {
           check_in_count?: number
           last_check_in?: string | null
           internal_notes?: string | null
+          // Invitation tracking
+          invitation_sent_at?: string | null
+          invitation_accepted_at?: string | null
           created_at?: string
           updated_at?: string
         }
         Update: {
           profile_id?: string | null
+          user_id?: string | null
           email?: string
           full_name?: string
           phone?: string | null
@@ -323,6 +350,9 @@ export type Database = {
           check_in_count?: number
           last_check_in?: string | null
           internal_notes?: string | null
+          // Invitation tracking
+          invitation_sent_at?: string | null
+          invitation_accepted_at?: string | null
           updated_at?: string
         }
       }
@@ -950,7 +980,7 @@ export const Constants = {
       member_status: ['active', 'inactive', 'suspended', 'cancelled'] as const,
       membership_status: ['active', 'expired', 'cancelled', 'frozen'] as const,
       booking_status: ['confirmed', 'cancelled', 'attended', 'no_show', 'waitlist'] as const,
-      user_role: ['owner', 'admin', 'instructor', 'member'] as const,
+      user_role: ['owner', 'admin', 'instructor', 'member', 'super_admin', 'assistant', 'trainer', 'nutritionist', 'client'] as const,
       payment_status: ['pending', 'paid', 'failed', 'refunded'] as const,
       note_type: ['notes', 'trainer_comments', 'progress', 'medical', 'general'] as const,
     },

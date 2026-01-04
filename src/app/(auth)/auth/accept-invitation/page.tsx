@@ -207,29 +207,55 @@ export default function AcceptInvitationPage() {
 
   const onSubmit = async (data: PasswordFormData) => {
     try {
+      // First verify we have a valid session
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session) {
+        form.setError('root', {
+          message: 'Tu sesión ha expirado. Por favor solicita un nuevo enlace de invitación.',
+        })
+        return
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: data.password,
       })
 
       if (error) {
         console.error('Update password error:', error)
+
+        // Handle specific error cases
+        if (error.message?.includes('same_password')) {
+          form.setError('root', {
+            message: 'La nueva contraseña debe ser diferente a la anterior.',
+          })
+          return
+        }
+
+        if (error.message?.includes('weak_password')) {
+          form.setError('root', {
+            message: 'La contraseña es demasiado débil. Por favor usa una más segura.',
+          })
+          return
+        }
+
         form.setError('root', {
-          message: 'Error al guardar la contraseña. Por favor intenta de nuevo.',
+          message: `Error al guardar la contraseña: ${error.message}`,
         })
         return
       }
 
       setStatus('success')
 
-      // Redirect to dashboard after a short delay
+      // Redirect to auth callback to determine correct destination
       setTimeout(() => {
-        router.push('/dashboard')
+        router.push('/auth/callback')
       }, 2000)
 
     } catch (err) {
       console.error('Password update error:', err)
       form.setError('root', {
-        message: 'Error al guardar la contraseña',
+        message: 'Error al guardar la contraseña. Por favor intenta de nuevo.',
       })
     }
   }

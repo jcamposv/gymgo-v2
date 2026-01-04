@@ -1,17 +1,20 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Loader2, Mail } from 'lucide-react'
+import { Loader2, Mail, Shield, Check, X, UserCheck, Clock, Send } from 'lucide-react'
 
 import type { Tables } from '@/types/database.types'
+import type { AppRole } from '@/lib/rbac'
 import { createMemberData, updateMemberData } from '@/actions/member.actions'
 import { getActivePlans } from '@/actions/plan.actions'
 import { sendMemberInvitation } from '@/actions/invitation.actions'
+import { updateMemberProfileRole, type MemberAccountStatus } from '@/actions/user.actions'
 import { memberSchema, type MemberFormData } from '@/schemas/member.schema'
+import { ROLE_LABELS, ROLE_COLORS, ASSIGNABLE_ROLES } from '@/lib/rbac/role-labels'
 
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
@@ -42,6 +45,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import { Badge } from '@/components/ui/badge'
 
 // =============================================================================
 // TYPES
@@ -59,6 +63,9 @@ interface MembershipPlan {
 interface MemberFormProps {
   member?: Tables<'members'>
   mode: 'create' | 'edit'
+  accountStatus?: MemberAccountStatus | null
+  profileRole?: AppRole | null
+  canEditRole?: boolean
 }
 
 // =============================================================================
@@ -92,11 +99,16 @@ function calculateEndDate(startDate: string, durationDays: number): string {
 // COMPONENT
 // =============================================================================
 
-export function MemberForm({ member, mode }: MemberFormProps) {
+export function MemberForm({ member, mode, accountStatus, profileRole, canEditRole }: MemberFormProps) {
   const router = useRouter()
   const [plans, setPlans] = useState<MembershipPlan[]>([])
   const [isLoadingPlans, setIsLoadingPlans] = useState(true)
   const [sendInvitation, setSendInvitation] = useState(mode === 'create')
+
+  // Role management state
+  const [selectedRole, setSelectedRole] = useState<AppRole>(profileRole ?? 'client')
+  const [isRolePending, startRoleTransition] = useTransition()
+  const [roleFeedback, setRoleFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   const form = useForm<MemberFormData>({
     resolver: zodResolver(memberSchema),
@@ -154,6 +166,24 @@ export function MemberForm({ member, mode }: MemberFormProps) {
     }
   }, [selectedPlanId, startDate, form])
 
+  // Handle role change
+  const handleRoleChange = (newRole: AppRole) => {
+    if (!member || newRole === selectedRole) return
+
+    startRoleTransition(async () => {
+      const result = await updateMemberProfileRole(member.id, newRole)
+
+      if (result.success) {
+        setSelectedRole(newRole)
+        setRoleFeedback({ type: 'success', message: 'Rol actualizado' })
+      } else {
+        setRoleFeedback({ type: 'error', message: result.message })
+      }
+
+      setTimeout(() => setRoleFeedback(null), 3000)
+    })
+  }
+
   const onSubmit = async (data: MemberFormData) => {
     try {
       const result = mode === 'create'
@@ -161,10 +191,10 @@ export function MemberForm({ member, mode }: MemberFormProps) {
         : await updateMemberData(member!.id, data)
 
       if (result.success) {
-        // If creating and invitation toggle is on, send invitation
+        // If creating and invitation toggle is on, send invitation with role
         if (mode === 'create' && sendInvitation && result.data) {
           const memberId = (result.data as { id: string }).id
-          const inviteResult = await sendMemberInvitation(memberId)
+          const inviteResult = await sendMemberInvitation(memberId, selectedRole)
 
           if (inviteResult.success) {
             toast.success('Miembro creado e invitación enviada correctamente')
@@ -637,28 +667,248 @@ export function MemberForm({ member, mode }: MemberFormProps) {
             </TabsContent>
           </Tabs>
 
-          {/* Invitation Toggle - Only show in create mode */}
+          {/* Invitation Toggle and Role Selector - Only show in create mode */}
           {mode === 'create' && (
             <Card className="border-lime-200 bg-lime-50/50">
-              <CardContent className="flex items-center justify-between py-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-lime-100">
-                    <Mail className="h-5 w-5 text-lime-700" />
+              <CardContent className="space-y-4 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-lime-100">
+                      <Mail className="h-5 w-5 text-lime-700" />
+                    </div>
+                    <div>
+                      <Label htmlFor="send-invitation" className="font-medium cursor-pointer">
+                        Enviar invitación por correo
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        El miembro recibirá un correo para crear su contraseña y acceder al sistema
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="send-invitation" className="font-medium cursor-pointer">
-                      Enviar invitación por correo
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      El miembro recibirá un correo para crear su contraseña y acceder al sistema
-                    </p>
-                  </div>
+                  <Switch
+                    id="send-invitation"
+                    checked={sendInvitation}
+                    onCheckedChange={setSendInvitation}
+                  />
                 </div>
-                <Switch
-                  id="send-invitation"
-                  checked={sendInvitation}
-                  onCheckedChange={setSendInvitation}
-                />
+
+                {/* Role selector - show when invitation is enabled */}
+                {sendInvitation && (
+                  <div className="flex items-center justify-between pt-4 border-t">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-lime-100">
+                        <Shield className="h-5 w-5 text-lime-700" />
+                      </div>
+                      <div>
+                        <Label className="font-medium">
+                          Rol en el sistema
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                          Permisos que tendra el usuario cuando acepte la invitacion
+                        </p>
+                      </div>
+                    </div>
+                    <Select
+                      value={selectedRole}
+                      onValueChange={(value) => setSelectedRole(value as AppRole)}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue>
+                          <Badge
+                            variant="outline"
+                            className={ROLE_COLORS[selectedRole]}
+                          >
+                            {ROLE_LABELS[selectedRole]}
+                          </Badge>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ASSIGNABLE_ROLES.map((role) => (
+                          <SelectItem key={role} value={role}>
+                            <span className="flex items-center gap-2">
+                              <Badge
+                                variant="outline"
+                                className={ROLE_COLORS[role]}
+                              >
+                                {ROLE_LABELS[role]}
+                              </Badge>
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Role Selector - Only show in edit mode */}
+          {mode === 'edit' && accountStatus !== undefined && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-lime-600" />
+                  Acceso al Sistema
+                </CardTitle>
+                <CardDescription>
+                  Rol y permisos del usuario en la plataforma
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {/* Case 1: Member has an active user account */}
+                {accountStatus?.hasAccount ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>Rol actual</Label>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          El rol determina que acciones puede realizar el usuario
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {canEditRole && selectedRole !== 'super_admin' ? (
+                          <>
+                            <div className="relative">
+                              {isRolePending && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded-md z-10">
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                </div>
+                              )}
+                              <Select
+                                value={selectedRole ?? undefined}
+                                onValueChange={(value) => handleRoleChange(value as AppRole)}
+                                disabled={isRolePending}
+                              >
+                                <SelectTrigger className="w-[180px]">
+                                  <SelectValue>
+                                    {selectedRole && (
+                                      <Badge
+                                        variant="outline"
+                                        className={ROLE_COLORS[selectedRole]}
+                                      >
+                                        {ROLE_LABELS[selectedRole]}
+                                      </Badge>
+                                    )}
+                                  </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {ASSIGNABLE_ROLES.map((role) => (
+                                    <SelectItem key={role} value={role}>
+                                      <span className="flex items-center gap-2">
+                                        <Badge
+                                          variant="outline"
+                                          className={ROLE_COLORS[role]}
+                                        >
+                                          {ROLE_LABELS[role]}
+                                        </Badge>
+                                      </span>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            {roleFeedback && (
+                              <span className={`text-xs flex items-center gap-1 ${
+                                roleFeedback.type === 'success' ? 'text-green-600' : 'text-red-600'
+                              }`}>
+                                {roleFeedback.type === 'success' ? (
+                                  <Check className="h-3 w-3" />
+                                ) : (
+                                  <X className="h-3 w-3" />
+                                )}
+                                {roleFeedback.message}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className={selectedRole ? ROLE_COLORS[selectedRole] : ''}
+                          >
+                            {selectedRole ? ROLE_LABELS[selectedRole] : 'Sin rol'}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Show account email */}
+                    {accountStatus.email && (
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 border border-green-200">
+                        <UserCheck className="h-4 w-4 text-green-600" />
+                        <span className="text-sm text-green-800">
+                          Cuenta activa: <strong>{accountStatus.email}</strong>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ) : accountStatus?.invitationSentAt ? (
+                  /* Case 2: Invitation was sent but not yet accepted */
+                  <div className="flex items-center gap-3 p-4 rounded-lg bg-amber-50 border border-amber-200">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
+                      <Clock className="h-5 w-5 text-amber-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-amber-800">Invitacion pendiente</p>
+                      <p className="text-sm text-amber-700">
+                        Se envio una invitacion el {new Date(accountStatus.invitationSentAt).toLocaleDateString('es-MX', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric'
+                        })}. El miembro aun no ha aceptado.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="border-amber-300 text-amber-700 hover:bg-amber-100"
+                      onClick={async () => {
+                        if (!member) return
+                        const result = await sendMemberInvitation(member.id, selectedRole)
+                        if (result.success) {
+                          toast.success('Invitacion reenviada')
+                        } else {
+                          toast.error(result.message)
+                        }
+                      }}
+                    >
+                      <Send className="h-4 w-4 mr-1" />
+                      Reenviar
+                    </Button>
+                  </div>
+                ) : (
+                  /* Case 3: No account and no invitation sent */
+                  <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                      <Mail className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-muted-foreground">Sin cuenta de usuario</p>
+                      <p className="text-sm text-muted-foreground">
+                        Este miembro aun no tiene cuenta. Envia una invitacion para que pueda acceder al sistema.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        if (!member) return
+                        const result = await sendMemberInvitation(member.id, selectedRole)
+                        if (result.success) {
+                          toast.success('Invitacion enviada')
+                          router.refresh()
+                        } else {
+                          toast.error(result.message)
+                        }
+                      }}
+                    >
+                      <Mail className="h-4 w-4 mr-1" />
+                      Enviar invitacion
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}

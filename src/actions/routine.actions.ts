@@ -10,52 +10,18 @@ import {
   type ExerciseItem,
 } from '@/schemas/routine.schema'
 import type { Tables, TablesInsert, Json } from '@/types/database.types'
+import {
+  requireAnyPermission,
+  requirePermission,
+  type ActionResult,
+  successResult,
+  errorResult,
+  forbiddenResult,
+  unauthorizedResult,
+} from '@/lib/auth/server-auth'
 
-export type ActionState = {
-  success: boolean
-  message: string
-  errors?: Record<string, string[]>
-  data?: unknown
-}
-
-interface UserProfile {
-  organization_id: string
-  role: string
-  userId: string
-}
-
-async function getUserProfile(): Promise<{ profile: UserProfile | null; error: string | null }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { profile: null, error: 'No autenticado' }
-  }
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('organization_id, role')
-    .eq('id', user.id)
-    .single()
-
-  if (error || !data) {
-    return { profile: null, error: 'No se encontro la organizacion' }
-  }
-
-  const profileData = data as { organization_id: string | null; role: string }
-  if (!profileData.organization_id) {
-    return { profile: null, error: 'No se encontro la organizacion' }
-  }
-
-  return {
-    profile: {
-      organization_id: profileData.organization_id,
-      role: profileData.role,
-      userId: user.id
-    },
-    error: null
-  }
-}
+// Legacy type export for backward compatibility
+export type ActionState = ActionResult
 
 // =============================================================================
 // Type for workout with member info
@@ -78,9 +44,10 @@ export async function getRoutines(params?: RoutineSearchParams): Promise<{
   count: number
   error: string | null
 }> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { data: null, count: 0, error: profileError ?? 'No profile found' }
+  const { authorized, user, error } = await requireAnyPermission(['view_any_member_routines', 'manage_any_member_routines'])
+
+  if (!authorized || !user) {
+    return { data: null, count: 0, error: error || 'No autorizado' }
   }
 
   const page = params?.page ?? 1
@@ -101,7 +68,7 @@ export async function getRoutines(params?: RoutineSearchParams): Promise<{
       *,
       member:members!assigned_to_member_id(id, full_name, email)
     `, { count: 'exact' })
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user.organizationId)
     .order(sortBy, { ascending })
     .range(from, to)
 
@@ -130,10 +97,10 @@ export async function getRoutines(params?: RoutineSearchParams): Promise<{
     dbQuery = dbQuery.eq('is_active', params.is_active)
   }
 
-  const { data, count, error } = await dbQuery
+  const { data, count, error: dbError } = await dbQuery
 
-  if (error) {
-    return { data: null, count: 0, error: error.message }
+  if (dbError) {
+    return { data: null, count: 0, error: dbError.message }
   }
 
   return { data: data as WorkoutWithMember[], count: count ?? 0, error: null }
@@ -147,25 +114,26 @@ export async function getRoutine(id: string): Promise<{
   data: WorkoutWithMember | null
   error: string | null
 }> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { data: null, error: profileError ?? 'No profile found' }
+  const { authorized, user, error } = await requireAnyPermission(['view_any_member_routines', 'manage_any_member_routines'])
+
+  if (!authorized || !user) {
+    return { data: null, error: error || 'No autorizado' }
   }
 
   const supabase = await createClient()
 
-  const { data, error } = await supabase
+  const { data, error: dbError } = await supabase
     .from('workouts')
     .select(`
       *,
       member:members!assigned_to_member_id(id, full_name, email)
     `)
     .eq('id', id)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user.organizationId)
     .single()
 
-  if (error) {
-    return { data: null, error: error.message }
+  if (dbError) {
+    return { data: null, error: dbError.message }
   }
 
   return { data: data as WorkoutWithMember, error: null }
@@ -176,25 +144,22 @@ export async function getRoutine(id: string): Promise<{
 // =============================================================================
 
 export async function createRoutineData(data: RoutineFormData): Promise<ActionState> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { success: false, message: profileError ?? 'No profile found' }
+  const { authorized, user, error } = await requirePermission('manage_any_member_routines')
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
   }
 
   const validated = routineSchema.safeParse(data)
 
   if (!validated.success) {
-    return {
-      success: false,
-      message: 'Validacion fallida',
-      errors: validated.error.flatten().fieldErrors,
-    }
+    return errorResult('Validacion fallida', validated.error.flatten().fieldErrors)
   }
 
   const supabase = await createClient()
 
   const insertData: TablesInsert<'workouts'> = {
-    organization_id: profile.organization_id,
+    organization_id: user!.organizationId,
     name: validated.data.name,
     description: validated.data.description,
     workout_type: validated.data.workout_type,
@@ -202,31 +167,24 @@ export async function createRoutineData(data: RoutineFormData): Promise<ActionSt
     wod_time_cap: validated.data.wod_time_cap,
     exercises: validated.data.exercises as unknown as Json,
     assigned_to_member_id: validated.data.assigned_to_member_id,
-    assigned_by_id: profile.userId,
+    assigned_by_id: user!.id,
     scheduled_date: validated.data.scheduled_date,
     is_template: validated.data.is_template,
     is_active: validated.data.is_active,
   }
 
-  const { data: routineResult, error } = await supabase
+  const { data: routineResult, error: dbError } = await supabase
     .from('workouts')
     .insert(insertData as never)
     .select()
     .single()
 
-  if (error) {
-    return {
-      success: false,
-      message: error.message,
-    }
+  if (dbError) {
+    return errorResult(dbError.message)
   }
 
   revalidatePath('/dashboard/routines')
-  return {
-    success: true,
-    message: 'Rutina creada exitosamente',
-    data: routineResult,
-  }
+  return successResult('Rutina creada exitosamente', routineResult)
 }
 
 // =============================================================================
@@ -237,19 +195,16 @@ export async function updateRoutineData(
   id: string,
   data: Partial<RoutineFormData>
 ): Promise<ActionState> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { success: false, message: profileError ?? 'No profile found' }
+  const { authorized, user, error } = await requirePermission('manage_any_member_routines')
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
   }
 
   const validated = routineUpdateSchema.safeParse(data)
 
   if (!validated.success) {
-    return {
-      success: false,
-      message: 'Validacion fallida',
-      errors: validated.error.flatten().fieldErrors,
-    }
+    return errorResult('Validacion fallida', validated.error.flatten().fieldErrors)
   }
 
   const supabase = await createClient()
@@ -259,28 +214,21 @@ export async function updateRoutineData(
     updateData.exercises = validated.data.exercises as unknown as Json
   }
 
-  const { data: routineResult, error } = await supabase
+  const { data: routineResult, error: dbError } = await supabase
     .from('workouts')
     .update(updateData as never)
     .eq('id', id)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user!.organizationId)
     .select()
     .single()
 
-  if (error) {
-    return {
-      success: false,
-      message: error.message,
-    }
+  if (dbError) {
+    return errorResult(dbError.message)
   }
 
   revalidatePath('/dashboard/routines')
   revalidatePath(`/dashboard/routines/${id}`)
-  return {
-    success: true,
-    message: 'Rutina actualizada exitosamente',
-    data: routineResult,
-  }
+  return successResult('Rutina actualizada exitosamente', routineResult)
 }
 
 // =============================================================================
@@ -288,31 +236,26 @@ export async function updateRoutineData(
 // =============================================================================
 
 export async function deleteRoutine(id: string): Promise<ActionState> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { success: false, message: profileError ?? 'No profile found' }
+  const { authorized, user, error } = await requirePermission('manage_any_member_routines')
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
   }
 
   const supabase = await createClient()
 
-  const { error } = await supabase
+  const { error: dbError } = await supabase
     .from('workouts')
     .delete()
     .eq('id', id)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user!.organizationId)
 
-  if (error) {
-    return {
-      success: false,
-      message: error.message,
-    }
+  if (dbError) {
+    return errorResult(dbError.message)
   }
 
   revalidatePath('/dashboard/routines')
-  return {
-    success: true,
-    message: 'Rutina eliminada exitosamente',
-  }
+  return successResult('Rutina eliminada exitosamente')
 }
 
 // =============================================================================
@@ -320,9 +263,10 @@ export async function deleteRoutine(id: string): Promise<ActionState> {
 // =============================================================================
 
 export async function toggleRoutineStatus(id: string): Promise<ActionState> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { success: false, message: profileError ?? 'No profile found' }
+  const { authorized, user, error } = await requirePermission('manage_any_member_routines')
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
   }
 
   const supabase = await createClient()
@@ -332,37 +276,28 @@ export async function toggleRoutineStatus(id: string): Promise<ActionState> {
     .from('workouts')
     .select('is_active')
     .eq('id', id)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user!.organizationId)
     .single()
 
   if (fetchError || !routine) {
-    return {
-      success: false,
-      message: 'Rutina no encontrada',
-    }
+    return errorResult('Rutina no encontrada')
   }
 
   const routineData = routine as { is_active: boolean }
 
   // Toggle status
-  const { error } = await supabase
+  const { error: dbError } = await supabase
     .from('workouts')
     .update({ is_active: !routineData.is_active } as never)
     .eq('id', id)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user!.organizationId)
 
-  if (error) {
-    return {
-      success: false,
-      message: error.message,
-    }
+  if (dbError) {
+    return errorResult(dbError.message)
   }
 
   revalidatePath('/dashboard/routines')
-  return {
-    success: true,
-    message: routineData.is_active ? 'Rutina desactivada' : 'Rutina activada',
-  }
+  return successResult(routineData.is_active ? 'Rutina desactivada' : 'Rutina activada')
 }
 
 // =============================================================================
@@ -370,9 +305,10 @@ export async function toggleRoutineStatus(id: string): Promise<ActionState> {
 // =============================================================================
 
 export async function duplicateRoutine(id: string): Promise<ActionState> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { success: false, message: profileError ?? 'No profile found' }
+  const { authorized, user, error } = await requirePermission('manage_any_member_routines')
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
   }
 
   const supabase = await createClient()
@@ -382,18 +318,18 @@ export async function duplicateRoutine(id: string): Promise<ActionState> {
     .from('workouts')
     .select('*')
     .eq('id', id)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user!.organizationId)
     .single()
 
   if (fetchError || !routine) {
-    return { success: false, message: 'Rutina no encontrada' }
+    return errorResult('Rutina no encontrada')
   }
 
   const routineData = routine as Tables<'workouts'>
 
   // Create a copy
   const insertData: TablesInsert<'workouts'> = {
-    organization_id: profile.organization_id,
+    organization_id: user!.organizationId,
     name: `${routineData.name} (copia)`,
     description: routineData.description,
     workout_type: routineData.workout_type,
@@ -401,31 +337,24 @@ export async function duplicateRoutine(id: string): Promise<ActionState> {
     wod_time_cap: routineData.wod_time_cap,
     exercises: routineData.exercises,
     assigned_to_member_id: null, // Don't copy assignment
-    assigned_by_id: profile.userId,
+    assigned_by_id: user!.id,
     scheduled_date: null, // Don't copy date
     is_template: true, // Make it a template
     is_active: true,
   }
 
-  const { data: newRoutine, error } = await supabase
+  const { data: newRoutine, error: dbError } = await supabase
     .from('workouts')
     .insert(insertData as never)
     .select()
     .single()
 
-  if (error) {
-    return {
-      success: false,
-      message: error.message,
-    }
+  if (dbError) {
+    return errorResult(dbError.message)
   }
 
   revalidatePath('/dashboard/routines')
-  return {
-    success: true,
-    message: 'Rutina duplicada exitosamente',
-    data: newRoutine,
-  }
+  return successResult('Rutina duplicada exitosamente', newRoutine)
 }
 
 // =============================================================================
@@ -437,9 +366,10 @@ export async function assignRoutineToMember(
   memberId: string,
   scheduledDate?: string
 ): Promise<ActionState> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { success: false, message: profileError ?? 'No profile found' }
+  const { authorized, user, error } = await requirePermission('manage_any_member_routines')
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
   }
 
   const supabase = await createClient()
@@ -449,18 +379,18 @@ export async function assignRoutineToMember(
     .from('workouts')
     .select('*')
     .eq('id', routineId)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user!.organizationId)
     .single()
 
   if (fetchError || !routine) {
-    return { success: false, message: 'Rutina no encontrada' }
+    return errorResult('Rutina no encontrada')
   }
 
   const routineData = routine as Tables<'workouts'>
 
   // Create assigned copy
   const insertData: TablesInsert<'workouts'> = {
-    organization_id: profile.organization_id,
+    organization_id: user!.organizationId,
     name: routineData.name,
     description: routineData.description,
     workout_type: routineData.workout_type,
@@ -468,31 +398,24 @@ export async function assignRoutineToMember(
     wod_time_cap: routineData.wod_time_cap,
     exercises: routineData.exercises,
     assigned_to_member_id: memberId,
-    assigned_by_id: profile.userId,
+    assigned_by_id: user!.id,
     scheduled_date: scheduledDate || null,
     is_template: false,
     is_active: true,
   }
 
-  const { data: assignedRoutine, error } = await supabase
+  const { data: assignedRoutine, error: dbError } = await supabase
     .from('workouts')
     .insert(insertData as never)
     .select()
     .single()
 
-  if (error) {
-    return {
-      success: false,
-      message: error.message,
-    }
+  if (dbError) {
+    return errorResult(dbError.message)
   }
 
   revalidatePath('/dashboard/routines')
-  return {
-    success: true,
-    message: 'Rutina asignada exitosamente',
-    data: assignedRoutine,
-  }
+  return successResult('Rutina asignada exitosamente', assignedRoutine)
 }
 
 // =============================================================================
@@ -503,23 +426,24 @@ export async function getRoutineTemplates(): Promise<{
   data: Tables<'workouts'>[] | null
   error: string | null
 }> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { data: null, error: profileError ?? 'No profile found' }
+  const { authorized, user, error } = await requireAnyPermission(['view_any_member_routines', 'manage_any_member_routines'])
+
+  if (!authorized || !user) {
+    return { data: null, error: error || 'No autorizado' }
   }
 
   const supabase = await createClient()
 
-  const { data, error } = await supabase
+  const { data, error: dbError } = await supabase
     .from('workouts')
     .select('*')
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user.organizationId)
     .eq('is_template', true)
     .eq('is_active', true)
     .order('name', { ascending: true })
 
-  if (error) {
-    return { data: null, error: error.message }
+  if (dbError) {
+    return { data: null, error: dbError.message }
   }
 
   return { data, error: null }
@@ -533,23 +457,24 @@ export async function getMemberRoutines(memberId: string): Promise<{
   data: Tables<'workouts'>[] | null
   error: string | null
 }> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { data: null, error: profileError ?? 'No profile found' }
+  const { authorized, user, error } = await requireAnyPermission(['view_any_member_routines', 'manage_any_member_routines'])
+
+  if (!authorized || !user) {
+    return { data: null, error: error || 'No autorizado' }
   }
 
   const supabase = await createClient()
 
-  const { data, error } = await supabase
+  const { data, error: dbError } = await supabase
     .from('workouts')
     .select('*')
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user.organizationId)
     .eq('assigned_to_member_id', memberId)
     .eq('is_active', true)
     .order('scheduled_date', { ascending: true, nullsFirst: false })
 
-  if (error) {
-    return { data: null, error: error.message }
+  if (dbError) {
+    return { data: null, error: dbError.message }
   }
 
   return { data, error: null }

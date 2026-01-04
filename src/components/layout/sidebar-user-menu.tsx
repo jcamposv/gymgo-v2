@@ -14,13 +14,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { ViewSwitcher } from './view-switcher'
+import type { ViewPreferences } from '@/lib/auth/get-view-preferences'
 
 interface SidebarUserMenuProps {
   user: User
   collapsed?: boolean
+  viewPreferences?: ViewPreferences | null
 }
 
-export function SidebarUserMenu({ user, collapsed }: SidebarUserMenuProps) {
+export function SidebarUserMenu({ user, collapsed, viewPreferences }: SidebarUserMenuProps) {
   const { signOut } = useAuth()
 
   const name = user.user_metadata?.name || user.email?.split('@')[0] || 'Usuario'
@@ -61,6 +64,9 @@ export function SidebarUserMenu({ user, collapsed }: SidebarUserMenuProps) {
             <p className="text-xs text-muted-foreground">{email}</p>
           </div>
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {/* View Switcher - Only shows for staff with member profile */}
+        <ViewSwitcher variant="dropdown" initialPreferences={viewPreferences} />
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={signOut} className="cursor-pointer">
           <LogOut className="mr-2 h-4 w-4" />

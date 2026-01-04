@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { Dumbbell } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
-import { checkOnboardingStatus } from '@/actions/onboarding.actions'
+import { getPostLoginRedirect } from '@/lib/auth/post-login-redirect'
 import { OnboardingWizard } from '@/components/onboarding'
 import { ROUTES } from '@/lib/constants'
 
@@ -19,10 +19,14 @@ export default async function OnboardingPage() {
     redirect(ROUTES.LOGIN)
   }
 
-  const { needsOnboarding, organizationId } = await checkOnboardingStatus()
+  // Use centralized redirect logic to check if user really needs onboarding
+  // This prevents invited users from seeing onboarding even if they navigate here directly
+  const { reason, redirectTo } = await getPostLoginRedirect()
 
-  if (!needsOnboarding && organizationId) {
-    redirect(ROUTES.DASHBOARD)
+  // Only show onboarding if user truly needs it (signed up, no organization)
+  // Invited users will be redirected to their appropriate dashboard
+  if (reason !== 'onboarding') {
+    redirect(redirectTo)
   }
 
   return (

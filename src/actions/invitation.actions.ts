@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendInvitationEmail } from '@/lib/email'
+import type { AppRole } from '@/lib/rbac'
+import { mapToDbRole } from '@/lib/rbac/helpers'
 
 // =============================================================================
 // TYPES
@@ -95,9 +97,11 @@ function formatGymAddress(org: OrganizationData): string | null {
 /**
  * Sends an invitation email to a member
  * Creates a Supabase user if needed and sends a branded email
+ * Optionally assigns a role to the user when created
  */
 export async function sendMemberInvitation(
-  memberId: string
+  memberId: string,
+  assignRole?: AppRole
 ): Promise<InvitationResult> {
   try {
     // 1. Verify user is authenticated and get organization
@@ -187,13 +191,42 @@ export async function sendMemberInvitation(
           return { success: false, message: emailResult.error ?? 'Error al enviar el correo' }
         }
 
-        // Update member invitation status
-        await supabase
-          .from('members')
-          .update({
-            invitation_sent_at: new Date().toISOString(),
-          } as never)
-          .eq('id', memberId)
+        // Update member with invitation status and link to profile if we can find the user
+        // For existing users, we need to find their user ID and link it
+        const { data: usersList } = await adminClient.auth.admin.listUsers()
+        const existingUser = usersList?.users?.find(u => u.email === member.email)
+
+        if (existingUser?.id) {
+          const userId = existingUser.id
+
+          // Link member to profile
+          await supabase
+            .from('members')
+            .update({
+              user_id: userId,
+              profile_id: userId,
+              invitation_sent_at: new Date().toISOString(),
+            } as never)
+            .eq('id', memberId)
+
+          // Update profile with organization_id if not set
+          const dbRole = assignRole ? mapToDbRole(assignRole) : 'client'
+          await supabase
+            .from('profiles')
+            .update({
+              role: dbRole,
+              organization_id: profile.organization_id,
+            } as never)
+            .eq('id', userId)
+        } else {
+          // Just update the invitation timestamp
+          await supabase
+            .from('members')
+            .update({
+              invitation_sent_at: new Date().toISOString(),
+            } as never)
+            .eq('id', memberId)
+        }
 
         revalidatePath(`/dashboard/members/${memberId}`)
         return { success: true, message: 'Invitación reenviada correctamente' }
@@ -208,15 +241,57 @@ export async function sendMemberInvitation(
       return { success: false, message: 'Error al generar el enlace de invitación' }
     }
 
-    // 6. Link the auth user to the member record (store user_id)
+    // 6. Link the auth user to the member record and update profile
+    // IMPORTANT: This ensures that invited users:
+    // - Have their member record linked to their profile (profile_id)
+    // - Have their profile's organization_id set correctly
+    // - Won't be redirected to onboarding after accepting the invitation
     if (linkData.user?.id) {
+      const userId = linkData.user.id
+
+      // Update member with user_id and profile_id in a single call
       await supabase
         .from('members')
         .update({
-          user_id: linkData.user.id,
+          user_id: userId,
+          profile_id: userId,
           invitation_sent_at: new Date().toISOString(),
         } as never)
         .eq('id', memberId)
+
+      // Wait a moment for the trigger to create the profile (if it hasn't yet)
+      // Then update the profile with organization_id and role
+      // We use a retry mechanism in case the profile isn't created yet
+      const maxRetries = 3
+      let profileUpdated = false
+
+      for (let i = 0; i < maxRetries && !profileUpdated; i++) {
+        if (i > 0) {
+          // Wait 500ms before retrying
+          await new Promise(resolve => setTimeout(resolve, 500))
+        }
+
+        const dbRole = assignRole ? mapToDbRole(assignRole) : 'client'
+
+        const { error: profileUpdateError } = await supabase
+          .from('profiles')
+          .update({
+            role: dbRole,
+            organization_id: profile.organization_id,
+          } as never)
+          .eq('id', userId)
+
+        if (!profileUpdateError) {
+          profileUpdated = true
+        } else {
+          console.log(`Profile update attempt ${i + 1} failed:`, profileUpdateError.message)
+        }
+      }
+
+      if (!profileUpdated) {
+        console.error('Failed to update profile after retries for user:', userId)
+        // Don't fail the invitation - the post-login redirect will fix this
+      }
     }
 
     // 7. Send branded invitation email via Resend
@@ -251,13 +326,49 @@ export async function sendMemberInvitation(
 
 /**
  * Resends an invitation email to a member
- * Generates a new token/link and sends the email again
+ * Preserves the current profile role when resending
  */
 export async function resendMemberInvitation(
   memberId: string
 ): Promise<InvitationResult> {
-  // Same logic as sendMemberInvitation - it handles existing users
-  return sendMemberInvitation(memberId)
+  try {
+    const supabase = await createClient()
+
+    // Get member's profile_id to look up their current role
+    const { data: memberData } = await supabase
+      .from('members')
+      .select('profile_id')
+      .eq('id', memberId)
+      .single()
+
+    const member = memberData as { profile_id: string | null } | null
+
+    // If member has a profile, get their current role and preserve it
+    let currentRole: AppRole | undefined
+    if (member?.profile_id) {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', member.profile_id)
+        .single()
+
+      const profile = profileData as { role: string } | null
+      if (profile?.role) {
+        const { mapLegacyRole } = await import('@/lib/rbac/helpers')
+        currentRole = mapLegacyRole(profile.role)
+      }
+    }
+
+    // Resend with the current role (or undefined if not found)
+    return sendMemberInvitation(memberId, currentRole)
+  } catch (err) {
+    console.error('Resend invitation error:', err)
+    return {
+      success: false,
+      message: 'Error al reenviar la invitación',
+      error: err instanceof Error ? err.message : 'Error desconocido',
+    }
+  }
 }
 
 // =============================================================================
@@ -282,7 +393,8 @@ export async function createMemberWithInvitation(
     membership_end_date?: string | null
     [key: string]: unknown
   },
-  sendInvitation: boolean
+  sendInvitation: boolean,
+  assignRole?: AppRole
 ): Promise<{ success: boolean; message: string; memberId?: string }> {
   try {
     // 1. Verify user is authenticated
@@ -313,7 +425,7 @@ export async function createMemberWithInvitation(
 
     // 3. Send invitation if requested
     if (sendInvitation && createdMember?.id) {
-      const inviteResult = await sendMemberInvitation(createdMember.id)
+      const inviteResult = await sendMemberInvitation(createdMember.id, assignRole)
       if (!inviteResult.success) {
         // Member created but invitation failed - still return success with warning
         revalidatePath('/dashboard/members')

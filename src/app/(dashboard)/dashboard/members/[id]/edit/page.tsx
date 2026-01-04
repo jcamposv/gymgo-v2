@@ -3,6 +3,9 @@ import { notFound } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 
 import { getMember } from '@/actions/member.actions'
+import { getMemberProfileRole, type MemberAccountStatus } from '@/actions/user.actions'
+import { requireAdmin } from '@/lib/auth/server-auth'
+import { mapLegacyRole } from '@/lib/rbac/helpers'
 import { MemberForm } from '@/components/members'
 import { Button } from '@/components/ui/button'
 
@@ -22,6 +25,17 @@ export default async function EditMemberPage({ params }: PageProps) {
     notFound()
   }
 
+  // Check if current user is admin (can edit roles)
+  const { authorized: isAdmin } = await requireAdmin()
+
+  // Get member's account status (has account, role, invitation status)
+  const { data: accountStatus } = await getMemberProfileRole(id)
+
+  // Map the role if member has an account
+  const profileRole = accountStatus?.hasAccount && accountStatus.role
+    ? mapLegacyRole(accountStatus.role)
+    : null
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -38,7 +52,13 @@ export default async function EditMemberPage({ params }: PageProps) {
         </div>
       </div>
 
-      <MemberForm mode="edit" member={member} />
+      <MemberForm
+        mode="edit"
+        member={member}
+        accountStatus={accountStatus}
+        profileRole={profileRole}
+        canEditRole={isAdmin}
+      />
     </div>
   )
 }

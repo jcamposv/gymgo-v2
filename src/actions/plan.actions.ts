@@ -3,19 +3,20 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { planSchema, planUpdateSchema, type PlanFormData } from '@/schemas/plan.schema'
+import {
+  getCurrentUser,
+  requirePermission,
+  requireAnyPermission,
+  type ActionResult,
+  successResult,
+  errorResult,
+  forbiddenResult,
+  unauthorizedResult,
+} from '@/lib/auth/server-auth'
 
-export type ActionState = {
-  success: boolean
-  message: string
-  errors?: Record<string, string[]>
-  data?: unknown
-}
-
-interface UserProfile {
-  organization_id: string
-  role: string
-  userId: string
-}
+// =============================================================================
+// TYPES
+// =============================================================================
 
 interface MembershipPlan {
   id: string
@@ -37,39 +38,6 @@ interface MembershipPlan {
   updated_at: string
 }
 
-async function getUserProfile(): Promise<{ profile: UserProfile | null; error: string | null }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { profile: null, error: 'No autenticado' }
-  }
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('organization_id, role')
-    .eq('id', user.id)
-    .single()
-
-  if (error || !data) {
-    return { profile: null, error: 'No se encontro la organizacion' }
-  }
-
-  const profileData = data as { organization_id: string | null; role: string }
-  if (!profileData.organization_id) {
-    return { profile: null, error: 'No se encontro la organizacion' }
-  }
-
-  return {
-    profile: {
-      organization_id: profileData.organization_id,
-      role: profileData.role,
-      userId: user.id
-    },
-    error: null
-  }
-}
-
 // =============================================================================
 // GET PLANS
 // =============================================================================
@@ -83,9 +51,11 @@ export async function getPlans(params?: {
   sort_by?: string
   sort_dir?: 'asc' | 'desc'
 }): Promise<{ data: MembershipPlan[] | null; count: number; error: string | null }> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { data: null, count: 0, error: profileError ?? 'No profile found' }
+  // Check permission: view_plans or manage_plans
+  const { authorized, user, error } = await requireAnyPermission(['view_plans', 'manage_plans'])
+
+  if (!authorized || !user) {
+    return { data: null, count: 0, error: error || 'No autorizado' }
   }
 
   const page = params?.page ?? 1
@@ -93,7 +63,6 @@ export async function getPlans(params?: {
   const from = (page - 1) * perPage
   const to = from + perPage - 1
 
-  // Handle sorting
   const sortBy = params?.sort_by || 'sort_order'
   const sortDir = params?.sort_dir || 'asc'
   const ascending = sortDir === 'asc'
@@ -103,7 +72,7 @@ export async function getPlans(params?: {
   let dbQuery = supabase
     .from('membership_plans')
     .select('*', { count: 'exact' })
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user.organizationId)
     .order(sortBy, { ascending })
     .range(from, to)
 
@@ -119,10 +88,10 @@ export async function getPlans(params?: {
     dbQuery = dbQuery.eq('billing_period', params.billing_period)
   }
 
-  const { data, count, error } = await dbQuery
+  const { data, count, error: dbError } = await dbQuery
 
-  if (error) {
-    return { data: null, count: 0, error: error.message }
+  if (dbError) {
+    return { data: null, count: 0, error: dbError.message }
   }
 
   return { data: data as MembershipPlan[], count: count ?? 0, error: null }
@@ -133,158 +102,145 @@ export async function getPlans(params?: {
 // =============================================================================
 
 export async function getPlan(id: string): Promise<{ data: MembershipPlan | null; error: string | null }> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { data: null, error: profileError ?? 'No profile found' }
+  const { authorized, user, error } = await requireAnyPermission(['view_plans', 'manage_plans'])
+
+  if (!authorized || !user) {
+    return { data: null, error: error || 'No autorizado' }
   }
 
   const supabase = await createClient()
 
-  const { data, error } = await supabase
+  const { data, error: dbError } = await supabase
     .from('membership_plans')
     .select('*')
     .eq('id', id)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user.organizationId)
     .single()
 
-  if (error) {
-    return { data: null, error: error.message }
+  if (dbError) {
+    return { data: null, error: dbError.message }
   }
 
   return { data: data as MembershipPlan, error: null }
 }
 
 // =============================================================================
-// GET ACTIVE PLANS (for dropdowns)
+// GET ACTIVE PLANS (for dropdowns) - Accessible to more roles
 // =============================================================================
 
 export async function getActivePlans(): Promise<{ data: MembershipPlan[] | null; error: string | null }> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { data: null, error: profileError ?? 'No profile found' }
+  // Any staff can view active plans (for assigning to members)
+  const { user, error } = await getCurrentUser()
+
+  if (!user) {
+    return { data: null, error: error || 'No autenticado' }
   }
 
   const supabase = await createClient()
 
-  const { data, error } = await supabase
+  const { data, error: dbError } = await supabase
     .from('membership_plans')
     .select('*')
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user.organizationId)
     .eq('is_active', true)
     .order('sort_order', { ascending: true })
 
-  if (error) {
-    return { data: null, error: error.message }
+  if (dbError) {
+    return { data: null, error: dbError.message }
   }
 
   return { data: data as MembershipPlan[], error: null }
 }
 
 // =============================================================================
-// CREATE PLAN (Data-based - for react-hook-form)
+// CREATE PLAN
 // =============================================================================
 
-export async function createPlanData(data: PlanFormData): Promise<ActionState> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { success: false, message: profileError ?? 'No profile found' }
+export async function createPlanData(data: PlanFormData): Promise<ActionResult> {
+  // Only users with manage_plans permission can create plans
+  const { authorized, user, error } = await requirePermission('manage_plans')
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
   }
 
   const validated = planSchema.safeParse(data)
 
   if (!validated.success) {
-    return {
-      success: false,
-      message: 'Datos invalidos',
-      errors: validated.error.flatten().fieldErrors,
-    }
+    return errorResult('Datos invalidos', validated.error.flatten().fieldErrors)
   }
 
   const supabase = await createClient()
 
   const insertData = {
     ...validated.data,
-    organization_id: profile.organization_id,
+    organization_id: user!.organizationId,
   }
 
-  const { data: plan, error } = await supabase
+  const { data: plan, error: dbError } = await supabase
     .from('membership_plans')
     .insert(insertData as never)
     .select()
     .single()
 
-  if (error) {
-    return {
-      success: false,
-      message: error.message,
-    }
+  if (dbError) {
+    return errorResult(dbError.message)
   }
 
   revalidatePath('/dashboard/plans')
-  return {
-    success: true,
-    message: 'Plan creado exitosamente',
-    data: plan,
-  }
+  return successResult('Plan creado exitosamente', plan)
 }
 
 // =============================================================================
-// UPDATE PLAN (Data-based - for react-hook-form)
+// UPDATE PLAN
 // =============================================================================
 
 export async function updatePlanData(
   id: string,
   data: Partial<PlanFormData>
-): Promise<ActionState> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { success: false, message: profileError ?? 'No profile found' }
+): Promise<ActionResult> {
+  // Only users with manage_plans permission can update plans
+  const { authorized, user, error } = await requirePermission('manage_plans')
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
   }
 
   const validated = planUpdateSchema.safeParse(data)
 
   if (!validated.success) {
-    return {
-      success: false,
-      message: 'Datos invalidos',
-      errors: validated.error.flatten().fieldErrors,
-    }
+    return errorResult('Datos invalidos', validated.error.flatten().fieldErrors)
   }
 
   const supabase = await createClient()
 
-  const { data: plan, error } = await supabase
+  const { data: plan, error: dbError } = await supabase
     .from('membership_plans')
     .update(validated.data as never)
     .eq('id', id)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user!.organizationId)
     .select()
     .single()
 
-  if (error) {
-    return {
-      success: false,
-      message: error.message,
-    }
+  if (dbError) {
+    return errorResult(dbError.message)
   }
 
   revalidatePath('/dashboard/plans')
   revalidatePath(`/dashboard/plans/${id}`)
-  return {
-    success: true,
-    message: 'Plan actualizado exitosamente',
-    data: plan,
-  }
+  return successResult('Plan actualizado exitosamente', plan)
 }
 
 // =============================================================================
 // DELETE PLAN
 // =============================================================================
 
-export async function deletePlan(id: string): Promise<ActionState> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { success: false, message: profileError ?? 'No profile found' }
+export async function deletePlan(id: string): Promise<ActionResult> {
+  // Only users with manage_plans permission can delete plans
+  const { authorized, user, error } = await requirePermission('manage_plans')
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
   }
 
   const supabase = await createClient()
@@ -293,44 +249,37 @@ export async function deletePlan(id: string): Promise<ActionState> {
   const { count } = await supabase
     .from('members')
     .select('*', { count: 'exact', head: true })
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user!.organizationId)
     .eq('current_plan_id', id)
 
   if (count && count > 0) {
-    return {
-      success: false,
-      message: `No se puede eliminar el plan porque hay ${count} miembro(s) usando este plan`,
-    }
+    return errorResult(`No se puede eliminar el plan porque hay ${count} miembro(s) usando este plan`)
   }
 
-  const { error } = await supabase
+  const { error: dbError } = await supabase
     .from('membership_plans')
     .delete()
     .eq('id', id)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user!.organizationId)
 
-  if (error) {
-    return {
-      success: false,
-      message: error.message,
-    }
+  if (dbError) {
+    return errorResult(dbError.message)
   }
 
   revalidatePath('/dashboard/plans')
-  return {
-    success: true,
-    message: 'Plan eliminado exitosamente',
-  }
+  return successResult('Plan eliminado exitosamente')
 }
 
 // =============================================================================
 // TOGGLE PLAN STATUS
 // =============================================================================
 
-export async function togglePlanStatus(id: string): Promise<ActionState> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { success: false, message: profileError ?? 'No profile found' }
+export async function togglePlanStatus(id: string): Promise<ActionResult> {
+  // Only users with manage_plans permission can toggle status
+  const { authorized, user, error } = await requirePermission('manage_plans')
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
   }
 
   const supabase = await createClient()
@@ -340,31 +289,31 @@ export async function togglePlanStatus(id: string): Promise<ActionState> {
     .from('membership_plans')
     .select('is_active')
     .eq('id', id)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user!.organizationId)
     .single()
 
   if (fetchError || !currentPlan) {
-    return { success: false, message: 'Plan no encontrado' }
+    return errorResult('Plan no encontrado')
   }
 
   const plan = currentPlan as { is_active: boolean }
 
-  const { error } = await supabase
+  const { error: dbError } = await supabase
     .from('membership_plans')
     .update({ is_active: !plan.is_active } as never)
     .eq('id', id)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user!.organizationId)
 
-  if (error) {
-    return {
-      success: false,
-      message: error.message,
-    }
+  if (dbError) {
+    return errorResult(dbError.message)
   }
 
   revalidatePath('/dashboard/plans')
-  return {
-    success: true,
-    message: plan.is_active ? 'Plan desactivado' : 'Plan activado',
-  }
+  return successResult(plan.is_active ? 'Plan desactivado' : 'Plan activado')
 }
+
+// =============================================================================
+// LEGACY TYPE EXPORT (for backward compatibility)
+// =============================================================================
+
+export type ActionState = ActionResult

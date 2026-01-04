@@ -12,15 +12,20 @@ import {
 import { SidebarNav } from './sidebar-nav'
 import { SidebarUserMenu } from './sidebar-user-menu'
 import { AppLogo } from './app-logo'
-import { mainNavigation, bottomNavigation } from '@/config/navigation'
+import type { FilteredNavigation } from '@/lib/navigation/filter-navigation'
+import type { ViewPreferences } from '@/lib/auth/get-view-preferences'
 
 interface MobileSidebarProps {
   user: User
+  navigation: FilteredNavigation
+  viewPreferences: ViewPreferences | null
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
-export function MobileSidebar({ user, open, onOpenChange }: MobileSidebarProps) {
+export function MobileSidebar({ user, navigation, viewPreferences, open, onOpenChange }: MobileSidebarProps) {
+  const { mainNavigation, bottomNavigation } = navigation
+
   const handleItemClick = () => {
     onOpenChange(false)
   }
@@ -42,10 +47,12 @@ export function MobileSidebar({ user, open, onOpenChange }: MobileSidebarProps) 
 
           {/* Bottom Navigation + User */}
           <div className="border-t">
-            <div className="py-2">
-              <SidebarNav items={bottomNavigation} onItemClick={handleItemClick} />
-            </div>
-            <SidebarUserMenu user={user} />
+            {bottomNavigation.length > 0 && (
+              <div className="py-2">
+                <SidebarNav items={bottomNavigation} onItemClick={handleItemClick} />
+              </div>
+            )}
+            <SidebarUserMenu user={user} viewPreferences={viewPreferences} />
           </div>
         </div>
       </SheetContent>

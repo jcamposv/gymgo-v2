@@ -17,6 +17,7 @@ import {
   type NavItem,
   type NavGroup,
   isNavGroup,
+  getIcon,
 } from '@/config/navigation'
 
 interface SidebarNavProps {
@@ -62,7 +63,7 @@ interface NavLinkItemProps {
 
 function NavLinkItem({ item, collapsed, onItemClick, isNested }: NavLinkItemProps) {
   const pathname = usePathname()
-  const Icon = item.icon
+  const Icon = getIcon(item.icon)
   const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
 
   const linkContent = (
@@ -113,7 +114,7 @@ interface NavGroupItemProps {
 
 function NavGroupItem({ group, collapsed, onItemClick }: NavGroupItemProps) {
   const pathname = usePathname()
-  const Icon = group.icon
+  const Icon = getIcon(group.icon)
 
   // Check if any child is active
   const isChildActive = group.items.some(
@@ -177,7 +178,7 @@ interface CollapsedNavGroupProps {
 }
 
 function CollapsedNavGroup({ group, isChildActive, onItemClick }: CollapsedNavGroupProps) {
-  const Icon = group.icon
+  const Icon = getIcon(group.icon)
   const pathname = usePathname()
 
   return (
@@ -202,7 +203,7 @@ function CollapsedNavGroup({ group, isChildActive, onItemClick }: CollapsedNavGr
           {group.label}
         </span>
         {group.items.map((item) => {
-          const ItemIcon = item.icon
+          const ItemIcon = getIcon(item.icon)
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
           return (
             <Link

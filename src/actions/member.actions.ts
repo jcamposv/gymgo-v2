@@ -4,52 +4,18 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { memberSchema, memberUpdateSchema, type MemberFormData } from '@/schemas/member.schema'
 import type { Tables, TablesInsert, MemberStatus } from '@/types/database.types'
+import {
+  requireAnyPermission,
+  requirePermission,
+  type ActionResult,
+  successResult,
+  errorResult,
+  forbiddenResult,
+  unauthorizedResult,
+} from '@/lib/auth/server-auth'
 
-export type ActionState = {
-  success: boolean
-  message: string
-  errors?: Record<string, string[]>
-  data?: unknown
-}
-
-interface UserProfile {
-  organization_id: string
-  role: string
-  userId: string
-}
-
-async function getUserProfile(): Promise<{ profile: UserProfile | null; error: string | null }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { profile: null, error: 'Not authenticated' }
-  }
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('organization_id, role')
-    .eq('id', user.id)
-    .single()
-
-  if (error || !data) {
-    return { profile: null, error: 'No organization found' }
-  }
-
-  const profileData = data as { organization_id: string | null; role: string }
-  if (!profileData.organization_id) {
-    return { profile: null, error: 'No organization found' }
-  }
-
-  return {
-    profile: {
-      organization_id: profileData.organization_id,
-      role: profileData.role,
-      userId: user.id
-    },
-    error: null
-  }
-}
+// Legacy type export for backward compatibility
+export type ActionState = ActionResult
 
 // =============================================================================
 // GET MEMBERS
@@ -64,9 +30,11 @@ export async function getMembers(params?: {
   sort_by?: string
   sort_dir?: 'asc' | 'desc'
 }): Promise<{ data: Tables<'members'>[] | null; count: number; error: string | null }> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { data: null, count: 0, error: profileError ?? 'No profile found' }
+  // Check permission: view_members or manage_members
+  const { authorized, user, error } = await requireAnyPermission(['view_members', 'manage_members'])
+
+  if (!authorized || !user) {
+    return { data: null, count: 0, error: error || 'No autorizado' }
   }
 
   const page = params?.page ?? 1
@@ -84,7 +52,7 @@ export async function getMembers(params?: {
   let dbQuery = supabase
     .from('members')
     .select('*', { count: 'exact' })
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user.organizationId)
     .order(sortBy, { ascending })
     .range(from, to)
 
@@ -100,10 +68,10 @@ export async function getMembers(params?: {
     dbQuery = dbQuery.eq('experience_level', params.experience_level)
   }
 
-  const { data, count, error } = await dbQuery
+  const { data, count, error: dbError } = await dbQuery
 
-  if (error) {
-    return { data: null, count: 0, error: error.message }
+  if (dbError) {
+    return { data: null, count: 0, error: dbError.message }
   }
 
   return { data, count: count ?? 0, error: null }
@@ -114,22 +82,23 @@ export async function getMembers(params?: {
 // =============================================================================
 
 export async function getMember(id: string): Promise<{ data: Tables<'members'> | null; error: string | null }> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { data: null, error: profileError ?? 'No profile found' }
+  const { authorized, user, error } = await requireAnyPermission(['view_members', 'manage_members'])
+
+  if (!authorized || !user) {
+    return { data: null, error: error || 'No autorizado' }
   }
 
   const supabase = await createClient()
 
-  const { data, error } = await supabase
+  const { data, error: dbError } = await supabase
     .from('members')
     .select('*')
     .eq('id', id)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user.organizationId)
     .single()
 
-  if (error) {
-    return { data: null, error: error.message }
+  if (dbError) {
+    return { data: null, error: dbError.message }
   }
 
   return { data, error: null }
@@ -145,14 +114,15 @@ export interface MemberWithPlan extends Tables<'members'> {
 }
 
 export async function getMemberWithPlan(id: string): Promise<{ data: MemberWithPlan | null; error: string | null }> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { data: null, error: profileError ?? 'No profile found' }
+  const { authorized, user, error } = await requireAnyPermission(['view_members', 'manage_members'])
+
+  if (!authorized || !user) {
+    return { data: null, error: error || 'No autorizado' }
   }
 
   const supabase = await createClient()
 
-  const { data, error } = await supabase
+  const { data, error: dbError } = await supabase
     .from('members')
     .select(`
       *,
@@ -160,11 +130,11 @@ export async function getMemberWithPlan(id: string): Promise<{ data: MemberWithP
       organization:organizations(name)
     `)
     .eq('id', id)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user.organizationId)
     .single()
 
-  if (error) {
-    return { data: null, error: error.message }
+  if (dbError) {
+    return { data: null, error: dbError.message }
   }
 
   return { data: data as MemberWithPlan, error: null }
@@ -178,9 +148,10 @@ export async function createMember(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { success: false, message: profileError ?? 'No profile found' }
+  const { authorized, user, error } = await requirePermission('manage_members')
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
   }
 
   const rawData = {
@@ -201,45 +172,31 @@ export async function createMember(
   const validated = memberSchema.safeParse(rawData)
 
   if (!validated.success) {
-    return {
-      success: false,
-      message: 'Validation failed',
-      errors: validated.error.flatten().fieldErrors,
-    }
+    return errorResult('Datos invalidos', validated.error.flatten().fieldErrors)
   }
 
   const supabase = await createClient()
 
   const insertData: TablesInsert<'members'> = {
     ...validated.data,
-    organization_id: profile.organization_id,
+    organization_id: user!.organizationId,
   }
 
-  const { data, error } = await supabase
+  const { data, error: dbError } = await supabase
     .from('members')
     .insert(insertData as never)
     .select()
     .single()
 
-  if (error) {
-    if (error.code === '23505') {
-      return {
-        success: false,
-        message: 'A member with this email already exists',
-      }
+  if (dbError) {
+    if (dbError.code === '23505') {
+      return errorResult('Ya existe un miembro con este email')
     }
-    return {
-      success: false,
-      message: error.message,
-    }
+    return errorResult(dbError.message)
   }
 
   revalidatePath('/dashboard/members')
-  return {
-    success: true,
-    message: 'Member created successfully',
-    data,
-  }
+  return successResult('Miembro creado exitosamente', data)
 }
 
 // =============================================================================
@@ -251,9 +208,10 @@ export async function updateMember(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { success: false, message: profileError ?? 'No profile found' }
+  const { authorized, user, error } = await requirePermission('manage_members')
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
   }
 
   const rawData = {
@@ -274,37 +232,26 @@ export async function updateMember(
   const validated = memberUpdateSchema.safeParse(rawData)
 
   if (!validated.success) {
-    return {
-      success: false,
-      message: 'Validation failed',
-      errors: validated.error.flatten().fieldErrors,
-    }
+    return errorResult('Datos invalidos', validated.error.flatten().fieldErrors)
   }
 
   const supabase = await createClient()
 
-  const { data, error } = await supabase
+  const { data, error: dbError } = await supabase
     .from('members')
     .update(validated.data as never)
     .eq('id', id)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user!.organizationId)
     .select()
     .single()
 
-  if (error) {
-    return {
-      success: false,
-      message: error.message,
-    }
+  if (dbError) {
+    return errorResult(dbError.message)
   }
 
   revalidatePath('/dashboard/members')
   revalidatePath(`/dashboard/members/${id}`)
-  return {
-    success: true,
-    message: 'Member updated successfully',
-    data,
-  }
+  return successResult('Miembro actualizado exitosamente', data)
 }
 
 // =============================================================================
@@ -312,31 +259,26 @@ export async function updateMember(
 // =============================================================================
 
 export async function deleteMember(id: string): Promise<ActionState> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { success: false, message: profileError ?? 'No profile found' }
+  const { authorized, user, error } = await requirePermission('manage_members')
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
   }
 
   const supabase = await createClient()
 
-  const { error } = await supabase
+  const { error: dbError } = await supabase
     .from('members')
     .delete()
     .eq('id', id)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user!.organizationId)
 
-  if (error) {
-    return {
-      success: false,
-      message: error.message,
-    }
+  if (dbError) {
+    return errorResult(dbError.message)
   }
 
   revalidatePath('/dashboard/members')
-  return {
-    success: true,
-    message: 'Member deleted successfully',
-  }
+  return successResult('Miembro eliminado exitosamente')
 }
 
 // =============================================================================
@@ -344,53 +286,40 @@ export async function deleteMember(id: string): Promise<ActionState> {
 // =============================================================================
 
 export async function createMemberData(data: MemberFormData): Promise<ActionState> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { success: false, message: profileError ?? 'No profile found' }
+  const { authorized, user, error } = await requirePermission('manage_members')
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
   }
 
   const validated = memberSchema.safeParse(data)
 
   if (!validated.success) {
-    return {
-      success: false,
-      message: 'Validation failed',
-      errors: validated.error.flatten().fieldErrors,
-    }
+    return errorResult('Datos invalidos', validated.error.flatten().fieldErrors)
   }
 
   const supabase = await createClient()
 
   const insertData: TablesInsert<'members'> = {
     ...validated.data,
-    organization_id: profile.organization_id,
+    organization_id: user!.organizationId,
   }
 
-  const { data: member, error } = await supabase
+  const { data: member, error: dbError } = await supabase
     .from('members')
     .insert(insertData as never)
     .select()
     .single()
 
-  if (error) {
-    if (error.code === '23505') {
-      return {
-        success: false,
-        message: 'Ya existe un miembro con este email',
-      }
+  if (dbError) {
+    if (dbError.code === '23505') {
+      return errorResult('Ya existe un miembro con este email')
     }
-    return {
-      success: false,
-      message: error.message,
-    }
+    return errorResult(dbError.message)
   }
 
   revalidatePath('/dashboard/members')
-  return {
-    success: true,
-    message: 'Miembro creado exitosamente',
-    data: member,
-  }
+  return successResult('Miembro creado exitosamente', member)
 }
 
 // =============================================================================
@@ -401,45 +330,35 @@ export async function updateMemberData(
   id: string,
   data: Partial<MemberFormData>
 ): Promise<ActionState> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { success: false, message: profileError ?? 'No profile found' }
+  const { authorized, user, error } = await requirePermission('manage_members')
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
   }
 
   const validated = memberUpdateSchema.safeParse(data)
 
   if (!validated.success) {
-    return {
-      success: false,
-      message: 'Validation failed',
-      errors: validated.error.flatten().fieldErrors,
-    }
+    return errorResult('Datos invalidos', validated.error.flatten().fieldErrors)
   }
 
   const supabase = await createClient()
 
-  const { data: member, error } = await supabase
+  const { data: member, error: dbError } = await supabase
     .from('members')
     .update(validated.data as never)
     .eq('id', id)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user!.organizationId)
     .select()
     .single()
 
-  if (error) {
-    return {
-      success: false,
-      message: error.message,
-    }
+  if (dbError) {
+    return errorResult(dbError.message)
   }
 
   revalidatePath('/dashboard/members')
   revalidatePath(`/dashboard/members/${id}`)
-  return {
-    success: true,
-    message: 'Miembro actualizado exitosamente',
-    data: member,
-  }
+  return successResult('Miembro actualizado exitosamente', member)
 }
 
 // =============================================================================
@@ -450,29 +369,24 @@ export async function updateMemberStatus(
   id: string,
   status: MemberStatus
 ): Promise<ActionState> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { success: false, message: profileError ?? 'No profile found' }
+  const { authorized, user, error } = await requirePermission('manage_members')
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
   }
 
   const supabase = await createClient()
 
-  const { error } = await supabase
+  const { error: dbError } = await supabase
     .from('members')
     .update({ status } as never)
     .eq('id', id)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user!.organizationId)
 
-  if (error) {
-    return {
-      success: false,
-      message: error.message,
-    }
+  if (dbError) {
+    return errorResult(dbError.message)
   }
 
   revalidatePath('/dashboard/members')
-  return {
-    success: true,
-    message: `Member status updated to ${status}`,
-  }
+  return successResult(`Estado del miembro actualizado a ${status}`)
 }

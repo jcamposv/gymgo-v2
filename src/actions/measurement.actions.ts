@@ -3,60 +3,18 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import type { MemberMeasurement, MeasurementFormData } from '@/types/member.types'
+import {
+  requireAnyPermission,
+  requirePermission,
+  type ActionResult,
+  successResult,
+  errorResult,
+  forbiddenResult,
+  unauthorizedResult,
+} from '@/lib/auth/server-auth'
 
-// =============================================================================
-// TYPES
-// =============================================================================
-
-export type ActionState = {
-  success: boolean
-  message: string
-  errors?: Record<string, string[]>
-  data?: unknown
-}
-
-interface UserProfile {
-  organization_id: string
-  role: string
-  userId: string
-}
-
-// =============================================================================
-// HELPER: Get User Profile
-// =============================================================================
-
-async function getUserProfile(): Promise<{ profile: UserProfile | null; error: string | null }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { profile: null, error: 'Not authenticated' }
-  }
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('organization_id, role')
-    .eq('id', user.id)
-    .single()
-
-  if (error || !data) {
-    return { profile: null, error: 'No organization found' }
-  }
-
-  const profileData = data as { organization_id: string | null; role: string }
-  if (!profileData.organization_id) {
-    return { profile: null, error: 'No organization found' }
-  }
-
-  return {
-    profile: {
-      organization_id: profileData.organization_id,
-      role: profileData.role,
-      userId: user.id
-    },
-    error: null
-  }
-}
+// Legacy type export for backward compatibility
+export type ActionState = ActionResult
 
 // =============================================================================
 // GET MEMBER MEASUREMENTS
@@ -65,22 +23,24 @@ async function getUserProfile(): Promise<{ profile: UserProfile | null; error: s
 export async function getMemberMeasurements(
   memberId: string
 ): Promise<{ data: MemberMeasurement[] | null; error: string | null }> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { data: null, error: profileError ?? 'No profile found' }
+  // Trainers, nutritionists, and admins can view measurements
+  const { authorized, user, error } = await requireAnyPermission(['view_members', 'manage_members'])
+
+  if (!authorized || !user) {
+    return { data: null, error: error || 'No autorizado' }
   }
 
   const supabase = await createClient()
 
-  const { data, error } = await supabase
+  const { data, error: dbError } = await supabase
     .from('member_measurements')
     .select('*')
     .eq('member_id', memberId)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user.organizationId)
     .order('measured_at', { ascending: false })
 
-  if (error) {
-    return { data: null, error: error.message }
+  if (dbError) {
+    return { data: null, error: dbError.message }
   }
 
   return { data: data as MemberMeasurement[], error: null }
@@ -93,24 +53,25 @@ export async function getMemberMeasurements(
 export async function getLatestMeasurement(
   memberId: string
 ): Promise<{ data: MemberMeasurement | null; error: string | null }> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { data: null, error: profileError ?? 'No profile found' }
+  const { authorized, user, error } = await requireAnyPermission(['view_members', 'manage_members'])
+
+  if (!authorized || !user) {
+    return { data: null, error: error || 'No autorizado' }
   }
 
   const supabase = await createClient()
 
-  const { data, error } = await supabase
+  const { data, error: dbError } = await supabase
     .from('member_measurements')
     .select('*')
     .eq('member_id', memberId)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user.organizationId)
     .order('measured_at', { ascending: false })
     .limit(1)
     .maybeSingle()
 
-  if (error) {
-    return { data: null, error: error.message }
+  if (dbError) {
+    return { data: null, error: dbError.message }
   }
 
   return { data: data as MemberMeasurement | null, error: null }
@@ -124,18 +85,16 @@ export async function createMeasurement(
   memberId: string,
   formData: MeasurementFormData
 ): Promise<ActionState> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { success: false, message: profileError ?? 'No profile found' }
+  // Trainers and nutritionists can record measurements
+  const { authorized, user, error } = await requirePermission('manage_members')
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
   }
 
   // Validate required field
   if (!formData.measured_at) {
-    return {
-      success: false,
-      message: 'Measurement date is required',
-      errors: { measured_at: ['Date is required'] }
-    }
+    return errorResult('La fecha de medicion es requerida', { measured_at: ['La fecha es requerida'] })
   }
 
   const supabase = await createClient()
@@ -145,20 +104,17 @@ export async function createMeasurement(
     .from('members')
     .select('id')
     .eq('id', memberId)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user!.organizationId)
     .single()
 
   if (memberError || !member) {
-    return {
-      success: false,
-      message: 'Member not found or access denied'
-    }
+    return errorResult('Miembro no encontrado o acceso denegado')
   }
 
   // Prepare insert data - mapping simplified form to database columns
   const insertData = {
     member_id: memberId,
-    organization_id: profile.organization_id,
+    organization_id: user!.organizationId,
     measured_at: formData.measured_at,
     // Core body measurements (metric)
     body_height_cm: formData.height_cm ?? null,
@@ -171,30 +127,22 @@ export async function createMeasurement(
     hip_cm: formData.hip_cm ?? null,
     // Notes
     notes: formData.notes ?? null,
-    recorded_by_id: profile.userId,
+    recorded_by_id: user!.id,
   }
 
-  const { data, error } = await supabase
+  const { data, error: dbError } = await supabase
     .from('member_measurements')
     .insert(insertData as never)
     .select()
     .single()
 
-  if (error) {
-    console.error('Error creating measurement:', error)
-    return {
-      success: false,
-      message: error.message
-    }
+  if (dbError) {
+    console.error('Error creating measurement:', dbError)
+    return errorResult(dbError.message)
   }
 
   revalidatePath(`/dashboard/members/${memberId}`)
-
-  return {
-    success: true,
-    message: 'Measurement recorded successfully',
-    data: data as MemberMeasurement
-  }
+  return successResult('Medicion registrada exitosamente', data as MemberMeasurement)
 }
 
 // =============================================================================
@@ -205,9 +153,10 @@ export async function updateMeasurement(
   measurementId: string,
   formData: Partial<MeasurementFormData>
 ): Promise<ActionState> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { success: false, message: profileError ?? 'No profile found' }
+  const { authorized, user, error } = await requirePermission('manage_members')
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
   }
 
   const supabase = await createClient()
@@ -224,29 +173,21 @@ export async function updateMeasurement(
   if (formData.hip_cm !== undefined) updateData.hip_cm = formData.hip_cm
   if (formData.notes !== undefined) updateData.notes = formData.notes
 
-  const { data, error } = await supabase
+  const { data, error: dbError } = await supabase
     .from('member_measurements')
     .update(updateData as never)
     .eq('id', measurementId)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user!.organizationId)
     .select()
     .single()
 
-  if (error) {
-    return {
-      success: false,
-      message: error.message
-    }
+  if (dbError) {
+    return errorResult(dbError.message)
   }
 
   const measurement = data as MemberMeasurement
   revalidatePath(`/dashboard/members/${measurement.member_id}`)
-
-  return {
-    success: true,
-    message: 'Measurement updated successfully',
-    data: measurement
-  }
+  return successResult('Medicion actualizada exitosamente', measurement)
 }
 
 // =============================================================================
@@ -254,9 +195,10 @@ export async function updateMeasurement(
 // =============================================================================
 
 export async function deleteMeasurement(measurementId: string): Promise<ActionState> {
-  const { profile, error: profileError } = await getUserProfile()
-  if (profileError || !profile) {
-    return { success: false, message: profileError ?? 'No profile found' }
+  const { authorized, user, error } = await requirePermission('manage_members')
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
   }
 
   const supabase = await createClient()
@@ -266,30 +208,24 @@ export async function deleteMeasurement(measurementId: string): Promise<ActionSt
     .from('member_measurements')
     .select('member_id')
     .eq('id', measurementId)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user!.organizationId)
     .single()
 
   const measurement = measurementData as { member_id: string } | null
 
-  const { error } = await supabase
+  const { error: dbError } = await supabase
     .from('member_measurements')
     .delete()
     .eq('id', measurementId)
-    .eq('organization_id', profile.organization_id)
+    .eq('organization_id', user!.organizationId)
 
-  if (error) {
-    return {
-      success: false,
-      message: error.message
-    }
+  if (dbError) {
+    return errorResult(dbError.message)
   }
 
   if (measurement) {
     revalidatePath(`/dashboard/members/${measurement.member_id}`)
   }
 
-  return {
-    success: true,
-    message: 'Measurement deleted successfully'
-  }
+  return successResult('Medicion eliminada exitosamente')
 }

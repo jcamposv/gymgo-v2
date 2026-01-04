@@ -8,15 +8,19 @@ import { useSidebar } from './sidebar-context'
 import { SidebarNav } from './sidebar-nav'
 import { SidebarUserMenu } from './sidebar-user-menu'
 import { AppLogo } from './app-logo'
-import { mainNavigation, bottomNavigation } from '@/config/navigation'
+import type { FilteredNavigation } from '@/lib/navigation/filter-navigation'
+import type { ViewPreferences } from '@/lib/auth/get-view-preferences'
 
 interface SidebarProps {
   user: User
+  navigation: FilteredNavigation
+  viewPreferences: ViewPreferences | null
   className?: string
 }
 
-export function Sidebar({ user, className }: SidebarProps) {
+export function Sidebar({ user, navigation, viewPreferences, className }: SidebarProps) {
   const { collapsed } = useSidebar()
+  const { mainNavigation, bottomNavigation } = navigation
 
   return (
     <aside
@@ -38,10 +42,12 @@ export function Sidebar({ user, className }: SidebarProps) {
 
       {/* Bottom Navigation + User */}
       <div className="border-t">
-        <div className="py-2">
-          <SidebarNav items={bottomNavigation} collapsed={collapsed} />
-        </div>
-        <SidebarUserMenu user={user} collapsed={collapsed} />
+        {bottomNavigation.length > 0 && (
+          <div className="py-2">
+            <SidebarNav items={bottomNavigation} collapsed={collapsed} />
+          </div>
+        )}
+        <SidebarUserMenu user={user} collapsed={collapsed} viewPreferences={viewPreferences} />
       </div>
     </aside>
   )
