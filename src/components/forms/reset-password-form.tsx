@@ -3,11 +3,12 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Loader2, Mail, Eye, EyeOff, Check, X } from 'lucide-react'
+import { Loader2, Eye, EyeOff, Check, X, CheckCircle } from 'lucide-react'
 
 import { useAuth } from '@/hooks/use-auth'
-import { registerSchema, type RegisterFormData } from '@/schemas/auth.schema'
+import { resetPasswordSchema, type ResetPasswordFormData } from '@/schemas/auth.schema'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,17 +22,16 @@ import {
 } from '@/components/ui/form'
 import { cn } from '@/lib/utils'
 
-export function RegisterForm() {
-  const [emailSent, setEmailSent] = useState(false)
+export function ResetPasswordForm() {
+  const { updatePassword } = useAuth()
+  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const { signUp } = useAuth()
+  const [success, setSuccess] = useState(false)
 
-  const form = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
+  const form = useForm<ResetPasswordFormData>({
+    resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
-      name: '',
-      email: '',
       password: '',
       confirmPassword: '',
     },
@@ -48,39 +48,37 @@ export function RegisterForm() {
     { label: 'Un numero', met: /[0-9]/.test(password) },
   ]
 
-  const onSubmit = async (data: RegisterFormData) => {
+  const onSubmit = async (data: ResetPasswordFormData) => {
     try {
-      await signUp(data.email, data.password, { name: data.name })
-      setEmailSent(true)
+      await updatePassword(data.password)
+      setSuccess(true)
+      toast.success('Contrasena actualizada correctamente')
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
 
-      if (errorMessage.includes('already registered')) {
-        toast.error('Este correo ya esta registrado. Intenta iniciar sesion.')
+      if (errorMessage.includes('same password')) {
+        toast.error('La nueva contrasena debe ser diferente a la anterior.')
       } else {
-        toast.error('Error al crear la cuenta. Intentalo de nuevo.')
+        toast.error('Error al actualizar la contrasena. Intentalo de nuevo.')
       }
     }
   }
 
-  if (emailSent) {
+  if (success) {
     return (
       <div className="text-center space-y-4">
         <div className="mx-auto w-12 h-12 bg-lime-100 rounded-full flex items-center justify-center">
-          <Mail className="h-6 w-6 text-lime-600" />
+          <CheckCircle className="h-6 w-6 text-lime-600" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold">Revisa tu correo</h3>
+          <h3 className="text-lg font-semibold">Contrasena actualizada</h3>
           <p className="text-sm text-muted-foreground mt-2">
-            Enviamos un enlace de confirmacion a{' '}
-            <span className="font-medium">{form.getValues('email')}</span>
+            Tu contrasena ha sido actualizada correctamente.
+            Ya puedes iniciar sesion con tu nueva contrasena.
           </p>
         </div>
-        <p className="text-xs text-muted-foreground">
-          No recibiste el correo? Revisa tu carpeta de spam.
-        </p>
-        <Button variant="ghost" onClick={() => setEmailSent(false)}>
-          Usar otro correo
+        <Button onClick={() => router.push('/login')} className="w-full">
+          Ir a iniciar sesion
         </Button>
       </div>
     )
@@ -91,52 +89,15 @@ export function RegisterForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nombre completo</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Juan Perez"
-                  autoComplete="name"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Correo electronico</FormLabel>
-              <FormControl>
-                <Input
-                  type="email"
-                  placeholder="tu@ejemplo.com"
-                  autoComplete="email"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Contrasena</FormLabel>
+              <FormLabel>Nueva contrasena</FormLabel>
               <FormControl>
                 <div className="relative">
                   <Input
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Crea una contrasena"
+                    placeholder="Ingresa tu nueva contrasena"
                     autoComplete="new-password"
                     className="pr-10"
                     {...field}
@@ -191,7 +152,7 @@ export function RegisterForm() {
                 <div className="relative">
                   <Input
                     type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="Confirma tu contrasena"
+                    placeholder="Confirma tu nueva contrasena"
                     autoComplete="new-password"
                     className="pr-10"
                     {...field}
@@ -224,10 +185,10 @@ export function RegisterForm() {
           {form.formState.isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creando cuenta...
+              Actualizando...
             </>
           ) : (
-            'Crear cuenta'
+            'Actualizar contrasena'
           )}
         </Button>
       </form>

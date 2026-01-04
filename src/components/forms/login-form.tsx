@@ -1,10 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Eye, EyeOff } from 'lucide-react'
 
 import { useAuth } from '@/hooks/use-auth'
 import { loginSchema, type LoginFormData } from '@/schemas/auth.schema'
@@ -23,6 +24,7 @@ import {
 export function LoginForm() {
   const { signIn } = useAuth()
   const router = useRouter()
+  const [showPassword, setShowPassword] = useState(false)
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -35,10 +37,21 @@ export function LoginForm() {
   const onSubmit = async (data: LoginFormData) => {
     try {
       await signIn(data.email, data.password)
-      toast.success('Welcome back!')
-      router.push('/dashboard')
+      toast.success('Bienvenido de vuelta')
+      // Redirect to callback which handles role-based routing
+      router.push('/auth/callback')
+      router.refresh()
     } catch (error) {
-      toast.error('Invalid email or password')
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
+
+      // Translate common Supabase errors
+      if (errorMessage.includes('Invalid login credentials')) {
+        toast.error('Credenciales invalidas. Verifica tu correo y contrasena.')
+      } else if (errorMessage.includes('Email not confirmed')) {
+        toast.error('Tu correo no ha sido confirmado. Revisa tu bandeja de entrada.')
+      } else {
+        toast.error('Error al iniciar sesion. Intentalo de nuevo.')
+      }
     }
   }
 
@@ -50,11 +63,11 @@ export function LoginForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>Correo electronico</FormLabel>
               <FormControl>
                 <Input
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder="tu@ejemplo.com"
                   autoComplete="email"
                   {...field}
                 />
@@ -69,14 +82,33 @@ export function LoginForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel>Contrasena</FormLabel>
               <FormControl>
-                <Input
-                  type="password"
-                  placeholder="Enter your password"
-                  autoComplete="current-password"
-                  {...field}
-                />
+                <div className="relative">
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Ingresa tu contrasena"
+                    autoComplete="current-password"
+                    className="pr-10"
+                    {...field}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <span className="sr-only">
+                      {showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                    </span>
+                  </Button>
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -88,10 +120,14 @@ export function LoginForm() {
           className="w-full"
           disabled={form.formState.isSubmitting}
         >
-          {form.formState.isSubmitting && (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          {form.formState.isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Iniciando sesion...
+            </>
+          ) : (
+            'Iniciar sesion'
           )}
-          Sign In
         </Button>
       </form>
     </Form>

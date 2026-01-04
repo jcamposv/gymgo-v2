@@ -33,6 +33,7 @@ export const PUBLIC_ROUTES = [
   ROUTES.REGISTER,
   '/auth/callback',
   '/auth/accept-invitation',
+  '/auth/reset-password',
 ] as const
 
 // Routes that require authentication but not organization setup
