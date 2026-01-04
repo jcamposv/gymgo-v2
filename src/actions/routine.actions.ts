@@ -450,7 +450,7 @@ export async function getRoutineTemplates(): Promise<{
 }
 
 // =============================================================================
-// GET MEMBER ROUTINES
+// GET MEMBER ROUTINES (for staff viewing member's routines)
 // =============================================================================
 
 export async function getMemberRoutines(memberId: string): Promise<{
@@ -478,4 +478,219 @@ export async function getMemberRoutines(memberId: string): Promise<{
   }
 
   return { data, error: null }
+}
+
+// =============================================================================
+// GET MY ROUTINES (for member viewing their own routines)
+// =============================================================================
+
+export async function getMyRoutines(): Promise<{
+  data: Tables<'workouts'>[] | null
+  memberId: string | null
+  error: string | null
+}> {
+  const supabase = await createClient()
+
+  // Get current user
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    return { data: null, memberId: null, error: 'No autenticado' }
+  }
+
+  // Get user's profile
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('organization_id, email')
+    .eq('id', user.id)
+    .single()
+
+  if (profileError || !profile) {
+    return { data: null, memberId: null, error: 'Perfil no encontrado' }
+  }
+
+  const profileData = profile as { organization_id: string | null; email: string }
+  if (!profileData.organization_id) {
+    return { data: null, memberId: null, error: 'No perteneces a ninguna organizacion' }
+  }
+
+  // Get member record by email and organization
+  const { data: member, error: memberError } = await supabase
+    .from('members')
+    .select('id')
+    .eq('organization_id', profileData.organization_id)
+    .eq('email', profileData.email)
+    .single()
+
+  if (memberError || !member) {
+    return { data: null, memberId: null, error: null } // Not an error, just no member profile
+  }
+
+  const memberData = member as { id: string }
+
+  // Get routines assigned to this member
+  const { data: routines, error: dbError } = await supabase
+    .from('workouts')
+    .select('*')
+    .eq('organization_id', profileData.organization_id)
+    .eq('assigned_to_member_id', memberData.id)
+    .eq('is_active', true)
+    .order('scheduled_date', { ascending: true, nullsFirst: false })
+
+  if (dbError) {
+    return { data: null, memberId: memberData.id, error: dbError.message }
+  }
+
+  return { data: routines, memberId: memberData.id, error: null }
+}
+
+// =============================================================================
+// GET MY ROUTINE BY ID (for member viewing routine detail)
+// =============================================================================
+
+export type RoutineWithExercises = Tables<'workouts'> & {
+  exerciseDetails?: Tables<'exercises'>[]
+}
+
+// =============================================================================
+// GET MY ROUTINE HISTORY (inactive/completed routines)
+// =============================================================================
+
+export async function getMyRoutineHistory(): Promise<{
+  data: Tables<'workouts'>[] | null
+  memberId: string | null
+  error: string | null
+}> {
+  const supabase = await createClient()
+
+  // Get current user
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    return { data: null, memberId: null, error: 'No autenticado' }
+  }
+
+  // Get user's profile
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('organization_id, email')
+    .eq('id', user.id)
+    .single()
+
+  if (profileError || !profile) {
+    return { data: null, memberId: null, error: 'Perfil no encontrado' }
+  }
+
+  const profileData = profile as { organization_id: string | null; email: string }
+  if (!profileData.organization_id) {
+    return { data: null, memberId: null, error: 'No perteneces a ninguna organizacion' }
+  }
+
+  // Get member record by email and organization
+  const { data: member, error: memberError } = await supabase
+    .from('members')
+    .select('id')
+    .eq('organization_id', profileData.organization_id)
+    .eq('email', profileData.email)
+    .single()
+
+  if (memberError || !member) {
+    return { data: null, memberId: null, error: null } // Not an error, just no member profile
+  }
+
+  const memberData = member as { id: string }
+
+  // Get historical routines (inactive) assigned to this member
+  const { data: routines, error: dbError } = await supabase
+    .from('workouts')
+    .select('*')
+    .eq('organization_id', profileData.organization_id)
+    .eq('assigned_to_member_id', memberData.id)
+    .eq('is_active', false)
+    .eq('is_template', false)
+    .order('updated_at', { ascending: false })
+
+  if (dbError) {
+    return { data: null, memberId: memberData.id, error: dbError.message }
+  }
+
+  return { data: routines, memberId: memberData.id, error: null }
+}
+
+export async function getMyRoutineById(routineId: string): Promise<{
+  data: RoutineWithExercises | null
+  error: string | null
+}> {
+  const supabase = await createClient()
+
+  // Get current user
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    return { data: null, error: 'No autenticado' }
+  }
+
+  // Get user's profile
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('organization_id, email')
+    .eq('id', user.id)
+    .single()
+
+  if (profileError || !profile) {
+    return { data: null, error: 'Perfil no encontrado' }
+  }
+
+  const profileData = profile as { organization_id: string | null; email: string }
+  if (!profileData.organization_id) {
+    return { data: null, error: 'No perteneces a ninguna organizacion' }
+  }
+
+  // Get member record by email and organization
+  const { data: member, error: memberError } = await supabase
+    .from('members')
+    .select('id')
+    .eq('organization_id', profileData.organization_id)
+    .eq('email', profileData.email)
+    .single()
+
+  if (memberError || !member) {
+    return { data: null, error: 'No tienes un perfil de miembro' }
+  }
+
+  const memberData = member as { id: string }
+
+  // Get the routine - verify it belongs to this member
+  const { data: routine, error: routineError } = await supabase
+    .from('workouts')
+    .select('*')
+    .eq('id', routineId)
+    .eq('organization_id', profileData.organization_id)
+    .eq('assigned_to_member_id', memberData.id)
+    .single()
+
+  if (routineError || !routine) {
+    return { data: null, error: 'Rutina no encontrada' }
+  }
+
+  const routineData = routine as Tables<'workouts'>
+
+  // Get exercise details for each exercise in the routine
+  const exercises = (routineData.exercises as ExerciseItem[]) || []
+  const exerciseIds = exercises.map(e => e.exercise_id)
+
+  let exerciseDetails: Tables<'exercises'>[] = []
+  if (exerciseIds.length > 0) {
+    const { data: exercisesData } = await supabase
+      .from('exercises')
+      .select('*')
+      .in('id', exerciseIds)
+
+    exerciseDetails = (exercisesData as Tables<'exercises'>[]) || []
+  }
+
+  return {
+    data: {
+      ...routineData,
+      exerciseDetails,
+    },
+    error: null,
+  }
 }
