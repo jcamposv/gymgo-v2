@@ -5,7 +5,17 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Loader2, Mail, Shield, Check, X, UserCheck, Clock, Send } from 'lucide-react'
+import {
+  Loader2,
+  Mail,
+  Shield,
+  Check,
+  X,
+  UserCheck,
+  Clock,
+  Send,
+  AlertCircle,
+} from 'lucide-react'
 
 import type { Tables } from '@/types/database.types'
 import type { AppRole } from '@/lib/rbac'
@@ -13,12 +23,16 @@ import { createMemberData, updateMemberData } from '@/actions/member.actions'
 import { getActivePlans } from '@/actions/plan.actions'
 import { sendMemberInvitation } from '@/actions/invitation.actions'
 import { updateMemberProfileRole, type MemberAccountStatus } from '@/actions/user.actions'
-import { memberSchema, type MemberFormData } from '@/schemas/member.schema'
+import {
+  memberFormSchema,
+  type MemberFormValues,
+  type MemberFormData,
+  getTabsWithErrors,
+  getFirstTabWithError,
+} from '@/schemas/member.schema'
 import { ROLE_LABELS, ROLE_COLORS, ASSIGNABLE_ROLES } from '@/lib/rbac/role-labels'
 
 import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -46,6 +60,8 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
+import { cn } from '@/lib/utils'
 
 // =============================================================================
 // TYPES
@@ -68,6 +84,8 @@ interface MemberFormProps {
   canEditRole?: boolean
 }
 
+type TabName = 'basic' | 'membership' | 'contact' | 'fitness'
+
 // =============================================================================
 // HELPERS
 // =============================================================================
@@ -84,7 +102,7 @@ function getBillingPeriodLabel(period: string): string {
     monthly: 'Mensual',
     quarterly: 'Trimestral',
     yearly: 'Anual',
-    one_time: 'Pago único',
+    one_time: 'Pago unico',
   }
   return labels[period] || period
 }
@@ -96,6 +114,30 @@ function calculateEndDate(startDate: string, durationDays: number): string {
 }
 
 // =============================================================================
+// TAB TRIGGER WITH ERROR INDICATOR
+// =============================================================================
+
+interface TabTriggerWithErrorProps {
+  value: TabName
+  label: string
+  hasError: boolean
+}
+
+function TabTriggerWithError({ value, label, hasError }: TabTriggerWithErrorProps) {
+  return (
+    <TabsTrigger value={value} className="relative">
+      {label}
+      {hasError && (
+        <span className="absolute -top-1 -right-1 flex h-3 w-3">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
+        </span>
+      )}
+    </TabsTrigger>
+  )
+}
+
+// =============================================================================
 // COMPONENT
 // =============================================================================
 
@@ -103,33 +145,50 @@ export function MemberForm({ member, mode, accountStatus, profileRole, canEditRo
   const router = useRouter()
   const [plans, setPlans] = useState<MembershipPlan[]>([])
   const [isLoadingPlans, setIsLoadingPlans] = useState(true)
-  const [sendInvitation, setSendInvitation] = useState(mode === 'create')
+  const [activeTab, setActiveTab] = useState<TabName>('basic')
+  const [tabsWithErrors, setTabsWithErrors] = useState<TabName[]>([])
 
-  // Role management state
+  // Role management state (for edit mode only)
   const [selectedRole, setSelectedRole] = useState<AppRole>(profileRole ?? 'client')
   const [isRolePending, startRoleTransition] = useTransition()
   const [roleFeedback, setRoleFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
-  const form = useForm<MemberFormData>({
-    resolver: zodResolver(memberSchema),
+  // Get today's date for default start date
+  const today = new Date().toISOString().split('T')[0]
+
+  // Form setup with unified schema
+  const form = useForm({
+    resolver: zodResolver(memberFormSchema),
     defaultValues: {
       email: member?.email ?? '',
       full_name: member?.full_name ?? '',
       phone: member?.phone ?? '',
       date_of_birth: member?.date_of_birth ?? '',
-      gender: (member?.gender as MemberFormData['gender']) ?? undefined,
+      gender: (member?.gender as MemberFormValues['gender']) ?? undefined,
       emergency_contact_name: member?.emergency_contact_name ?? '',
       emergency_contact_phone: member?.emergency_contact_phone ?? '',
       medical_conditions: member?.medical_conditions ?? '',
       injuries: member?.injuries ?? '',
-      experience_level: (member?.experience_level as MemberFormData['experience_level']) ?? 'beginner',
-      status: (member?.status as MemberFormData['status']) ?? 'active',
+      experience_level: (member?.experience_level as MemberFormValues['experience_level']) ?? 'beginner',
+      status: (member?.status as MemberFormValues['status']) ?? 'active',
       internal_notes: member?.internal_notes ?? '',
-      current_plan_id: member?.current_plan_id ?? undefined,
-      membership_start_date: member?.membership_start_date ?? '',
+      current_plan_id: member?.current_plan_id ?? '',
+      membership_start_date: member?.membership_start_date ?? today,
       membership_end_date: member?.membership_end_date ?? '',
+      // Invitation fields (only used in create mode)
+      send_invitation: true,
+      role: 'client' as const,
     },
+    mode: 'onBlur', // Validate on blur for better UX
   })
+
+  const { formState: { errors } } = form
+
+  // Update tabs with errors when form errors change
+  useEffect(() => {
+    const errorTabs = getTabsWithErrors(errors as Record<string, unknown>)
+    setTabsWithErrors(errorTabs)
+  }, [errors])
 
   // Load active plans
   useEffect(() => {
@@ -147,6 +206,7 @@ export function MemberForm({ member, mode, accountStatus, profileRole, canEditRo
   // Watch plan selection to auto-calculate end date
   const selectedPlanId = form.watch('current_plan_id')
   const startDate = form.watch('membership_start_date')
+  const sendInvitation = form.watch('send_invitation')
 
   useEffect(() => {
     if (selectedPlanId && startDate) {
@@ -158,15 +218,7 @@ export function MemberForm({ member, mode, accountStatus, profileRole, canEditRo
     }
   }, [selectedPlanId, startDate, plans, form])
 
-  // Auto-set start date to today when selecting a plan
-  useEffect(() => {
-    if (selectedPlanId && !startDate) {
-      const today = new Date().toISOString().split('T')[0]
-      form.setValue('membership_start_date', today)
-    }
-  }, [selectedPlanId, startDate, form])
-
-  // Handle role change
+  // Handle role change (edit mode only)
   const handleRoleChange = (newRole: AppRole) => {
     if (!member || newRole === selectedRole) return
 
@@ -184,23 +236,27 @@ export function MemberForm({ member, mode, accountStatus, profileRole, canEditRo
     })
   }
 
-  const onSubmit = async (data: MemberFormData) => {
+  // Form submission
+  const onSubmit = async (data: MemberFormValues) => {
     try {
+      // Extract invitation fields for create mode
+      const { send_invitation, role, ...memberData } = data
+
       const result = mode === 'create'
-        ? await createMemberData(data)
-        : await updateMemberData(member!.id, data)
+        ? await createMemberData(memberData as MemberFormData)
+        : await updateMemberData(member!.id, memberData as MemberFormData)
 
       if (result.success) {
         // If creating and invitation toggle is on, send invitation with role
-        if (mode === 'create' && sendInvitation && result.data) {
+        if (mode === 'create' && send_invitation && result.data) {
           const memberId = (result.data as { id: string }).id
-          const inviteResult = await sendMemberInvitation(memberId, selectedRole)
+          const inviteResult = await sendMemberInvitation(memberId, role)
 
           if (inviteResult.success) {
-            toast.success('Miembro creado e invitación enviada correctamente')
+            toast.success('Miembro creado e invitacion enviada correctamente')
           } else {
             toast.success('Miembro creado')
-            toast.error(`Error al enviar invitación: ${inviteResult.message}`)
+            toast.error(`Error al enviar invitacion: ${inviteResult.message}`)
           }
         } else {
           toast.success(result.message)
@@ -209,9 +265,9 @@ export function MemberForm({ member, mode, accountStatus, profileRole, canEditRo
       } else {
         toast.error(result.message)
         if (result.errors) {
-          Object.entries(result.errors).forEach(([field, errors]) => {
-            form.setError(field as keyof MemberFormData, {
-              message: errors[0],
+          Object.entries(result.errors).forEach(([field, fieldErrors]) => {
+            form.setError(field as keyof MemberFormValues, {
+              message: fieldErrors[0],
             })
           })
         }
@@ -221,16 +277,56 @@ export function MemberForm({ member, mode, accountStatus, profileRole, canEditRo
     }
   }
 
+  // Handle form submission with validation
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    // Trigger validation on all fields
+    const isValid = await form.trigger()
+
+    if (!isValid) {
+      // Find first tab with error and switch to it
+      const firstErrorTab = getFirstTabWithError(form.formState.errors as Record<string, unknown>)
+      if (firstErrorTab) {
+        setActiveTab(firstErrorTab)
+        toast.error('Por favor corrige los errores antes de continuar', {
+          description: 'Hay campos obligatorios sin completar',
+          icon: <AlertCircle className="h-4 w-4" />,
+        })
+      }
+      return
+    }
+
+    // If valid, submit
+    form.handleSubmit(onSubmit)()
+  }
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit}>
         <div className="space-y-6">
-          <Tabs defaultValue="basic" className="w-full">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabName)} className="w-full">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="basic">Informacion Basica</TabsTrigger>
-              <TabsTrigger value="membership">Membresia</TabsTrigger>
-              <TabsTrigger value="contact">Contacto Emergencia</TabsTrigger>
-              <TabsTrigger value="fitness">Fitness & Salud</TabsTrigger>
+              <TabTriggerWithError
+                value="basic"
+                label="Informacion Basica"
+                hasError={tabsWithErrors.includes('basic')}
+              />
+              <TabTriggerWithError
+                value="membership"
+                label="Membresia"
+                hasError={tabsWithErrors.includes('membership')}
+              />
+              <TabTriggerWithError
+                value="contact"
+                label="Contacto Emergencia"
+                hasError={tabsWithErrors.includes('contact')}
+              />
+              <TabTriggerWithError
+                value="fitness"
+                label="Fitness & Salud"
+                hasError={tabsWithErrors.includes('fitness')}
+              />
             </TabsList>
 
             {/* TAB 1: Basic Info */}
@@ -263,7 +359,7 @@ export function MemberForm({ member, mode, accountStatus, profileRole, canEditRo
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email *</FormLabel>
+                          <FormLabel>Correo electronico *</FormLabel>
                           <FormControl>
                             <Input
                               type="email"
@@ -397,7 +493,9 @@ export function MemberForm({ member, mode, accountStatus, profileRole, canEditRo
                           disabled={isLoadingPlans}
                         >
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className={cn(
+                              errors.current_plan_id && 'border-red-500 focus:ring-red-500'
+                            )}>
                               <SelectValue placeholder={isLoadingPlans ? 'Cargando planes...' : 'Selecciona un plan'} />
                             </SelectTrigger>
                           </FormControl>
@@ -428,12 +526,15 @@ export function MemberForm({ member, mode, accountStatus, profileRole, canEditRo
                       name="membership_start_date"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Fecha de inicio</FormLabel>
+                          <FormLabel>Fecha de inicio *</FormLabel>
                           <FormControl>
                             <Input
                               type="date"
                               {...field}
                               value={field.value ?? ''}
+                              className={cn(
+                                errors.membership_start_date && 'border-red-500 focus:ring-red-500'
+                              )}
                             />
                           </FormControl>
                           <FormDescription>
@@ -667,77 +768,94 @@ export function MemberForm({ member, mode, accountStatus, profileRole, canEditRo
             </TabsContent>
           </Tabs>
 
-          {/* Invitation Toggle and Role Selector - Only show in create mode */}
+          {/* Invitation Section - Only for create mode, INSIDE the form */}
           {mode === 'create' && (
             <Card className="border-lime-200 bg-lime-50/50">
               <CardContent className="space-y-4 py-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-lime-100">
-                      <Mail className="h-5 w-5 text-lime-700" />
-                    </div>
-                    <div>
-                      <Label htmlFor="send-invitation" className="font-medium cursor-pointer">
-                        Enviar invitación por correo
-                      </Label>
-                      <p className="text-sm text-muted-foreground">
-                        El miembro recibirá un correo para crear su contraseña y acceder al sistema
-                      </p>
-                    </div>
-                  </div>
-                  <Switch
-                    id="send-invitation"
-                    checked={sendInvitation}
-                    onCheckedChange={setSendInvitation}
-                  />
-                </div>
+                {/* Send Invitation Toggle - Controlled by RHF */}
+                <FormField
+                  control={form.control}
+                  name="send_invitation"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between space-y-0">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-lime-100">
+                          <Mail className="h-5 w-5 text-lime-700" />
+                        </div>
+                        <div>
+                          <FormLabel className="font-medium cursor-pointer">
+                            Enviar invitacion por correo
+                          </FormLabel>
+                          <FormDescription className="text-sm">
+                            El miembro recibira un correo para crear su contrasena y acceder al sistema
+                          </FormDescription>
+                        </div>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
 
-                {/* Role selector - show when invitation is enabled */}
+                {/* Role Selector - Controlled by RHF, shown when invitation is enabled */}
                 {sendInvitation && (
-                  <div className="flex items-center justify-between pt-4 border-t">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-lime-100">
-                        <Shield className="h-5 w-5 text-lime-700" />
-                      </div>
-                      <div>
-                        <Label className="font-medium">
-                          Rol en el sistema
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                          Permisos que tendra el usuario cuando acepte la invitacion
-                        </p>
-                      </div>
-                    </div>
-                    <Select
-                      value={selectedRole}
-                      onValueChange={(value) => setSelectedRole(value as AppRole)}
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue>
-                          <Badge
-                            variant="outline"
-                            className={ROLE_COLORS[selectedRole]}
+                  <FormField
+                    control={form.control}
+                    name="role"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center justify-between pt-4 border-t space-y-0">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-lime-100">
+                            <Shield className="h-5 w-5 text-lime-700" />
+                          </div>
+                          <div>
+                            <FormLabel className="font-medium">
+                              Rol en el sistema
+                            </FormLabel>
+                            <FormDescription className="text-sm">
+                              Permisos que tendra el usuario cuando acepte la invitacion
+                            </FormDescription>
+                          </div>
+                        </div>
+                        <FormControl>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
                           >
-                            {ROLE_LABELS[selectedRole]}
-                          </Badge>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ASSIGNABLE_ROLES.map((role) => (
-                          <SelectItem key={role} value={role}>
-                            <span className="flex items-center gap-2">
-                              <Badge
-                                variant="outline"
-                                className={ROLE_COLORS[role]}
-                              >
-                                {ROLE_LABELS[role]}
-                              </Badge>
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                            <SelectTrigger className="w-[180px]">
+                              <SelectValue>
+                                <Badge
+                                  variant="outline"
+                                  className={ROLE_COLORS[field.value as AppRole]}
+                                >
+                                  {ROLE_LABELS[field.value as AppRole]}
+                                </Badge>
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {ASSIGNABLE_ROLES.map((role) => (
+                                <SelectItem key={role} value={role}>
+                                  <span className="flex items-center gap-2">
+                                    <Badge
+                                      variant="outline"
+                                      className={ROLE_COLORS[role]}
+                                    >
+                                      {ROLE_LABELS[role]}
+                                    </Badge>
+                                  </span>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 )}
               </CardContent>
             </Card>
@@ -761,7 +879,7 @@ export function MemberForm({ member, mode, accountStatus, profileRole, canEditRo
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <Label>Rol actual</Label>
+                        <label className="text-sm font-medium">Rol actual</label>
                         <p className="text-sm text-muted-foreground mt-1">
                           El rol determina que acciones puede realizar el usuario
                         </p>
@@ -913,6 +1031,7 @@ export function MemberForm({ member, mode, accountStatus, profileRole, canEditRo
             </Card>
           )}
 
+          {/* Submit Buttons */}
           <div className="flex justify-end gap-4">
             <Button
               type="button"
@@ -929,7 +1048,7 @@ export function MemberForm({ member, mode, accountStatus, profileRole, canEditRo
                   {mode === 'create' ? 'Creando...' : 'Guardando...'}
                 </>
               ) : mode === 'create' ? (
-                sendInvitation ? 'Crear y enviar invitación' : 'Crear miembro'
+                sendInvitation ? 'Crear y enviar invitacion' : 'Crear miembro'
               ) : (
                 'Guardar cambios'
               )}
