@@ -4,6 +4,11 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { classSchema, classUpdateSchema, classCancelSchema, type ClassFormData } from '@/schemas/class.schema'
 import type { Tables, TablesInsert } from '@/types/database.types'
+import {
+  sendClassCreatedNotification,
+  sendClassUpdatedNotification,
+  sendClassCancelledNotification,
+} from '@/lib/firebase/notifications'
 
 export type ActionState = {
   success: boolean
@@ -497,6 +502,19 @@ export async function createClassData(data: ClassFormData): Promise<ActionState>
     }
   }
 
+  // Send push notification to gym members (fire and forget)
+  const classData = classResult as Tables<'classes'>
+  sendClassCreatedNotification({
+    type: 'class_created',
+    classId: classData.id,
+    gymId: profile.organization_id,
+    title: classData.name,
+    startTime: classData.start_time,
+    instructorName: classData.instructor_name ?? undefined,
+  }).catch((err) => {
+    console.error('[Class Action] Failed to send push notification:', err)
+  })
+
   revalidatePath('/dashboard/classes')
   return {
     success: true,
@@ -545,6 +563,19 @@ export async function updateClassData(
     }
   }
 
+  // Send push notification for class update (fire and forget)
+  const classData = classResult as Tables<'classes'>
+  sendClassUpdatedNotification({
+    type: 'class_updated',
+    classId: classData.id,
+    gymId: profile.organization_id,
+    title: classData.name,
+    startTime: classData.start_time,
+    instructorName: classData.instructor_name ?? undefined,
+  }).catch((err) => {
+    console.error('[Class Action] Failed to send update notification:', err)
+  })
+
   revalidatePath('/dashboard/classes')
   revalidatePath(`/dashboard/classes/${id}`)
   return {
@@ -584,6 +615,16 @@ export async function cancelClass(
 
   const supabase = await createClient()
 
+  // Get class details before cancelling (for notification)
+  const { data: classDetails } = await supabase
+    .from('classes')
+    .select('id, name, start_time')
+    .eq('id', id)
+    .eq('organization_id', profile.organization_id)
+    .single()
+
+  const classData = classDetails as { id: string; name: string; start_time: string } | null
+
   const { error } = await supabase
     .from('classes')
     .update({
@@ -598,6 +639,19 @@ export async function cancelClass(
       success: false,
       message: error.message,
     }
+  }
+
+  // Send cancellation notification (fire and forget)
+  if (classData) {
+    sendClassCancelledNotification({
+      type: 'class_cancelled',
+      classId: classData.id,
+      gymId: profile.organization_id,
+      title: classData.name,
+      startTime: classData.start_time,
+    }).catch((err) => {
+      console.error('[Class Action] Failed to send cancellation notification:', err)
+    })
   }
 
   revalidatePath('/dashboard/classes')
