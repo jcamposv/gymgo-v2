@@ -30,6 +30,7 @@ export default async function ClassesPage({ searchParams }: PageProps) {
     per_page: pageSize,
     sort_by: params.sortBy,
     sort_dir: params.sortDir,
+    include_template: true,
   })
 
   if (error) {

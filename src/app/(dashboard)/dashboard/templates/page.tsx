@@ -1,8 +1,9 @@
 import { getClassTemplates } from '@/actions/template.actions'
 import { TemplatesDataTable } from '@/components/templates'
+import { ScheduleManager } from '@/components/schedule'
 
 export const metadata = {
-  title: 'Plantillas de Clases | GymGo',
+  title: 'Horario Semanal | GymGo',
 }
 
 interface PageProps {
@@ -21,7 +22,7 @@ interface PageProps {
 export default async function TemplatesPage({ searchParams }: PageProps) {
   const params = await searchParams
   const page = params.page ? parseInt(params.page) : 1
-  const pageSize = params.pageSize ? parseInt(params.pageSize) : 20
+  const pageSize = params.pageSize ? parseInt(params.pageSize) : 100 // Get all for calendar view
 
   // Convert is_active filter
   let isActive: boolean | undefined
@@ -35,8 +36,8 @@ export default async function TemplatesPage({ searchParams }: PageProps) {
     is_active: isActive,
     page,
     per_page: pageSize,
-    sort_by: params.sortBy,
-    sort_dir: params.sortDir,
+    sort_by: params.sortBy || 'day_of_week',
+    sort_dir: params.sortDir || 'asc',
   })
 
   if (error) {
@@ -50,15 +51,20 @@ export default async function TemplatesPage({ searchParams }: PageProps) {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Plantillas de Clases</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Horario Semanal</h1>
         <p className="text-muted-foreground">
-          Horarios semanales para generacion automatica
+          Configura tu semana tipo y genera clases automaticamente
         </p>
       </div>
 
-      <TemplatesDataTable
+      <ScheduleManager
         templates={templates || []}
-        totalItems={count || 0}
+        tableView={
+          <TemplatesDataTable
+            templates={templates || []}
+            totalItems={count || 0}
+          />
+        }
       />
     </div>
   )

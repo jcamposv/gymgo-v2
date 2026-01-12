@@ -4,6 +4,9 @@ export { MembersDataTable } from './members-data-table'
 export { MembersTable } from './members-table'
 export { memberColumns } from './members-columns'
 
+// Profile photo components
+export { MemberProfilePhoto, type ProfilePhotoSaveData } from './profile-photo'
+
 // New detail view components
 export { MemberHeaderCard } from './member-header-card'
 export { MemberContactInfoCard } from './member-contact-info-card'

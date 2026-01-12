@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 
 import type { Tables } from '@/types/database.types'
+import type { ClassWithTemplate } from '@/actions/class.actions'
 import { classTypeLabels } from '@/schemas/class.schema'
 import { deleteClass, cancelClass } from '@/actions/class.actions'
 
@@ -37,7 +38,7 @@ import {
   StatusBadge,
 } from '@/components/data-table'
 
-type ClassItem = Tables<'classes'>
+type ClassItem = ClassWithTemplate
 
 export const classColumns: ColumnDef<ClassItem>[] = [
   // Name & Type column
@@ -51,11 +52,18 @@ export const classColumns: ColumnDef<ClassItem>[] = [
       return (
         <div>
           <div className="font-medium">{classItem.name}</div>
-          {classItem.class_type && (
-            <Badge variant="outline" className="mt-1">
-              {classTypeLabels[classItem.class_type] ?? classItem.class_type}
-            </Badge>
-          )}
+          <div className="flex items-center gap-1 mt-1">
+            {classItem.class_type && (
+              <Badge variant="outline">
+                {classTypeLabels[classItem.class_type] ?? classItem.class_type}
+              </Badge>
+            )}
+            {classItem.template_info && (
+              <Badge variant="secondary" className="text-[10px]">
+                Plantilla
+              </Badge>
+            )}
+          </div>
         </div>
       )
     },
@@ -140,22 +148,32 @@ export const classColumns: ColumnDef<ClassItem>[] = [
     header: 'Estado',
     cell: ({ row }) => {
       const classItem = row.original
+      const now = new Date()
+      const startTime = new Date(classItem.start_time)
+      const endTime = new Date(classItem.end_time)
+
       if (classItem.is_cancelled) {
         return <StatusBadge variant="error">Cancelada</StatusBadge>
       }
-      if (new Date(classItem.start_time) < new Date()) {
+      if (endTime < now) {
         return <StatusBadge variant="default">Finalizada</StatusBadge>
+      }
+      if (startTime <= now && endTime >= now) {
+        return <StatusBadge variant="warning">En curso</StatusBadge>
       }
       return <StatusBadge variant="success">Activa</StatusBadge>
     },
     filterFn: (row, id, value) => {
       const classItem = row.original
+      const now = new Date()
+      const endTime = new Date(classItem.end_time)
+
       if (value === 'cancelled') return classItem.is_cancelled
       if (value === 'finished') {
-        return !classItem.is_cancelled && new Date(classItem.start_time) < new Date()
+        return !classItem.is_cancelled && endTime < now
       }
       if (value === 'active') {
-        return !classItem.is_cancelled && new Date(classItem.start_time) >= new Date()
+        return !classItem.is_cancelled && endTime >= now
       }
       return true
     },

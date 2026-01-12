@@ -112,7 +112,7 @@ export function MemberDetailsContent({
         {/* Left column - Main content */}
         <div className="space-y-6">
           {/* Header Card */}
-          <MemberHeaderCard member={member} />
+          <MemberHeaderCard member={member} organizationId={member.organization_id} />
 
           {/* Contact + General Info Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

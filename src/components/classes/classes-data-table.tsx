@@ -3,13 +3,13 @@
 import { useRouter } from 'next/navigation'
 import { Plus } from 'lucide-react'
 
-import type { Tables } from '@/types/database.types'
+import type { ClassWithTemplate } from '@/actions/class.actions'
 import { classTypes } from '@/schemas/class.schema'
 import { DataTable, type FilterConfig } from '@/components/data-table'
 import { classColumns } from './classes-columns'
 
 interface ClassesDataTableProps {
-  classes: Tables<'classes'>[]
+  classes: ClassWithTemplate[]
   totalItems: number
 }
 

@@ -55,6 +55,14 @@ async function getUserProfile(): Promise<{ profile: UserProfile | null; error: s
 // GET CLASSES
 // =============================================================================
 
+// Extended class type with template info
+export type ClassWithTemplate = Tables<'classes'> & {
+  template_info?: {
+    template_id: string
+    template_name: string
+  } | null
+}
+
 export async function getClasses(params?: {
   query?: string
   start_date?: string
@@ -66,7 +74,8 @@ export async function getClasses(params?: {
   per_page?: number
   sort_by?: string
   sort_dir?: 'asc' | 'desc'
-}): Promise<{ data: Tables<'classes'>[] | null; count: number; error: string | null }> {
+  include_template?: boolean
+}): Promise<{ data: ClassWithTemplate[] | null; count: number; error: string | null }> {
   const { profile, error: profileError } = await getUserProfile()
   if (profileError || !profile) {
     return { data: null, count: 0, error: profileError ?? 'No profile found' }
@@ -117,9 +126,11 @@ export async function getClasses(params?: {
     if (params.status === 'cancelled') {
       dbQuery = dbQuery.eq('is_cancelled', true)
     } else if (params.status === 'finished') {
-      dbQuery = dbQuery.eq('is_cancelled', false).lt('start_time', now)
+      // A class is finished when end_time has passed
+      dbQuery = dbQuery.eq('is_cancelled', false).lt('end_time', now)
     } else if (params.status === 'active') {
-      dbQuery = dbQuery.eq('is_cancelled', false).gte('start_time', now)
+      // A class is active if it hasn't ended yet
+      dbQuery = dbQuery.eq('is_cancelled', false).gte('end_time', now)
     }
   }
 
@@ -129,7 +140,124 @@ export async function getClasses(params?: {
     return { data: null, count: 0, error: error.message }
   }
 
-  return { data, count: count ?? 0, error: null }
+  // If include_template is true, fetch template info for each class
+  if (params?.include_template && data && data.length > 0) {
+    const classIds = data.map((c) => (c as Tables<'classes'>).id)
+
+    const { data: generationLogs } = await supabase
+      .from('class_generation_log')
+      .select(`
+        generated_class_id,
+        template_id,
+        class_templates!inner (
+          name
+        )
+      `)
+      .in('generated_class_id', classIds)
+
+    // Create a map of class_id -> template info
+    const templateMap = new Map<string, { template_id: string; template_name: string }>()
+    if (generationLogs) {
+      for (const log of generationLogs) {
+        const logData = log as {
+          generated_class_id: string
+          template_id: string
+          class_templates: { name: string }
+        }
+        templateMap.set(logData.generated_class_id, {
+          template_id: logData.template_id,
+          template_name: logData.class_templates.name,
+        })
+      }
+    }
+
+    // Add template info to classes
+    const classesWithTemplates = data.map((classItem) => {
+      const c = classItem as Tables<'classes'>
+      return {
+        ...c,
+        template_info: templateMap.get(c.id) || null,
+      }
+    })
+
+    return { data: classesWithTemplates, count: count ?? 0, error: null }
+  }
+
+  return { data: data as ClassWithTemplate[], count: count ?? 0, error: null }
+}
+
+// =============================================================================
+// GET CLASSES BY WEEK (for calendar view)
+// =============================================================================
+
+export async function getClassesByWeek(params: {
+  week_start: string  // YYYY-MM-DD format (Monday)
+  week_end: string    // YYYY-MM-DD format (Sunday)
+}): Promise<{ data: ClassWithTemplate[] | null; error: string | null }> {
+  const { profile, error: profileError } = await getUserProfile()
+  if (profileError || !profile) {
+    return { data: null, error: profileError ?? 'No profile found' }
+  }
+
+  const supabase = await createClient()
+
+  // Get classes within the week range
+  const { data: classes, error } = await supabase
+    .from('classes')
+    .select('*')
+    .eq('organization_id', profile.organization_id)
+    .gte('start_time', `${params.week_start}T00:00:00`)
+    .lte('start_time', `${params.week_end}T23:59:59`)
+    .order('start_time', { ascending: true })
+
+  if (error) {
+    return { data: null, error: error.message }
+  }
+
+  if (!classes || classes.length === 0) {
+    return { data: [], error: null }
+  }
+
+  // Get template info for these classes
+  const classIds = classes.map((c) => (c as Tables<'classes'>).id)
+
+  const { data: generationLogs } = await supabase
+    .from('class_generation_log')
+    .select(`
+      generated_class_id,
+      template_id,
+      class_templates!inner (
+        name
+      )
+    `)
+    .in('generated_class_id', classIds)
+
+  // Create a map of class_id -> template info
+  const templateMap = new Map<string, { template_id: string; template_name: string }>()
+  if (generationLogs) {
+    for (const log of generationLogs) {
+      const logData = log as {
+        generated_class_id: string
+        template_id: string
+        class_templates: { name: string }
+      }
+      templateMap.set(logData.generated_class_id, {
+        template_id: logData.template_id,
+        template_name: logData.class_templates.name,
+      })
+    }
+  }
+
+  // Add template info to classes
+  const classesWithTemplates = classes.map((classItem) => {
+    const c = classItem as Tables<'classes'>
+    return {
+      ...c,
+      template_info: templateMap.get(c.id) || null,
+    }
+  })
+
+  return { data: classesWithTemplates, error: null }
 }
 
 // =============================================================================

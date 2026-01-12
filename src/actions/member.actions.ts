@@ -453,3 +453,37 @@ export async function updateMemberStatus(
   revalidatePath('/dashboard/members')
   return successResult(`Estado del miembro actualizado a ${status}`)
 }
+
+// =============================================================================
+// UPDATE MEMBER AVATAR
+// =============================================================================
+
+export async function updateMemberAvatar(
+  memberId: string,
+  avatarUrl: string | null
+): Promise<ActionResult> {
+  const { authorized, user, error } = await requirePermission('manage_members')
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
+  }
+
+  const supabase = await createClient()
+
+  const { data, error: dbError } = await supabase
+    .from('members')
+    .update({ avatar_url: avatarUrl } as never)
+    .eq('id', memberId)
+    .eq('organization_id', user!.organizationId)
+    .select('avatar_url')
+    .single()
+
+  if (dbError) {
+    return errorResult(dbError.message)
+  }
+
+  revalidatePath('/dashboard/members')
+  revalidatePath(`/dashboard/members/${memberId}`)
+
+  return successResult('Avatar actualizado exitosamente', data)
+}
