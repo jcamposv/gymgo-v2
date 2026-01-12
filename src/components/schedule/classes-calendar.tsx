@@ -25,10 +25,9 @@ interface ClassesCalendarProps {
   onClassClick?: (classItem: ClassWithTemplate) => void
 }
 
-// Generate time slots from 5:00 to 21:00
-const TIME_SLOTS = Array.from({ length: 17 }, (_, i) => {
-  const hour = i + 5
-  return `${hour.toString().padStart(2, '0')}:00`
+// Generate time slots from 0:00 to 23:00
+const TIME_SLOTS = Array.from({ length: 24 }, (_, i) => {
+  return `${i.toString().padStart(2, '0')}:00`
 })
 
 // Days of week starting Monday

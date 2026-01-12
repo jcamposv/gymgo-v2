@@ -41,6 +41,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import { InstructorSelect } from '@/components/shared/instructor-select'
 
 interface ClassTemplate {
   id: string
@@ -283,15 +284,18 @@ export function TemplateForm({ template, mode }: TemplateFormProps) {
 
                 <FormField
                   control={form.control}
-                  name="instructor_name"
+                  name="instructor_id"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Instructor</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Nombre del instructor"
-                          {...field}
-                          value={field.value ?? ''}
+                        <InstructorSelect
+                          value={field.value}
+                          onValueChange={(instructorId, instructorName) => {
+                            field.onChange(instructorId)
+                            form.setValue('instructor_name', instructorName ?? '')
+                          }}
+                          placeholder="Seleccionar instructor..."
                         />
                       </FormControl>
                       <FormMessage />

@@ -37,6 +37,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import { InstructorSelect } from '@/components/shared/instructor-select'
 
 interface ClassFormProps {
   classData?: Tables<'classes'>
@@ -244,15 +245,18 @@ export function ClassForm({ classData, mode }: ClassFormProps) {
               <div className="grid gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
-                  name="instructor_name"
+                  name="instructor_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nombre del instructor</FormLabel>
+                      <FormLabel>Instructor</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Nombre del coach"
-                          {...field}
-                          value={field.value ?? ''}
+                        <InstructorSelect
+                          value={field.value}
+                          onValueChange={(instructorId, instructorName) => {
+                            field.onChange(instructorId)
+                            form.setValue('instructor_name', instructorName ?? '')
+                          }}
+                          placeholder="Seleccionar instructor..."
                         />
                       </FormControl>
                       <FormMessage />

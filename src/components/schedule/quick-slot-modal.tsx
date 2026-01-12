@@ -43,6 +43,7 @@ import {
 } from '@/components/ui/form'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { InstructorSelect } from '@/components/shared/instructor-select'
 
 type ClassTemplate = Tables<'class_templates'>
 
@@ -54,6 +55,7 @@ const quickSlotSchema = z.object({
   start_time: z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:MM'),
   end_time: z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:MM'),
   max_capacity: z.number().min(1),
+  instructor_id: z.string().nullable(),
   instructor_name: z.string().nullable(),
   location: z.string().nullable(),
   waitlist_enabled: z.boolean(),
@@ -102,6 +104,7 @@ export function QuickSlotModal({
       start_time: defaultTime,
       end_time: calculateEndTime(defaultTime),
       max_capacity: 20,
+      instructor_id: null,
       instructor_name: null,
       location: null,
       waitlist_enabled: true,
@@ -123,6 +126,7 @@ export function QuickSlotModal({
         start_time: template.start_time.slice(0, 5),
         end_time: template.end_time.slice(0, 5),
         max_capacity: template.max_capacity,
+        instructor_id: template.instructor_id,
         instructor_name: template.instructor_name,
         location: template.location,
         waitlist_enabled: template.waitlist_enabled,
@@ -140,6 +144,7 @@ export function QuickSlotModal({
         start_time: defaultTime,
         end_time: calculateEndTime(defaultTime),
         max_capacity: 20,
+        instructor_id: null,
         instructor_name: null,
         location: null,
         waitlist_enabled: true,
@@ -342,15 +347,18 @@ export function QuickSlotModal({
             <div className="grid grid-cols-2 gap-3">
               <FormField
                 control={form.control}
-                name="instructor_name"
+                name="instructor_id"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Instructor</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Nombre"
-                        {...field}
-                        value={field.value ?? ''}
+                      <InstructorSelect
+                        value={field.value}
+                        onValueChange={(instructorId, instructorName) => {
+                          field.onChange(instructorId)
+                          form.setValue('instructor_name', instructorName)
+                        }}
+                        placeholder="Seleccionar..."
                       />
                     </FormControl>
                     <FormMessage />

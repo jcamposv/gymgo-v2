@@ -2,12 +2,14 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { ChevronLeft, Pencil, Clock, Users, MapPin, Calendar, Plus } from 'lucide-react'
+import { ChevronLeft, Pencil, Clock, Users, MapPin, Calendar, User } from 'lucide-react'
 
 import { getClassWithBookings } from '@/actions/class.actions'
 import { getClassBookings } from '@/actions/booking.actions'
+import { getInstructor } from '@/actions/instructor.actions'
 import { ClassBookingsTable } from '@/components/bookings'
 import { AddBookingDialog } from '@/components/bookings/add-booking-dialog'
+import { UserAvatar } from '@/components/shared/user-avatar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -57,6 +59,11 @@ export default async function ClassDetailPage({ params }: PageProps) {
   const classData = classResult.data
   const bookings = bookingsResult.data ?? []
   const isPast = new Date(classData.start_time) < new Date()
+
+  // Fetch instructor data if there's an instructor_id
+  const instructor = classData.instructor_id
+    ? (await getInstructor(classData.instructor_id)).data
+    : null
 
   return (
     <div className="space-y-6">
@@ -155,7 +162,26 @@ export default async function ClassDetailPage({ params }: PageProps) {
             <CardTitle>Instructor</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="font-medium">{classData.instructor_name ?? 'Sin asignar'}</p>
+            {instructor ? (
+              <div className="flex items-center gap-3">
+                <UserAvatar
+                  src={instructor.avatar_url}
+                  name={instructor.full_name}
+                  size="lg"
+                />
+                <div>
+                  <p className="font-medium">{instructor.full_name || classData.instructor_name}</p>
+                  <p className="text-sm text-muted-foreground">{instructor.email}</p>
+                </div>
+              </div>
+            ) : classData.instructor_name ? (
+              <div className="flex items-center gap-3">
+                <UserAvatar name={classData.instructor_name} size="lg" />
+                <p className="font-medium">{classData.instructor_name}</p>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">Sin asignar</p>
+            )}
           </CardContent>
         </Card>
 
