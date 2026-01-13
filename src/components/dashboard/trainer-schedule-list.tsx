@@ -27,7 +27,7 @@ export function TrainerScheduleList({ trainers, className }: TrainerScheduleList
   return (
     <Card className={cn('overflow-hidden', className)}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-base font-semibold">Trainer Schedule</CardTitle>
+        <CardTitle className="text-base font-semibold">Horario de Instructores</CardTitle>
         <Button variant="ghost" size="icon" className="h-8 w-8">
           <MoreHorizontal className="h-4 w-4" />
         </Button>
@@ -58,7 +58,7 @@ export function TrainerScheduleList({ trainers, className }: TrainerScheduleList
                     : 'bg-red-100 text-red-700 hover:bg-red-100'
                 )}
               >
-                {trainer.status === 'available' ? 'Available' : 'Unavailable'}
+                {trainer.status === 'available' ? 'Disponible' : 'No disponible'}
               </Badge>
               <span className="text-[10px] text-muted-foreground whitespace-nowrap">
                 {trainer.startTime} - {trainer.endTime}

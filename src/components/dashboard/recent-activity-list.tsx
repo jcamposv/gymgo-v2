@@ -23,7 +23,7 @@ export function RecentActivityList({ activities, className }: RecentActivityList
   return (
     <Card className={cn('', className)}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
+        <CardTitle className="text-base font-semibold">Actividad Reciente</CardTitle>
         <Button variant="ghost" size="icon" className="h-8 w-8">
           <MoreHorizontal className="h-4 w-4" />
         </Button>

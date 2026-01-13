@@ -49,8 +49,8 @@ export function CalendarSchedule({
   selectedDate: controlledDate,
   onDateChange,
 }: CalendarScheduleProps) {
-  const [internalDate, setInternalDate] = useState<Date>(new Date(2028, 6, 12)) // July 12, 2028
-  const [month, setMonth] = useState<Date>(new Date(2028, 6, 1)) // July 2028
+  const [internalDate, setInternalDate] = useState<Date>(new Date())
+  const [month, setMonth] = useState<Date>(new Date())
 
   const selectedDate = controlledDate ?? internalDate
   const handleDateChange = onDateChange ?? setInternalDate
@@ -60,7 +60,7 @@ export function CalendarSchedule({
       <CardHeader className="pb-2">
         {/* Month navigation */}
         <div className="flex items-center justify-between mb-2">
-          <h3 className="font-semibold">{format(month, 'MMMM yyyy')}</h3>
+          <h3 className="font-semibold capitalize">{format(month, 'MMMM yyyy', { locale: es })}</h3>
           <div className="flex gap-1">
             <Button
               variant="ghost"
@@ -113,8 +113,8 @@ export function CalendarSchedule({
       <CardContent className="border-t pt-4">
         {/* Day header */}
         <div className="flex items-center justify-between mb-4">
-          <h4 className="font-medium">
-            {format(selectedDate, 'EEEE, d MMMM')}
+          <h4 className="font-medium capitalize">
+            {format(selectedDate, 'EEEE, d MMMM', { locale: es })}
           </h4>
           <Button size="icon" className="h-8 w-8 rounded-full bg-lime-400 hover:bg-lime-500 text-black">
             <Plus className="h-4 w-4" />

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react'
 import { addDays, format, startOfWeek, isSameDay } from 'date-fns'
+import { es } from 'date-fns/locale'
 
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -29,10 +30,16 @@ const statusStyles = {
   cancelled: 'bg-gray-200 text-gray-600 hover:bg-gray-200',
 }
 
+const statusLabels = {
+  confirmed: 'Confirmado',
+  pending: 'Pendiente',
+  cancelled: 'Cancelado',
+}
+
 export function ClientClassSchedule({ classes, className }: ClientClassScheduleProps) {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date(2028, 6, 20)) // July 20, 2028
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [weekStart, setWeekStart] = useState<Date>(
-    startOfWeek(new Date(2028, 6, 12), { weekStartsOn: 3 }) // Start on Wednesday
+    startOfWeek(new Date(), { weekStartsOn: 1 }) // Start on Monday
   )
 
   // Generate dates for the horizontal date picker
@@ -49,9 +56,9 @@ export function ClientClassSchedule({ classes, className }: ClientClassScheduleP
   return (
     <Card className={cn('', className)}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-base font-semibold">Client Class Schedule</CardTitle>
+        <CardTitle className="text-base font-semibold">Reservas de Hoy</CardTitle>
         <Button variant="ghost" size="sm" className="text-primary">
-          View All
+          Ver Todo
         </Button>
       </CardHeader>
       <CardContent>
@@ -80,8 +87,8 @@ export function ClientClassSchedule({ classes, className }: ClientClassScheduleP
                       : 'hover:bg-muted'
                   )}
                 >
-                  <span className="text-xs text-current opacity-70">
-                    {format(date, 'EEE')}
+                  <span className="text-xs text-current opacity-70 capitalize">
+                    {format(date, 'EEE', { locale: es })}
                   </span>
                   <span className="text-sm font-medium">{format(date, 'd')}</span>
                 </button>
@@ -104,12 +111,12 @@ export function ClientClassSchedule({ classes, className }: ClientClassScheduleP
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[180px]">Name</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Time</TableHead>
-                <TableHead>Trainer</TableHead>
-                <TableHead>Class</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead className="w-[180px]">Nombre</TableHead>
+                <TableHead>Fecha</TableHead>
+                <TableHead>Hora</TableHead>
+                <TableHead>Instructor</TableHead>
+                <TableHead>Clase</TableHead>
+                <TableHead>Estado</TableHead>
                 <TableHead className="w-[40px]"></TableHead>
               </TableRow>
             </TableHeader>
@@ -124,9 +131,9 @@ export function ClientClassSchedule({ classes, className }: ClientClassScheduleP
                   <TableCell>
                     <Badge
                       variant="secondary"
-                      className={cn('capitalize', statusStyles[classItem.status])}
+                      className={cn(statusStyles[classItem.status])}
                     >
-                      {classItem.status}
+                      {statusLabels[classItem.status]}
                     </Badge>
                   </TableCell>
                   <TableCell>

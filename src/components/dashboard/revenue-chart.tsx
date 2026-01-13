@@ -17,11 +17,11 @@ import type { RevenuePoint, RevenuePeriod } from '@/types/dashboard.types'
 
 const chartConfig = {
   income: {
-    label: 'Income',
+    label: 'Ingresos',
     color: '#1a1a2e',
   },
   expense: {
-    label: 'Expense',
+    label: 'Gastos',
     color: '#b8e986',
   },
 } satisfies ChartConfig
@@ -42,12 +42,12 @@ export function RevenueChart({
   return (
     <Card className={cn('', className)}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-base font-semibold">Revenue</CardTitle>
+        <CardTitle className="text-base font-semibold">Ingresos</CardTitle>
         <Tabs value={period} onValueChange={(v) => onPeriodChange?.(v as RevenuePeriod)}>
           <TabsList className="h-9">
-            <TabsTrigger value="week" className="text-xs px-3">Week</TabsTrigger>
-            <TabsTrigger value="month" className="text-xs px-3">Month</TabsTrigger>
-            <TabsTrigger value="year" className="text-xs px-3">Year</TabsTrigger>
+            <TabsTrigger value="week" className="text-xs px-3">Semana</TabsTrigger>
+            <TabsTrigger value="month" className="text-xs px-3">Mes</TabsTrigger>
+            <TabsTrigger value="year" className="text-xs px-3">Año</TabsTrigger>
           </TabsList>
         </Tabs>
       </CardHeader>

@@ -38,8 +38,8 @@ export function ActivityDonutChart({ data, className }: ActivityDonutChartProps)
     <Card className={cn('', className)}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div>
-          <CardTitle className="text-base font-semibold">Client Overview</CardTitle>
-          <p className="text-sm text-muted-foreground">by Activity type</p>
+          <CardTitle className="text-base font-semibold">Resumen de Actividades</CardTitle>
+          <p className="text-sm text-muted-foreground">por tipo de actividad</p>
         </div>
         <Button variant="ghost" size="icon" className="h-8 w-8">
           <MoreHorizontal className="h-4 w-4" />
@@ -79,7 +79,7 @@ export function ActivityDonutChart({ data, className }: ActivityDonutChartProps)
                           y={(viewBox.cy || 0) - 10}
                           className="fill-muted-foreground text-xs"
                         >
-                          Overall
+                          Total
                         </tspan>
                         <tspan
                           x={viewBox.cx}
