@@ -12,6 +12,9 @@ import {
   Settings,
   User,
   Activity,
+  DollarSign,
+  Receipt,
+  TrendingUp,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -35,6 +38,9 @@ export const iconRegistry = {
   Settings,
   User,
   Activity,
+  DollarSign,
+  Receipt,
+  TrendingUp,
 } as const
 
 export type IconName = keyof typeof iconRegistry
@@ -187,6 +193,42 @@ export const adminNavigation: NavEntry[] = [
     label: 'Reportes',
     icon: 'BarChart3',
     permission: 'view_reports',
+  },
+  {
+    id: 'finances-group',
+    label: 'Finanzas',
+    icon: 'DollarSign',
+    anyPermission: ['view_gym_finances', 'create_payments', 'create_expenses'],
+    items: [
+      {
+        id: 'finances-overview',
+        href: '/dashboard/finances',
+        label: 'Resumen',
+        icon: 'TrendingUp',
+        permission: 'view_gym_finances',
+      },
+      {
+        id: 'finances-payments',
+        href: '/dashboard/finances/payments',
+        label: 'Pagos',
+        icon: 'CreditCard',
+        anyPermission: ['view_gym_finances', 'create_payments'],
+      },
+      {
+        id: 'finances-expenses',
+        href: '/dashboard/finances/expenses',
+        label: 'Gastos',
+        icon: 'Receipt',
+        anyPermission: ['view_gym_finances', 'create_expenses'],
+      },
+      {
+        id: 'finances-income',
+        href: '/dashboard/finances/income',
+        label: 'Otros Ingresos',
+        icon: 'DollarSign',
+        anyPermission: ['view_gym_finances', 'create_payments'],
+      },
+    ],
   },
 ]
 

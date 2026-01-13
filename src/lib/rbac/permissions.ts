@@ -37,10 +37,13 @@ export const ROLE_PERMISSIONS: Record<AppRole, AppPermission[]> = {
     PERMISSIONS.MANAGE_GYM_SETTINGS,
     PERMISSIONS.MANAGE_GYM_BRANDING,
 
-    // Finances
+    // Finances - Full access
     PERMISSIONS.VIEW_GYM_FINANCES,
     PERMISSIONS.MANAGE_GYM_FINANCES,
     PERMISSIONS.VIEW_REPORTS,
+    PERMISSIONS.CREATE_PAYMENTS,
+    PERMISSIONS.CREATE_EXPENSES,
+    PERMISSIONS.VIEW_MEMBER_PAYMENT_STATUS,
 
     // Plans
     PERMISSIONS.VIEW_PLANS,
@@ -109,7 +112,12 @@ export const ROLE_PERMISSIONS: Record<AppRole, AppPermission[]> = {
     PERMISSIONS.VIEW_TRAINER_DASHBOARD,
 
     // NO gym settings/branding
-    // NO finances
+    // NO full finance access (VIEW_GYM_FINANCES, MANAGE_GYM_FINANCES)
+
+    // Finance Operations - Can register but NOT view aggregated data
+    PERMISSIONS.CREATE_PAYMENTS,
+    PERMISSIONS.CREATE_EXPENSES,
+    PERMISSIONS.VIEW_MEMBER_PAYMENT_STATUS,
 
     // Reports (read-only)
     PERMISSIONS.VIEW_REPORTS,
@@ -179,8 +187,11 @@ export const ROLE_PERMISSIONS: Record<AppRole, AppPermission[]> = {
     PERMISSIONS.VIEW_CLIENT_DASHBOARD,
 
     // NO gym settings
-    // NO finances
+    // NO full finances access
     // NO plans management
+
+    // Finance - Limited: Only view member payment status (no amounts)
+    PERMISSIONS.VIEW_MEMBER_PAYMENT_STATUS,
 
     // Members (view only)
     PERMISSIONS.VIEW_MEMBERS,
@@ -328,6 +339,9 @@ export const PERMISSION_GROUPS = {
       PERMISSIONS.VIEW_GYM_FINANCES,
       PERMISSIONS.MANAGE_GYM_FINANCES,
       PERMISSIONS.VIEW_REPORTS,
+      PERMISSIONS.CREATE_PAYMENTS,
+      PERMISSIONS.CREATE_EXPENSES,
+      PERMISSIONS.VIEW_MEMBER_PAYMENT_STATUS,
     ],
   },
   plans: {

@@ -7,6 +7,16 @@ export interface DashboardKpi {
   delta: number
   deltaType: 'increase' | 'decrease'
   icon: 'revenue' | 'clients' | 'classes' | 'equipment'
+  /**
+   * Currency code for monetary values (e.g., 'MXN', 'CRC', 'USD')
+   * When present, the value will be formatted as currency
+   */
+  currency?: string
+  /**
+   * Permission required to view this KPI
+   * If not authorized, the KPI will be hidden
+   */
+  requiresPermission?: boolean
 }
 
 // Client Overview Bar Chart (Age Segments)

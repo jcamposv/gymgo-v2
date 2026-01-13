@@ -1,7 +1,10 @@
 import { redirect } from 'next/navigation'
+import { Globe } from 'lucide-react'
+
 import { getCurrentOrganization } from '@/actions/organization.actions'
 import { BrandingForm } from './branding-form'
 import { InfoForm } from './info-form'
+import { RegionalForm } from './regional-form'
 import {
   Card,
   CardContent,
@@ -38,6 +41,7 @@ export default async function SettingsPage() {
         <TabsList>
           <TabsTrigger value="branding">Branding</TabsTrigger>
           <TabsTrigger value="info">Informacion</TabsTrigger>
+          <TabsTrigger value="regional">Regional</TabsTrigger>
         </TabsList>
 
         <TabsContent value="branding">
@@ -82,6 +86,30 @@ export default async function SettingsPage() {
                   state: organization.state,
                   postal_code: organization.postal_code,
                   country: organization.country,
+                }}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="regional">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="h-5 w-5" />
+                Configuracion Regional
+              </CardTitle>
+              <CardDescription>
+                Pais, moneda, idioma y zona horaria de tu gimnasio
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RegionalForm
+                initialData={{
+                  country: organization.country,
+                  currency: organization.currency,
+                  language: organization.language,
+                  timezone: organization.timezone,
                 }}
               />
             </CardContent>

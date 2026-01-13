@@ -9,6 +9,7 @@ import { useState } from 'react'
 
 import { createPlanData, updatePlanData } from '@/actions/plan.actions'
 import { planSchema, billingPeriodLabels, type PlanFormData } from '@/schemas/plan.schema'
+import { CURRENCIES } from '@/lib/constants/currencies'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -265,9 +266,11 @@ export function PlanForm({ plan, mode, currency = 'MXN' }: PlanFormProps) {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="MXN">MXN</SelectItem>
-                            <SelectItem value="USD">USD</SelectItem>
-                            <SelectItem value="EUR">EUR</SelectItem>
+                            {CURRENCIES.map((currency) => (
+                              <SelectItem key={currency.code} value={currency.code}>
+                                {currency.symbol} {currency.code} - {currency.name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />

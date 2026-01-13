@@ -2,7 +2,7 @@
 
 import { DollarSign, Users, Calendar, Dumbbell, MoreHorizontal, TrendingUp, TrendingDown } from 'lucide-react'
 
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import type { DashboardKpi } from '@/types/dashboard.types'
@@ -17,6 +17,16 @@ const iconMap = {
 interface KpiCardProps {
   kpi: DashboardKpi
   className?: string
+}
+
+/**
+ * Format the KPI value based on whether it has a currency
+ */
+function formatKpiValue(value: number, currency?: string): string {
+  if (currency) {
+    return formatCurrency(value, { currency, compact: true })
+  }
+  return value.toLocaleString()
 }
 
 export function KpiCard({ kpi, className }: KpiCardProps) {
@@ -38,7 +48,9 @@ export function KpiCard({ kpi, className }: KpiCardProps) {
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-3">
-          <span className="text-3xl font-bold">{kpi.value.toLocaleString()}</span>
+          <span className="text-3xl font-bold">
+            {formatKpiValue(kpi.value, kpi.currency)}
+          </span>
           <div
             className={cn(
               'flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',

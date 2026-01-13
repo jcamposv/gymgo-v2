@@ -71,10 +71,15 @@ export const PERMISSIONS = {
   MANAGE_GYM_SETTINGS: 'manage_gym_settings',
   MANAGE_GYM_BRANDING: 'manage_gym_branding',
 
-  // Financial
+  // Financial - Overview & Configuration (Admin only)
   VIEW_GYM_FINANCES: 'view_gym_finances',
   MANAGE_GYM_FINANCES: 'manage_gym_finances',
   VIEW_REPORTS: 'view_reports',
+
+  // Financial - Operations (Admin & Assistant)
+  CREATE_PAYMENTS: 'create_payments',
+  CREATE_EXPENSES: 'create_expenses',
+  VIEW_MEMBER_PAYMENT_STATUS: 'view_member_payment_status',
 
   // Membership plans
   VIEW_PLANS: 'view_plans',

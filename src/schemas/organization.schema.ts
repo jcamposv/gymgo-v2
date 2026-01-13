@@ -92,7 +92,14 @@ export const organizationSchema = z.object({
     .enum(['es', 'en', 'pt'])
     .default('es'),
   currency: z
-    .enum(['MXN', 'USD', 'COP', 'ARS', 'CLP', 'PEN', 'BRL'])
+    .enum([
+      // Principales
+      'USD', 'MXN', 'COP', 'ARS', 'CLP', 'PEN', 'BRL',
+      // Centroamerica y Caribe
+      'CRC', 'GTQ', 'HNL', 'NIO', 'PAB', 'DOP', 'CUP',
+      // Sudamerica
+      'UYU', 'PYG', 'BOB', 'VES',
+    ])
     .default('MXN'),
   timezone: z
     .string()
@@ -116,7 +123,11 @@ export const organizationOnboardingSchema = z.object({
     'multi_format',
   ]),
   country: z.string().length(2).default('MX'),
-  currency: z.enum(['MXN', 'USD', 'COP', 'ARS', 'CLP', 'PEN', 'BRL']).default('MXN'),
+  currency: z.enum([
+    'USD', 'MXN', 'COP', 'ARS', 'CLP', 'PEN', 'BRL',
+    'CRC', 'GTQ', 'HNL', 'NIO', 'PAB', 'DOP', 'CUP',
+    'UYU', 'PYG', 'BOB', 'VES',
+  ]).default('MXN'),
   admin_email: z.string().email(),
   admin_name: z.string().min(2).max(100),
   admin_password: z

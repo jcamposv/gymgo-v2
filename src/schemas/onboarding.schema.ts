@@ -166,24 +166,68 @@ export const BUSINESS_TYPE_OPTIONS: Array<{
 // =============================================================================
 
 export const COUNTRY_OPTIONS = [
-  { value: 'MX', label: 'Mexico', currency: 'MXN', timezone: 'America/Mexico_City' },
+  // Norteamérica
+  { value: 'MX', label: 'México', currency: 'MXN', timezone: 'America/Mexico_City' },
+  { value: 'US', label: 'Estados Unidos', currency: 'USD', timezone: 'America/New_York' },
+
+  // Centroamérica
+  { value: 'CR', label: 'Costa Rica', currency: 'CRC', timezone: 'America/Costa_Rica' },
+  { value: 'GT', label: 'Guatemala', currency: 'GTQ', timezone: 'America/Guatemala' },
+  { value: 'PA', label: 'Panamá', currency: 'USD', timezone: 'America/Panama' },
+  { value: 'HN', label: 'Honduras', currency: 'HNL', timezone: 'America/Tegucigalpa' },
+  { value: 'SV', label: 'El Salvador', currency: 'USD', timezone: 'America/El_Salvador' },
+  { value: 'NI', label: 'Nicaragua', currency: 'NIO', timezone: 'America/Managua' },
+  { value: 'BZ', label: 'Belice', currency: 'BZD', timezone: 'America/Belize' },
+
+  // Caribe
+  { value: 'DO', label: 'República Dominicana', currency: 'DOP', timezone: 'America/Santo_Domingo' },
+  { value: 'PR', label: 'Puerto Rico', currency: 'USD', timezone: 'America/Puerto_Rico' },
+
+  // Sudamérica
   { value: 'CO', label: 'Colombia', currency: 'COP', timezone: 'America/Bogota' },
   { value: 'AR', label: 'Argentina', currency: 'ARS', timezone: 'America/Argentina/Buenos_Aires' },
   { value: 'CL', label: 'Chile', currency: 'CLP', timezone: 'America/Santiago' },
-  { value: 'PE', label: 'Peru', currency: 'PEN', timezone: 'America/Lima' },
+  { value: 'PE', label: 'Perú', currency: 'PEN', timezone: 'America/Lima' },
   { value: 'EC', label: 'Ecuador', currency: 'USD', timezone: 'America/Guayaquil' },
   { value: 'BR', label: 'Brasil', currency: 'BRL', timezone: 'America/Sao_Paulo' },
-  { value: 'US', label: 'Estados Unidos', currency: 'USD', timezone: 'America/New_York' },
-  { value: 'ES', label: 'Espana', currency: 'EUR', timezone: 'Europe/Madrid' },
+  { value: 'BO', label: 'Bolivia', currency: 'BOB', timezone: 'America/La_Paz' },
+  { value: 'PY', label: 'Paraguay', currency: 'PYG', timezone: 'America/Asuncion' },
+  { value: 'UY', label: 'Uruguay', currency: 'UYU', timezone: 'America/Montevideo' },
+  { value: 'VE', label: 'Venezuela', currency: 'USD', timezone: 'America/Caracas' },
+
+  // Europa
+  { value: 'ES', label: 'España', currency: 'EUR', timezone: 'Europe/Madrid' },
 ] as const
 
 export const CURRENCY_OPTIONS = [
-  { value: 'MXN', label: 'Peso Mexicano (MXN)', symbol: '$' },
-  { value: 'COP', label: 'Peso Colombiano (COP)', symbol: '$' },
-  { value: 'ARS', label: 'Peso Argentino (ARS)', symbol: '$' },
-  { value: 'CLP', label: 'Peso Chileno (CLP)', symbol: '$' },
-  { value: 'PEN', label: 'Sol Peruano (PEN)', symbol: 'S/' },
-  { value: 'USD', label: 'Dolar (USD)', symbol: '$' },
-  { value: 'BRL', label: 'Real Brasileno (BRL)', symbol: 'R$' },
-  { value: 'EUR', label: 'Euro (EUR)', symbol: '€' },
+  // Norteamérica
+  { value: 'MXN', label: 'Peso Mexicano (MXN)', symbol: '$', locale: 'es-MX' },
+  { value: 'USD', label: 'Dólar (USD)', symbol: '$', locale: 'en-US' },
+
+  // Centroamérica
+  { value: 'CRC', label: 'Colón Costarricense (CRC)', symbol: '₡', locale: 'es-CR' },
+  { value: 'GTQ', label: 'Quetzal (GTQ)', symbol: 'Q', locale: 'es-GT' },
+  { value: 'HNL', label: 'Lempira (HNL)', symbol: 'L', locale: 'es-HN' },
+  { value: 'NIO', label: 'Córdoba (NIO)', symbol: 'C$', locale: 'es-NI' },
+  { value: 'BZD', label: 'Dólar Beliceño (BZD)', symbol: 'BZ$', locale: 'en-BZ' },
+
+  // Caribe
+  { value: 'DOP', label: 'Peso Dominicano (DOP)', symbol: 'RD$', locale: 'es-DO' },
+
+  // Sudamérica
+  { value: 'COP', label: 'Peso Colombiano (COP)', symbol: '$', locale: 'es-CO' },
+  { value: 'ARS', label: 'Peso Argentino (ARS)', symbol: '$', locale: 'es-AR' },
+  { value: 'CLP', label: 'Peso Chileno (CLP)', symbol: '$', locale: 'es-CL' },
+  { value: 'PEN', label: 'Sol Peruano (PEN)', symbol: 'S/', locale: 'es-PE' },
+  { value: 'BRL', label: 'Real Brasileño (BRL)', symbol: 'R$', locale: 'pt-BR' },
+  { value: 'BOB', label: 'Boliviano (BOB)', symbol: 'Bs', locale: 'es-BO' },
+  { value: 'PYG', label: 'Guaraní (PYG)', symbol: '₲', locale: 'es-PY' },
+  { value: 'UYU', label: 'Peso Uruguayo (UYU)', symbol: '$U', locale: 'es-UY' },
+
+  // Europa
+  { value: 'EUR', label: 'Euro (EUR)', symbol: '€', locale: 'es-ES' },
 ] as const
+
+// Type helpers
+export type CountryCode = (typeof COUNTRY_OPTIONS)[number]['value']
+export type CurrencyCode = (typeof CURRENCY_OPTIONS)[number]['value']

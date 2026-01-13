@@ -189,3 +189,47 @@ export async function updateOrganizationAddress(
   revalidatePath('/dashboard/settings')
   return { success: true, message: 'Direccion actualizada' }
 }
+
+/**
+ * Actualiza la configuracion regional de la organizacion (pais, moneda, idioma, zona horaria)
+ */
+export async function updateOrganizationRegional(
+  data: {
+    country?: string
+    currency?: string
+    language?: string
+    timezone?: string
+  }
+): Promise<ActionResponse> {
+  const supabase = await createClient()
+
+  const profile = await getProfileWithOrg(supabase)
+  const organizationId = profile?.organization_id
+  if (!organizationId) {
+    return { success: false, message: 'Sin organizacion asignada' }
+  }
+
+  if (!profile || !['owner', 'admin'].includes(profile.role)) {
+    return { success: false, message: 'Sin permisos para editar' }
+  }
+
+  const { error } = await supabase
+    .from('organizations')
+    .update({
+      country: data.country,
+      currency: data.currency,
+      language: data.language,
+      timezone: data.timezone,
+    } as never)
+    .eq('id', organizationId)
+
+  if (error) {
+    console.error('Update regional error:', error)
+    return { success: false, message: 'Error al actualizar configuracion regional' }
+  }
+
+  revalidatePath('/dashboard/settings')
+  revalidatePath('/dashboard')
+  revalidatePath('/dashboard/finances')
+  return { success: true, message: 'Configuracion regional actualizada' }
+}
