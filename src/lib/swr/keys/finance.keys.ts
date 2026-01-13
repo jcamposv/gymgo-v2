@@ -24,6 +24,13 @@ export const FINANCE_KEY_PREFIX = {
   kpi: 'finance-kpi',
 } as const
 
+export const REPORT_KEY_PREFIX = {
+  summary: 'report-summary',
+  members: 'report-members',
+  classes: 'report-classes',
+  revenue: 'report-revenue',
+} as const
+
 // =============================================================================
 // PARAM TYPES
 // =============================================================================
@@ -51,6 +58,12 @@ export interface FinanceListParams {
 export interface FinanceKpiParams {
   startDate?: string
   endDate?: string
+}
+
+export interface ReportSummaryParams {
+  startDate: string
+  endDate: string
+  type?: 'summary' | 'members' | 'classes' | 'revenue'
 }
 
 // =============================================================================
@@ -177,6 +190,53 @@ export const financeKeys = {
 }
 
 // =============================================================================
+// REPORT KEY GENERATORS
+// =============================================================================
+
+export const reportKeys = {
+  /**
+   * All report-related keys (for bulk invalidation)
+   */
+  all: () => ['report'] as const,
+
+  /**
+   * Report summary key with date range
+   *
+   * @example
+   * ```ts
+   * const key = reportKeys.summary({ startDate: '2024-01-01', endDate: '2024-01-31' })
+   * ```
+   */
+  summary: (params: ReportSummaryParams): string => {
+    return serializeKey(REPORT_KEY_PREFIX.summary, {
+      startDate: params.startDate,
+      endDate: params.endDate,
+    })
+  },
+
+  /**
+   * Members report key
+   */
+  members: (params: { startDate: string; endDate: string }): string => {
+    return serializeKey(REPORT_KEY_PREFIX.members, params)
+  },
+
+  /**
+   * Classes report key
+   */
+  classes: (params: { startDate: string; endDate: string }): string => {
+    return serializeKey(REPORT_KEY_PREFIX.classes, params)
+  },
+
+  /**
+   * Revenue report key
+   */
+  revenue: (params: { startDate: string; endDate: string }): string => {
+    return serializeKey(REPORT_KEY_PREFIX.revenue, params)
+  },
+}
+
+// =============================================================================
 // KEY MATCHERS (for selective invalidation)
 // =============================================================================
 
@@ -242,6 +302,33 @@ export const financeKeyMatchers = {
     try {
       const parsed = JSON.parse(key)
       return Array.isArray(parsed) && parsed[0].startsWith(FINANCE_KEY_PREFIX.income)
+    } catch {
+      return false
+    }
+  },
+
+  /**
+   * Matches any report key
+   */
+  isReportKey: (key: unknown): boolean => {
+    if (typeof key !== 'string') return false
+    try {
+      const parsed = JSON.parse(key)
+      if (!Array.isArray(parsed)) return false
+      return typeof parsed[0] === 'string' && parsed[0].startsWith('report-')
+    } catch {
+      return false
+    }
+  },
+
+  /**
+   * Matches report summary keys
+   */
+  isReportSummaryKey: (key: unknown): boolean => {
+    if (typeof key !== 'string') return false
+    try {
+      const parsed = JSON.parse(key)
+      return Array.isArray(parsed) && parsed[0] === REPORT_KEY_PREFIX.summary
     } catch {
       return false
     }
