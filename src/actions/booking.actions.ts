@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { checkDailyBookingLimit, getOrganizationBookingLimits } from '@/lib/booking/daily-limit'
 import { bookingSchema, bookingUpdateSchema, type BookingFormData, type BookingUpdateData } from '@/schemas/booking.schema'
 
 export type ActionState = {
@@ -206,7 +207,10 @@ export async function getMemberBookings(memberId: string): Promise<{
 // CREATE BOOKING
 // =============================================================================
 
-export async function createBooking(data: BookingFormData): Promise<ActionState> {
+export async function createBooking(
+  data: BookingFormData,
+  options?: { bypassDailyLimit?: boolean }
+): Promise<ActionState> {
   const { profile, error: profileError } = await getUserProfile()
   if (profileError || !profile) {
     return { success: false, message: profileError ?? 'No profile found' }
@@ -227,7 +231,7 @@ export async function createBooking(data: BookingFormData): Promise<ActionState>
   // Check if class exists and has capacity
   const { data: classData, error: classError } = await supabase
     .from('classes')
-    .select('id, max_capacity, current_bookings, waitlist_enabled, max_waitlist, is_cancelled')
+    .select('id, start_time, max_capacity, current_bookings, waitlist_enabled, max_waitlist, is_cancelled')
     .eq('id', validated.data.class_id)
     .eq('organization_id', profile.organization_id)
     .single()
@@ -238,6 +242,7 @@ export async function createBooking(data: BookingFormData): Promise<ActionState>
 
   const classInfo = classData as {
     id: string
+    start_time: string
     max_capacity: number
     current_bookings: number
     waitlist_enabled: boolean
@@ -248,6 +253,36 @@ export async function createBooking(data: BookingFormData): Promise<ActionState>
   if (classInfo.is_cancelled) {
     return { success: false, message: 'La clase ha sido cancelada' }
   }
+
+  // --- VALIDACIÓN: Límite diario de clases (solo si no se bypasea) ---
+  if (!options?.bypassDailyLimit) {
+    const orgLimits = await getOrganizationBookingLimits(supabase, profile.organization_id)
+
+    if (orgLimits && orgLimits.maxClassesPerDay !== null) {
+      const limitCheck = await checkDailyBookingLimit(supabase, {
+        memberId: validated.data.member_id,
+        organizationId: profile.organization_id,
+        classStartTime: classInfo.start_time,
+        maxClassesPerDay: orgLimits.maxClassesPerDay,
+        timezone: orgLimits.timezone,
+      })
+
+      if (!limitCheck.canBook) {
+        return {
+          success: false,
+          message: `El miembro ya tiene ${limitCheck.currentCount} clases reservadas para este dia (maximo: ${limitCheck.limit})`,
+          data: {
+            code: 'DAILY_CLASS_LIMIT_REACHED',
+            limit: limitCheck.limit,
+            currentCount: limitCheck.currentCount,
+            targetDate: limitCheck.targetDate,
+            timezone: limitCheck.timezone,
+          },
+        }
+      }
+    }
+  }
+  // --- FIN VALIDACIÓN ---
 
   // Check if already booked
   const { data: existingBooking } = await supabase

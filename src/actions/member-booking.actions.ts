@@ -2,7 +2,11 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import type { Tables } from '@/types/database.types'
+import {
+  checkDailyBookingLimit,
+  getOrganizationBookingLimits,
+  getMemberDailyBookingCount,
+} from '@/lib/booking/daily-limit'
 
 // =============================================================================
 // TYPES
@@ -62,6 +66,13 @@ export interface AvailableClass {
   hasMyBooking: boolean
   myBookingStatus: string | null
   myBookingId: string | null
+  // Daily limit info
+  dailyLimitReached: boolean
+  dailyLimitInfo: {
+    limit: number
+    currentCount: number
+    date: string
+  } | null
 }
 
 // =============================================================================
@@ -293,7 +304,7 @@ export async function getAvailableClasses(): Promise<{
   // Get member's current bookings for these classes
   const classIds = (classesData || []).map((c: Record<string, unknown>) => c.id as string)
 
-  let myBookingsMap = new Map<string, { id: string; status: string }>()
+  const myBookingsMap = new Map<string, { id: string; status: string }>()
 
   if (classIds.length > 0) {
     const { data: bookingsData } = await supabase
@@ -310,9 +321,63 @@ export async function getAvailableClasses(): Promise<{
     }
   }
 
-  // Transform to expected format with booking info
+  // Get organization booking limits
+  const orgLimits = await getOrganizationBookingLimits(supabase, profile.organization_id)
+  const hasLimit = orgLimits && orgLimits.maxClassesPerDay !== null
+
+  // Calculate daily booking counts if there's a limit
+  const dailyBookingCounts = new Map<string, number>()
+
+  if (hasLimit && classesData && classesData.length > 0) {
+    // Get unique dates from classes
+    const uniqueDates = new Set<string>()
+    for (const c of classesData as Array<{ start_time: string }>) {
+      const dateStr = new Intl.DateTimeFormat('en-CA', {
+        timeZone: orgLimits.timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(new Date(c.start_time))
+      uniqueDates.add(dateStr)
+    }
+
+    // For each unique date, count the member's bookings
+    for (const dateStr of uniqueDates) {
+      const { count } = await getMemberDailyBookingCount(supabase, {
+        memberId: profile.memberId,
+        organizationId: profile.organization_id,
+        targetDate: new Date(dateStr),
+        timezone: orgLimits.timezone,
+      })
+      dailyBookingCounts.set(dateStr, count)
+    }
+  }
+
+  // Transform to expected format with booking info and daily limit info
   const classes: AvailableClass[] = (classesData || []).map((c: Record<string, unknown>) => {
     const myBooking = myBookingsMap.get(c.id as string)
+
+    // Calculate daily limit info for this class
+    let dailyLimitReached = false
+    let dailyLimitInfo: { limit: number; currentCount: number; date: string } | null = null
+
+    if (hasLimit && orgLimits.maxClassesPerDay !== null) {
+      const classDate = new Intl.DateTimeFormat('en-CA', {
+        timeZone: orgLimits.timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(new Date(c.start_time as string))
+
+      const currentCount = dailyBookingCounts.get(classDate) || 0
+      dailyLimitReached = currentCount >= orgLimits.maxClassesPerDay
+      dailyLimitInfo = {
+        limit: orgLimits.maxClassesPerDay,
+        currentCount,
+        date: classDate,
+      }
+    }
+
     return {
       id: c.id as string,
       name: c.name as string,
@@ -332,6 +397,8 @@ export async function getAvailableClasses(): Promise<{
       hasMyBooking: !!myBooking,
       myBookingStatus: myBooking?.status || null,
       myBookingId: myBooking?.id || null,
+      dailyLimitReached,
+      dailyLimitInfo,
     }
   })
 
@@ -390,6 +457,35 @@ export async function reserveClass(classId: string): Promise<ActionState> {
   if (classInfo.is_cancelled) {
     return { success: false, message: 'La clase ha sido cancelada' }
   }
+
+  // --- VALIDACIÓN: Límite diario de clases ---
+  const orgLimits = await getOrganizationBookingLimits(supabase, profile.organization_id)
+
+  if (orgLimits && orgLimits.maxClassesPerDay !== null) {
+    const limitCheck = await checkDailyBookingLimit(supabase, {
+      memberId: profile.memberId,
+      organizationId: profile.organization_id,
+      classStartTime: classInfo.start_time,
+      maxClassesPerDay: orgLimits.maxClassesPerDay,
+      timezone: orgLimits.timezone,
+    })
+
+    if (!limitCheck.canBook) {
+      return {
+        success: false,
+        message: `Ya alcanzaste el maximo de ${limitCheck.limit} clases para este dia`,
+        data: {
+          code: 'DAILY_CLASS_LIMIT_REACHED',
+          limit: limitCheck.limit,
+          currentCount: limitCheck.currentCount,
+          targetDate: limitCheck.targetDate,
+          timezone: limitCheck.timezone,
+          existingBookings: limitCheck.existingBookings,
+        },
+      }
+    }
+  }
+  // --- FIN VALIDACIÓN ---
 
   const classStart = new Date(classInfo.start_time)
   const now = new Date()

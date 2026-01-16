@@ -233,3 +233,50 @@ export async function updateOrganizationRegional(
   revalidatePath('/dashboard/finances')
   return { success: true, message: 'Configuracion regional actualizada' }
 }
+
+/**
+ * Actualiza los límites de reserva de clases de la organización
+ */
+export async function updateBookingLimits(
+  data: {
+    max_classes_per_day: number | null
+  }
+): Promise<ActionResponse> {
+  const supabase = await createClient()
+
+  const profile = await getProfileWithOrg(supabase)
+  const organizationId = profile?.organization_id
+  if (!organizationId) {
+    return { success: false, message: 'Sin organizacion asignada' }
+  }
+
+  if (!profile || !['owner', 'admin'].includes(profile.role)) {
+    return { success: false, message: 'Sin permisos para editar' }
+  }
+
+  // Validar el valor
+  if (data.max_classes_per_day !== null) {
+    if (!Number.isInteger(data.max_classes_per_day)) {
+      return { success: false, message: 'El limite debe ser un numero entero' }
+    }
+    if (data.max_classes_per_day < 1 || data.max_classes_per_day > 10) {
+      return { success: false, message: 'El limite debe estar entre 1 y 10 clases' }
+    }
+  }
+
+  const { error } = await supabase
+    .from('organizations')
+    .update({
+      max_classes_per_day: data.max_classes_per_day,
+    } as never)
+    .eq('id', organizationId)
+
+  if (error) {
+    console.error('Update booking limits error:', error)
+    return { success: false, message: 'Error al actualizar limites de reserva' }
+  }
+
+  revalidatePath('/dashboard/settings')
+  revalidatePath('/member/classes')
+  return { success: true, message: 'Limites de reserva actualizados' }
+}

@@ -1,11 +1,12 @@
 import { redirect } from 'next/navigation'
-import { Globe, MessageSquare, AlertCircle } from 'lucide-react'
+import { Globe, MessageSquare, AlertCircle, CalendarDays } from 'lucide-react'
 
 import { getCurrentOrganization } from '@/actions/organization.actions'
 import { getWhatsAppSettings } from '@/actions/whatsapp.actions'
 import { BrandingForm } from './branding-form'
 import { InfoForm } from './info-form'
 import { RegionalForm } from './regional-form'
+import { BookingLimitsForm } from './booking-limits-form'
 import { SettingsForm as WhatsAppSettingsForm } from './whatsapp/settings-form'
 import { DeliveryLogSection } from './whatsapp/delivery-log-section'
 import { SandboxTest } from '@/components/whatsapp/sandbox-test'
@@ -59,6 +60,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           <TabsTrigger value="branding">Branding</TabsTrigger>
           <TabsTrigger value="info">Informacion</TabsTrigger>
           <TabsTrigger value="regional">Regional</TabsTrigger>
+          <TabsTrigger value="classes">Clases</TabsTrigger>
           <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
         </TabsList>
 
@@ -129,6 +131,28 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                   language: organization.language,
                   timezone: organization.timezone,
                 }}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="classes">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CalendarDays className="h-5 w-5" />
+                Configuracion de Clases
+              </CardTitle>
+              <CardDescription>
+                Reglas y limites para las reservas de clases
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BookingLimitsForm
+                initialData={{
+                  max_classes_per_day: organization.max_classes_per_day ?? null,
+                }}
+                timezone={organization.timezone ?? undefined}
               />
             </CardContent>
           </Card>

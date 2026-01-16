@@ -1332,6 +1332,7 @@ export type Database = {
           language: string | null
           logo_url: string | null
           max_admin_users: number | null
+          max_classes_per_day: number | null
           max_locations: number | null
           max_members: number | null
           name: string
@@ -1360,6 +1361,7 @@ export type Database = {
           language?: string | null
           logo_url?: string | null
           max_admin_users?: number | null
+          max_classes_per_day?: number | null
           max_locations?: number | null
           max_members?: number | null
           name: string
@@ -1388,6 +1390,7 @@ export type Database = {
           language?: string | null
           logo_url?: string | null
           max_admin_users?: number | null
+          max_classes_per_day?: number | null
           max_locations?: number | null
           max_members?: number | null
           name?: string

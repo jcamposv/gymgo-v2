@@ -1,9 +1,10 @@
 'use client'
 
 import { useTransition } from 'react'
-import { Loader2, CalendarPlus, UserPlus } from 'lucide-react'
+import { Loader2, CalendarPlus, UserPlus, AlertCircle } from 'lucide-react'
 
 import { reserveClass } from '@/actions/member-booking.actions'
+import { isDailyLimitError } from '@/schemas/booking-limits.schema'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -27,6 +28,11 @@ interface ReserveClassButtonProps {
   myBookingStatus: string | null
   disabled?: boolean
   disabledReason?: string
+  dailyLimitReached?: boolean
+  dailyLimitInfo?: {
+    limit: number
+    currentCount: number
+  }
 }
 
 // =============================================================================
@@ -42,6 +48,8 @@ export function ReserveClassButton({
   myBookingStatus,
   disabled = false,
   disabledReason,
+  dailyLimitReached = false,
+  dailyLimitInfo,
 }: ReserveClassButtonProps) {
   const [isPending, startTransition] = useTransition()
 
@@ -52,9 +60,46 @@ export function ReserveClassButton({
       if (result.success) {
         toast.success(result.message)
       } else {
-        toast.error(result.message)
+        // Check if it's a daily limit error and show specific message
+        if (isDailyLimitError(result.data)) {
+          toast.error(result.message, {
+            description: `Tienes ${result.data.currentCount} de ${result.data.limit} clases para el ${result.data.targetDate}`,
+            duration: 5000,
+          })
+        } else {
+          toast.error(result.message)
+        }
       }
     })
+  }
+
+  // Daily limit reached - show disabled state with explanation
+  if (dailyLimitReached && dailyLimitInfo) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="w-full">
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled
+                className="w-full"
+              >
+                <AlertCircle className="h-4 w-4 mr-2" />
+                Limite diario
+              </Button>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-xs">
+            <p>
+              Ya tienes {dailyLimitInfo.currentCount} de {dailyLimitInfo.limit} clases
+              reservadas para este dia
+            </p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    )
   }
 
   // Already has booking
