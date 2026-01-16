@@ -51,8 +51,9 @@ export function ExpenseForm({ currency }: ExpenseFormProps) {
   const router = useRouter()
   const symbol = getCurrencySymbol(currency)
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<ExpenseFormData>({
-    resolver: zodResolver(expenseSchema),
+    resolver: zodResolver(expenseSchema) as any,
     defaultValues: {
       description: '',
       amount: 0,

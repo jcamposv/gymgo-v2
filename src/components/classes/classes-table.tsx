@@ -170,8 +170,8 @@ export function ClassesTable({ classes }: ClassesTableProps) {
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-muted-foreground" />
-                    <Badge variant={getOccupancy(classItem.current_bookings, classItem.max_capacity)}>
-                      {classItem.current_bookings}/{classItem.max_capacity}
+                    <Badge variant={getOccupancy(classItem.current_bookings ?? 0, classItem.max_capacity ?? 1)}>
+                      {classItem.current_bookings ?? 0}/{classItem.max_capacity ?? 0}
                     </Badge>
                   </div>
                 </TableCell>

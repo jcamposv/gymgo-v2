@@ -217,7 +217,7 @@ function ExerciseRowActions({ exercise }: { exercise: Exercise }) {
       label: 'Editar',
       icon: Pencil,
       onClick: () => router.push(`/dashboard/exercises/${exercise.id}/edit`),
-      hidden: exercise.is_global,
+      hidden: exercise.is_global ?? false,
     },
     {
       id: 'duplicate',
@@ -230,7 +230,7 @@ function ExerciseRowActions({ exercise }: { exercise: Exercise }) {
       label: exercise.is_active ? 'Desactivar' : 'Activar',
       icon: Power,
       onClick: handleToggleStatus,
-      hidden: exercise.is_global,
+      hidden: exercise.is_global ?? false,
     },
     {
       id: 'delete',
@@ -238,7 +238,7 @@ function ExerciseRowActions({ exercise }: { exercise: Exercise }) {
       icon: Trash2,
       onClick: handleDelete,
       variant: 'destructive' as const,
-      hidden: exercise.is_global,
+      hidden: exercise.is_global ?? false,
     },
   ]
 

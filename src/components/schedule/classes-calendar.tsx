@@ -256,7 +256,7 @@ function ClassCard({ classItem, onClick }: ClassCardProps) {
   const isCancelled = classItem.is_cancelled
   const isFinished = endTime < now
   const isInProgress = startTime <= now && endTime >= now
-  const isFull = classItem.current_bookings >= classItem.max_capacity
+  const isFull = (classItem.current_bookings ?? 0) >= classItem.max_capacity
 
   const statusColor = isCancelled
     ? 'bg-destructive/10 border-destructive/30 text-destructive'

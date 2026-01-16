@@ -51,23 +51,23 @@ interface Exercise {
   name: string
   category: string | null
   muscle_groups: string[] | null
-  difficulty: string
+  difficulty: string | null
   gif_url: string | null
-  is_global: boolean
+  is_global: boolean | null
 }
 
 interface Routine {
   id: string
   name: string
   description: string | null
-  workout_type: string
+  workout_type: string | null
   wod_type: string | null
   wod_time_cap: number | null
   exercises: ExerciseItem[]
   assigned_to_member_id: string | null
   scheduled_date: string | null
-  is_template: boolean
-  is_active: boolean
+  is_template: boolean | null
+  is_active: boolean | null
 }
 
 interface RoutineFormProps {

@@ -58,15 +58,15 @@ interface Exercise {
   category: string | null
   muscle_groups: string[] | null
   equipment: string[] | null
-  difficulty: string
+  difficulty: string | null
   video_url: string | null
   gif_url: string | null
   thumbnail_url: string | null
   instructions: string[] | null
   tips: string[] | null
   common_mistakes: string[] | null
-  is_global: boolean
-  is_active: boolean
+  is_global: boolean | null
+  is_active: boolean | null
 }
 
 interface ExerciseFormProps {

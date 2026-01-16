@@ -58,20 +58,20 @@ const LANGUAGES = [
 
 interface RegionalFormProps {
   initialData: {
-    country: string
-    currency: string
-    language: string
-    timezone: string
+    country: string | null
+    currency: string | null
+    language: string | null
+    timezone: string | null
   }
 }
 
 export function RegionalForm({ initialData }: RegionalFormProps) {
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({
-    country: initialData.country,
-    currency: initialData.currency,
-    language: initialData.language,
-    timezone: initialData.timezone,
+    country: initialData.country ?? 'MX',
+    currency: initialData.currency ?? 'MXN',
+    language: initialData.language ?? 'es',
+    timezone: initialData.timezone ?? 'America/Mexico_City',
   })
 
   const handleCountryChange = (countryCode: string) => {

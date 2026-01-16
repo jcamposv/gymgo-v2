@@ -1,10 +1,15 @@
 import { redirect } from 'next/navigation'
-import { Globe } from 'lucide-react'
+import { Globe, MessageSquare, AlertCircle } from 'lucide-react'
 
 import { getCurrentOrganization } from '@/actions/organization.actions'
+import { getWhatsAppSettings } from '@/actions/whatsapp.actions'
 import { BrandingForm } from './branding-form'
 import { InfoForm } from './info-form'
 import { RegionalForm } from './regional-form'
+import { SettingsForm as WhatsAppSettingsForm } from './whatsapp/settings-form'
+import { DeliveryLogSection } from './whatsapp/delivery-log-section'
+import { SandboxTest } from '@/components/whatsapp/sandbox-test'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
   Card,
   CardContent,
@@ -19,14 +24,26 @@ export const metadata = {
   title: 'Configuracion | GymGo',
 }
 
-export default async function SettingsPage() {
-  const result = await getCurrentOrganization()
+interface SettingsPageProps {
+  searchParams: Promise<{ tab?: string }>
+}
 
-  if (!result.success || !result.data) {
+export default async function SettingsPage({ searchParams }: SettingsPageProps) {
+  const params = await searchParams
+  const defaultTab = params.tab || 'branding'
+
+  const [orgResult, whatsappResult] = await Promise.all([
+    getCurrentOrganization(),
+    getWhatsAppSettings(),
+  ])
+
+  if (!orgResult.success || !orgResult.data) {
     redirect('/dashboard')
   }
 
-  const organization = result.data as Tables<'organizations'>
+  const organization = orgResult.data as Tables<'organizations'>
+  const whatsappSettings = whatsappResult.data
+  const whatsappAvailable = whatsappSettings && whatsappSettings.setup_status === 'active'
 
   return (
     <div className="space-y-6">
@@ -37,11 +54,12 @@ export default async function SettingsPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="branding" className="space-y-6">
+      <Tabs defaultValue={defaultTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="branding">Branding</TabsTrigger>
           <TabsTrigger value="info">Informacion</TabsTrigger>
           <TabsTrigger value="regional">Regional</TabsTrigger>
+          <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
         </TabsList>
 
         <TabsContent value="branding">
@@ -114,6 +132,64 @@ export default async function SettingsPage() {
               />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="whatsapp">
+          {!whatsappAvailable ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5" />
+                  Notificaciones por WhatsApp
+                </CardTitle>
+                <CardDescription>
+                  Envia recordatorios automaticos a tus miembros
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Funcion no disponible</AlertTitle>
+                  <AlertDescription>
+                    Las notificaciones por WhatsApp no estan habilitadas para tu cuenta.
+                    Contacta a soporte para activar esta funcion.
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5" />
+                    Notificaciones por WhatsApp
+                  </CardTitle>
+                  <CardDescription>
+                    Configura los recordatorios automaticos para tus miembros
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <WhatsAppSettingsForm initialData={whatsappSettings} />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Historial de envios</CardTitle>
+                  <CardDescription>
+                    Registro de mensajes enviados a tus miembros
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <DeliveryLogSection />
+                </CardContent>
+              </Card>
+
+              {/* Sandbox Test - Solo para desarrollo/testing */}
+              {process.env.NODE_ENV === 'development' && <SandboxTest />}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

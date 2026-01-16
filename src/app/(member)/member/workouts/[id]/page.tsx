@@ -86,7 +86,7 @@ export default async function MemberRoutineDetailPage({ params }: PageProps) {
               </Badge>
             )}
             <Badge variant="secondary" className="text-sm">
-              {workoutTypeLabels[routine.workout_type] || routine.workout_type}
+              {routine.workout_type ? (workoutTypeLabels[routine.workout_type] || routine.workout_type) : 'Sin tipo'}
             </Badge>
             {routine.workout_type === 'wod' && routine.wod_type && (
               <Badge variant="outline" className="text-sm">

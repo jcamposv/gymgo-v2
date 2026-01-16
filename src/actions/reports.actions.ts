@@ -124,7 +124,7 @@ export async function getReportSummary(period: 'week' | 'month' | 'year' = 'mont
 
   // Members by status
   const membersByStatus: { status: string; count: number }[] = []
-  const statuses = ['active', 'inactive', 'suspended', 'cancelled']
+  const statuses = ['active', 'inactive', 'suspended', 'cancelled'] as const
 
   for (const status of statuses) {
     const { count } = await supabase

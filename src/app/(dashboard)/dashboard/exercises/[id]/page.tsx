@@ -137,7 +137,7 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
                     : 'destructive'
                 }
               >
-                {difficultyLabels[exercise.difficulty] || exercise.difficulty}
+                {exercise.difficulty ? (difficultyLabels[exercise.difficulty] || exercise.difficulty) : 'Sin definir'}
               </Badge>
             </div>
 

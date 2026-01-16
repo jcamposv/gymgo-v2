@@ -566,7 +566,7 @@ export async function getTodayBookings(): Promise<{
 
   // Get today's bookings with class and member info
   const { data: bookingsData } = await supabase
-    .from('class_bookings')
+    .from('bookings')
     .select(`
       id,
       status,
@@ -665,7 +665,7 @@ export async function getRecentActivity(): Promise<{
 
   // Get recent bookings
   const { data: bookingsData } = await supabase
-    .from('class_bookings')
+    .from('bookings')
     .select('id, created_at, status, member:members(full_name), class:classes(name)')
     .eq('organization_id', user.organizationId)
     .gte('created_at', todayStart)

@@ -2,11 +2,13 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { requireStaff } from '@/lib/auth/server-auth'
-import type { UserRole } from '@/types/database.types'
+import type { Database } from '@/types/database.types'
 
 // =============================================================================
 // TYPES
 // =============================================================================
+
+type UserRole = Database['public']['Enums']['user_role']
 
 export interface Instructor {
   id: string
@@ -17,7 +19,7 @@ export interface Instructor {
 }
 
 // Roles that can be instructors
-const INSTRUCTOR_ROLES: UserRole[] = ['admin', 'assistant', 'trainer', 'owner', 'super_admin']
+const INSTRUCTOR_ROLES: UserRole[] = ['admin', 'instructor', 'owner', 'super_admin']
 
 // =============================================================================
 // GET INSTRUCTORS
@@ -60,11 +62,14 @@ export async function getInstructors(): Promise<{
 
   // Create a map of email -> member for quick lookup
   const membersByEmail = new Map(
-    (members || []).map(m => [m.email.toLowerCase(), m])
+    ((members || []) as Array<{ email: string; full_name: string | null; avatar_url: string | null }>)
+      .filter(m => m.email)
+      .map(m => [m.email.toLowerCase(), m])
   )
 
   // Merge data: prioritize member name/avatar over profile
-  const instructors = (profiles || []).map(profile => {
+  type ProfileData = { id: string; email: string; full_name: string | null; avatar_url: string | null; role: UserRole }
+  const instructors = ((profiles || []) as ProfileData[]).map(profile => {
     const member = membersByEmail.get(profile.email.toLowerCase())
     return {
       ...profile,
@@ -92,24 +97,30 @@ export async function getInstructor(instructorId: string): Promise<{
 
   const supabase = await createClient()
 
-  const { data: profile, error: dbError } = await supabase
+  type ProfileData = { id: string; email: string; full_name: string | null; avatar_url: string | null; role: UserRole }
+  const { data: profileData, error: dbError } = await supabase
     .from('profiles')
     .select('id, email, full_name, avatar_url, role')
     .eq('id', instructorId)
     .eq('organization_id', user.organizationId)
     .single()
 
-  if (dbError) {
-    return { data: null, error: dbError.message }
+  if (dbError || !profileData) {
+    return { data: null, error: dbError?.message || 'Instructor no encontrado' }
   }
 
+  const profile = profileData as ProfileData
+
   // Try to get name from members (prioritize over profile)
-  const { data: member } = await supabase
+  type MemberData = { full_name: string | null; avatar_url: string | null }
+  const { data: memberData } = await supabase
     .from('members')
     .select('full_name, avatar_url')
     .eq('email', profile.email)
     .eq('organization_id', user.organizationId)
     .single()
+
+  const member = memberData as MemberData | null
 
   return {
     data: {

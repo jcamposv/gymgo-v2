@@ -160,6 +160,7 @@ export async function getFinanceOverview(params?: {
     .single()
 
   const currency = (org as { currency: string } | null)?.currency || 'MXN'
+  const organizationId = user.organizationId
 
   // Helper function to fetch period data
   async function fetchPeriodData(periodStart: string, periodEnd: string) {
@@ -167,7 +168,7 @@ export async function getFinanceOverview(params?: {
     const { data: payments } = await supabase
       .from('payments')
       .select('amount, status')
-      .eq('organization_id', user.organizationId)
+      .eq('organization_id', organizationId)
       .eq('status', 'paid')
       .gte('created_at', periodStart)
       .lte('created_at', periodEnd)
@@ -179,7 +180,7 @@ export async function getFinanceOverview(params?: {
     const { data: incomeData } = await supabase
       .from('income')
       .select('amount')
-      .eq('organization_id', user.organizationId)
+      .eq('organization_id', organizationId)
       .gte('income_date', periodStart)
       .lte('income_date', periodEnd)
 
@@ -190,7 +191,7 @@ export async function getFinanceOverview(params?: {
     const { data: expensesData } = await supabase
       .from('expenses')
       .select('amount')
-      .eq('organization_id', user.organizationId)
+      .eq('organization_id', organizationId)
       .gte('expense_date', periodStart)
       .lte('expense_date', periodEnd)
 
@@ -216,7 +217,7 @@ export async function getFinanceOverview(params?: {
   const { data: pendingPaymentsData } = await supabase
     .from('payments')
     .select('amount')
-    .eq('organization_id', user.organizationId)
+    .eq('organization_id', organizationId)
     .eq('status', 'pending')
 
   const pendingPayments = (pendingPaymentsData as { amount: number }[] || [])
@@ -302,7 +303,7 @@ export async function getPayments(params?: {
     .range(from, to)
 
   if (params?.status) {
-    query = query.eq('status', params.status)
+    query = query.eq('status', params.status as 'pending' | 'paid' | 'failed' | 'refunded')
   }
 
   if (params?.startDate) {
@@ -424,7 +425,7 @@ export async function getExpenses(params?: {
   }
 
   if (params?.category) {
-    dbQuery = dbQuery.eq('category', params.category)
+    dbQuery = dbQuery.eq('category', params.category as 'rent' | 'utilities' | 'salaries' | 'equipment' | 'maintenance' | 'marketing' | 'supplies' | 'insurance' | 'taxes' | 'other')
   }
 
   if (params?.startDate) {
@@ -533,7 +534,7 @@ export async function getIncome(params?: {
   }
 
   if (params?.category) {
-    dbQuery = dbQuery.eq('category', params.category)
+    dbQuery = dbQuery.eq('category', params.category as 'product_sale' | 'service' | 'rental' | 'event' | 'donation' | 'other')
   }
 
   if (params?.startDate) {
@@ -665,7 +666,7 @@ export async function getMemberPaymentStatus(
   }
 
   // Only include amounts if user has view_gym_finances permission
-  if (hasPermission(user, 'view_gym_finances')) {
+  if (hasPermission({ id: user.id, role: user.role, organization_id: user.organizationId }, 'view_gym_finances')) {
     // Get total paid
     const { data: totalPaidData } = await supabase
       .from('payments')

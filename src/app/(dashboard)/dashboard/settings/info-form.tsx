@@ -21,7 +21,7 @@ interface InfoFormProps {
     city: string | null
     state: string | null
     postal_code: string | null
-    country: string
+    country: string | null
   }
 }
 
@@ -37,7 +37,7 @@ export function InfoForm({ initialData }: InfoFormProps) {
     city: initialData.city ?? '',
     state: initialData.state ?? '',
     postal_code: initialData.postal_code ?? '',
-    country: initialData.country,
+    country: initialData.country ?? '',
   })
 
   const handleChange = (field: string, value: string) => {

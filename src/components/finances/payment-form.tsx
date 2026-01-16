@@ -64,8 +64,9 @@ export function PaymentForm({ members, plans, currency }: PaymentFormProps) {
   const router = useRouter()
   const symbol = getCurrencySymbol(currency)
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<PaymentFormData>({
-    resolver: zodResolver(paymentSchema),
+    resolver: zodResolver(paymentSchema) as any,
     defaultValues: {
       member_id: '',
       plan_id: null,

@@ -105,7 +105,7 @@ export async function getTodayCheckIns(): Promise<{
     return { data: null, error: error.message }
   }
 
-  return { data: data as CheckInWithMember[], error: null }
+  return { data: data as unknown as CheckInWithMember[], error: null }
 }
 
 // =============================================================================

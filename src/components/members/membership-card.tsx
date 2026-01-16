@@ -113,7 +113,7 @@ export function MembershipCard({ member, className }: MembershipCardProps) {
               <Sparkles className="h-5 w-5" />
               <span className="font-semibold text-sm">{member.gym_name || 'WellNest GymGo'}</span>
             </div>
-            {plan && (
+            {plan && plan.billing_period && (
               <span className="text-xs text-white/70">
                 {getBillingPeriodLabel(plan.billing_period)}
               </span>

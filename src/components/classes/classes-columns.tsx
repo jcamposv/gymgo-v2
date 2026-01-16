@@ -109,8 +109,8 @@ export const classColumns: ColumnDef<ClassItem>[] = [
     header: 'Capacidad',
     cell: ({ row }) => {
       const classItem = row.original
-      const current = classItem.current_bookings
-      const max = classItem.max_capacity
+      const current = classItem.current_bookings ?? 0
+      const max = classItem.max_capacity ?? 1
       const percentage = (current / max) * 100
 
       const variant =
@@ -167,13 +167,14 @@ export const classColumns: ColumnDef<ClassItem>[] = [
       const classItem = row.original
       const now = new Date()
       const endTime = new Date(classItem.end_time)
+      const isCancelled = classItem.is_cancelled ?? false
 
-      if (value === 'cancelled') return classItem.is_cancelled
+      if (value === 'cancelled') return isCancelled
       if (value === 'finished') {
-        return !classItem.is_cancelled && endTime < now
+        return !isCancelled && endTime < now
       }
       if (value === 'active') {
-        return !classItem.is_cancelled && endTime >= now
+        return !isCancelled && endTime >= now
       }
       return true
     },
@@ -237,7 +238,7 @@ function ClassRowActions({ classItem }: { classItem: ClassItem }) {
       label: 'Cancelar clase',
       icon: XCircle,
       onClick: () => setCancelDialogOpen(true),
-      hidden: classItem.is_cancelled,
+      hidden: classItem.is_cancelled ?? false,
     },
     {
       id: 'delete',

@@ -13,3 +13,6 @@ export * from './use-finance-payments'
 export * from './use-finance-expenses'
 export * from './use-finance-income'
 export * from './use-finance-cache'
+
+// WhatsApp module hooks
+export * from './use-whatsapp'

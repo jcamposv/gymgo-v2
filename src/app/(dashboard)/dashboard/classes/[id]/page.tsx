@@ -151,7 +151,7 @@ export default async function ClassDetailPage({ params }: PageProps) {
             <div className="w-full bg-secondary rounded-full h-2">
               <div
                 className="bg-primary h-2 rounded-full transition-all"
-                style={{ width: `${Math.min((classData.current_bookings / classData.max_capacity) * 100, 100)}%` }}
+                style={{ width: `${Math.min(((classData.current_bookings ?? 0) / (classData.max_capacity ?? 1)) * 100, 100)}%` }}
               />
             </div>
           </CardContent>
@@ -243,7 +243,7 @@ export default async function ClassDetailPage({ params }: PageProps) {
             <ClassBookingsTable
               bookings={bookings}
               isPast={isPast}
-              isCancelled={classData.is_cancelled}
+              isCancelled={classData.is_cancelled ?? false}
             />
           </CardContent>
         </Card>

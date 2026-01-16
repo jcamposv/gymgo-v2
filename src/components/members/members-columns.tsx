@@ -8,7 +8,9 @@ import { es } from 'date-fns/locale'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Eye, Pencil, Trash2, UserCheck, UserX } from 'lucide-react'
 
-import type { Tables, MemberStatus } from '@/types/database.types'
+import type { Tables, Database } from '@/types/database.types'
+
+type MemberStatus = Database['public']['Enums']['member_status']
 import { updateMemberStatus } from '@/actions/member.actions'
 import {
   memberStatusLabels,

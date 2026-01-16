@@ -162,8 +162,8 @@ export function MemberHeaderCard({ member, organizationId, className }: MemberHe
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-xl font-semibold">{member.full_name}</h1>
-              <Badge className={cn('text-xs font-medium', statusStyles[member.status])}>
-                {statusLabels[member.status]}
+              <Badge className={cn('text-xs font-medium', member.status ? statusStyles[member.status] : '')}>
+                {member.status ? statusLabels[member.status] : 'Sin estado'}
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">

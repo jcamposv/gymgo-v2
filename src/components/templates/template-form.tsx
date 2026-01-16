@@ -48,19 +48,19 @@ interface ClassTemplate {
   name: string
   description: string | null
   class_type: string | null
-  day_of_week: number
+  day_of_week: number | null
   start_time: string
   end_time: string
-  max_capacity: number
-  waitlist_enabled: boolean
-  max_waitlist: number
+  max_capacity: number | null
+  waitlist_enabled: boolean | null
+  max_waitlist: number | null
   instructor_id: string | null
   instructor_name: string | null
   location: string | null
-  booking_opens_hours: number
-  booking_closes_minutes: number
-  cancellation_deadline_hours: number
-  is_active: boolean
+  booking_opens_hours: number | null
+  booking_closes_minutes: number | null
+  cancellation_deadline_hours: number | null
+  is_active: boolean | null
 }
 
 interface TemplateFormProps {

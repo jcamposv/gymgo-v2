@@ -13,7 +13,9 @@ import {
   Eye,
 } from 'lucide-react'
 
-import type { Tables, MemberStatus } from '@/types/database.types'
+import type { Tables, Database } from '@/types/database.types'
+
+type MemberStatus = Database['public']['Enums']['member_status']
 import { deleteMember, updateMemberStatus } from '@/actions/member.actions'
 
 import {
@@ -130,8 +132,8 @@ export function MembersTable({ members }: MembersTableProps) {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={statusConfig[member.status].variant}>
-                    {statusConfig[member.status].label}
+                  <Badge variant={member.status ? statusConfig[member.status].variant : 'secondary'}>
+                    {member.status ? statusConfig[member.status].label : 'Sin estado'}
                   </Badge>
                 </TableCell>
                 <TableCell className="capitalize">
@@ -141,7 +143,7 @@ export function MembersTable({ members }: MembersTableProps) {
                 </TableCell>
                 <TableCell>{member.check_in_count}</TableCell>
                 <TableCell>
-                  {format(new Date(member.created_at), 'dd MMM yyyy', { locale: es })}
+                  {member.created_at ? format(new Date(member.created_at), 'dd MMM yyyy', { locale: es }) : '-'}
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>

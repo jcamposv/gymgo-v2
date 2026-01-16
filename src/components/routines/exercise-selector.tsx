@@ -36,9 +36,9 @@ interface Exercise {
   name: string
   category: string | null
   muscle_groups: string[] | null
-  difficulty: string
+  difficulty: string | null
   gif_url: string | null
-  is_global: boolean
+  is_global: boolean | null
 }
 
 interface ExerciseSelectorProps {
@@ -162,12 +162,11 @@ export function ExerciseSelector({ onSelect, selectedIds = [], trigger }: Exerci
                             {categoryLabels[exercise.category] || exercise.category}
                           </Badge>
                         )}
-                        <Badge
-                          variant="secondary"
-                          className="text-xs"
-                        >
-                          {difficultyLabels[exercise.difficulty] || exercise.difficulty}
-                        </Badge>
+                        {exercise.difficulty && (
+                          <Badge variant="secondary" className="text-xs">
+                            {difficultyLabels[exercise.difficulty] || exercise.difficulty}
+                          </Badge>
+                        )}
                         {exercise.muscle_groups?.slice(0, 2).map((muscle) => (
                           <Badge key={muscle} variant="secondary" className="text-xs">
                             {muscleGroupLabels[muscle] || muscle}

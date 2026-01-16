@@ -15,8 +15,8 @@ interface BrandingFormProps {
   organizationId: string
   initialData: {
     logo_url: string | null
-    primary_color: string
-    secondary_color: string
+    primary_color: string | null
+    secondary_color: string | null
   }
 }
 
@@ -24,8 +24,8 @@ export function BrandingForm({ organizationId, initialData }: BrandingFormProps)
   const { refresh: refreshOrganization } = useOrganizationContext()
   const [saving, setSaving] = useState(false)
   const [logoUrl, setLogoUrl] = useState(initialData.logo_url)
-  const [primaryColor, setPrimaryColor] = useState(initialData.primary_color)
-  const [secondaryColor, setSecondaryColor] = useState(initialData.secondary_color)
+  const [primaryColor, setPrimaryColor] = useState(initialData.primary_color ?? '#000000')
+  const [secondaryColor, setSecondaryColor] = useState(initialData.secondary_color ?? '#ffffff')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

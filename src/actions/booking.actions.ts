@@ -126,7 +126,7 @@ export async function getBookings(params?: {
   }
 
   if (params?.status) {
-    query = query.eq('status', params.status)
+    query = query.eq('status', params.status as 'confirmed' | 'cancelled' | 'attended' | 'no_show' | 'waitlist')
   }
 
   const { data, count, error } = await query

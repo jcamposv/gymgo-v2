@@ -82,7 +82,7 @@ export function MemberGeneralInfoCard({ member, className }: MemberGeneralInfoCa
           <div className="flex-1 space-y-3">
             <InfoRow
               label={generalInfoLabels.fitnessLevel}
-              value={levelLabels[member.experience_level] || member.experience_level}
+              value={member.experience_level ? (levelLabels[member.experience_level] || member.experience_level) : null}
             />
             <InfoRow
               label={generalInfoLabels.goal}

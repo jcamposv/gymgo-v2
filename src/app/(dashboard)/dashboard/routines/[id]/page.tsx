@@ -85,7 +85,7 @@ export default async function RoutinePage({ params }: RoutinePageProps) {
             <div className="flex items-center gap-2">
               <Dumbbell className="h-4 w-4 text-muted-foreground" />
               <span className="font-medium">
-                {workoutTypeLabels[routine.workout_type] || routine.workout_type}
+                {routine.workout_type ? (workoutTypeLabels[routine.workout_type] || routine.workout_type) : 'Sin tipo'}
               </span>
             </div>
             {routine.workout_type === 'wod' && routine.wod_type && (

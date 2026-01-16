@@ -130,8 +130,8 @@ export function OrganizationProvider({
       id: organization.id,
       name: organization.name,
       logoUrl: organization.logo_url,
-      primaryColor: organization.primary_color,
-      secondaryColor: organization.secondary_color,
+      primaryColor: organization.primary_color ?? '#3b82f6',
+      secondaryColor: organization.secondary_color ?? '#1e40af',
     }
   }, [organization])
 

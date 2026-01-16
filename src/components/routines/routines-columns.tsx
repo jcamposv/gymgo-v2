@@ -62,9 +62,11 @@ export const routineColumns: ColumnDef<WorkoutWithMember>[] = [
       const routine = row.original
       return (
         <div className="flex flex-col gap-1">
-          <Badge variant="secondary">
-            {workoutTypeLabels[routine.workout_type] || routine.workout_type}
-          </Badge>
+          {routine.workout_type && (
+            <Badge variant="secondary">
+              {workoutTypeLabels[routine.workout_type] || routine.workout_type}
+            </Badge>
+          )}
           {routine.workout_type === 'wod' && routine.wod_type && (
             <span className="text-xs text-muted-foreground">
               {wodTypeLabels[routine.wod_type] || routine.wod_type}

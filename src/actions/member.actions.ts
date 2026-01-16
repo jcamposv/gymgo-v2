@@ -4,7 +4,9 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { memberSchema, memberUpdateSchema, type MemberFormData } from '@/schemas/member.schema'
-import type { Tables, TablesInsert, MemberStatus } from '@/types/database.types'
+import type { Tables, TablesInsert, Database } from '@/types/database.types'
+
+type MemberStatus = Database['public']['Enums']['member_status']
 import {
   requireAnyPermission,
   requirePermission,

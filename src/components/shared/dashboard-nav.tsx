@@ -16,6 +16,8 @@ import {
   CalendarClock,
   ChevronDown,
   Library,
+  MessageCircle,
+  UserCog,
 } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import type { LucideIcon } from 'lucide-react'
@@ -201,6 +203,18 @@ export function DashboardNav({ user }: DashboardNavProps) {
               <Link href="/dashboard/settings">
                 <Settings className="mr-2 h-4 w-4" />
                 Configuracion
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/settings/team">
+                <UserCog className="mr-2 h-4 w-4" />
+                Equipo
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/settings/whatsapp">
+                <MessageCircle className="mr-2 h-4 w-4" />
+                WhatsApp
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />

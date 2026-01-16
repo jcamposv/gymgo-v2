@@ -1,5 +1,7 @@
 import { z } from 'zod'
-import type { BusinessType } from '@/types/database.types'
+import type { Database } from '@/types/database.types'
+
+type BusinessType = Database['public']['Enums']['business_type']
 
 // =============================================================================
 // STEP 1: ORGANIZATION BASIC INFO

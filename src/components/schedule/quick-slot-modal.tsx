@@ -125,16 +125,16 @@ export function QuickSlotModal({
         day_of_week: template.day_of_week,
         start_time: template.start_time.slice(0, 5),
         end_time: template.end_time.slice(0, 5),
-        max_capacity: template.max_capacity,
+        max_capacity: template.max_capacity ?? 20,
         instructor_id: template.instructor_id,
         instructor_name: template.instructor_name,
         location: template.location,
-        waitlist_enabled: template.waitlist_enabled,
-        max_waitlist: template.max_waitlist,
-        is_active: template.is_active,
-        booking_opens_hours: template.booking_opens_hours,
-        booking_closes_minutes: template.booking_closes_minutes,
-        cancellation_deadline_hours: template.cancellation_deadline_hours,
+        waitlist_enabled: template.waitlist_enabled ?? true,
+        max_waitlist: template.max_waitlist ?? 5,
+        is_active: template.is_active ?? true,
+        booking_opens_hours: template.booking_opens_hours ?? 168,
+        booking_closes_minutes: template.booking_closes_minutes ?? 60,
+        cancellation_deadline_hours: template.cancellation_deadline_hours ?? 2,
       })
     } else {
       form.reset({

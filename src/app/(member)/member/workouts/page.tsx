@@ -181,7 +181,7 @@ function RoutineCard({ routine }: RoutineCardProps) {
               )}
             </div>
             <Badge variant="secondary" className="shrink-0">
-              {workoutTypeLabels[routine.workout_type] || routine.workout_type}
+              {routine.workout_type ? (workoutTypeLabels[routine.workout_type] || routine.workout_type) : 'Sin tipo'}
             </Badge>
           </div>
         </CardHeader>
