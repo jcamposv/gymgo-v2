@@ -10,6 +10,7 @@ import {
   type GenerateClassesParams,
 } from '@/schemas/template.schema'
 import type { Tables, TablesInsert } from '@/types/database.types'
+import { sendScheduleGeneratedNotification } from '@/lib/firebase/notifications'
 
 export type ActionState = {
   success: boolean
@@ -630,6 +631,24 @@ export async function generateClassesFromTemplates(params: GenerateClassesParams
 
   revalidatePath('/dashboard/classes')
   revalidatePath('/dashboard/templates')
+
+  // Send push notification to gym members (fire and forget)
+  if (classesCreated > 0) {
+    const periodLabels: Record<string, string> = {
+      week: 'esta semana',
+      two_weeks: 'las proximas 2 semanas',
+      month: 'este mes',
+    }
+    const periodLabel = periodLabels[validated.data.period] || 'los proximos dias'
+
+    sendScheduleGeneratedNotification({
+      gymId: profile.organization_id,
+      classesCreated,
+      periodLabel,
+    }).catch((err) => {
+      console.error('[Template Action] Failed to send schedule notification:', err)
+    })
+  }
 
   return {
     success: true,

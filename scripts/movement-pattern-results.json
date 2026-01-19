@@ -1,0 +1,1304 @@
+[
+  {
+    "exerciseId": "aea2a6ca-72c2-428c-92df-abd1d3c307cd",
+    "name": "Ab wheel rollout",
+    "suggestedPattern": "core",
+    "confidence": 1,
+    "reasoning": "Ab wheel rollout targets core muscles for stabilization and flexion."
+  },
+  {
+    "exerciseId": "60146784-4bc8-41a3-8b89-15695f334483",
+    "name": "Abduccion de cadera",
+    "suggestedPattern": "hinge",
+    "confidence": 0.5,
+    "reasoning": "Fallback: guessed from muscle groups"
+  },
+  {
+    "exerciseId": "04a7ad9f-1a9d-4e17-a720-b312b85fc264",
+    "name": "Aduccion de cadera",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Targeting hip flexors with machine isolation exercise."
+  },
+  {
+    "exerciseId": "0f3f3304-e13a-40ea-a8cc-69ee2a05d13e",
+    "name": "Aperturas con mancuernas",
+    "suggestedPattern": "horizontal_push",
+    "confidence": 1,
+    "reasoning": "Isolation exercise for chest involving horizontal pushing movement."
+  },
+  {
+    "exerciseId": "34ae4e55-8e04-4382-b07d-822b16775b7e",
+    "name": "Aperturas en polea",
+    "suggestedPattern": "horizontal_push",
+    "confidence": 0.9,
+    "reasoning": "Chest exercise involving pushing away from body horizontally."
+  },
+  {
+    "exerciseId": "40c005da-e1af-47a0-b61c-1c64feb37fe3",
+    "name": "Aperturas inclinadas",
+    "suggestedPattern": "horizontal_push",
+    "confidence": 1,
+    "reasoning": "Isolation exercise for upper chest using dumbbells on bench."
+  },
+  {
+    "exerciseId": "8d357f88-db9d-40cb-8119-2d9c571edd78",
+    "name": "Assault bike",
+    "suggestedPattern": "vertical_push",
+    "confidence": 0.5,
+    "reasoning": "Fallback: guessed from muscle groups"
+  },
+  {
+    "exerciseId": "5f728123-de30-40a0-a3d5-8f04081376f4",
+    "name": "Battle ropes",
+    "suggestedPattern": "carry",
+    "confidence": 1,
+    "reasoning": "Battle ropes involve loaded locomotion with rope movement."
+  },
+  {
+    "exerciseId": "ac3bba5f-2390-41f4-b994-9d0b1062c048",
+    "name": "Bicycle crunch",
+    "suggestedPattern": "rotation",
+    "confidence": 1,
+    "reasoning": "Dynamic oblique rotation exercise for core muscles."
+  },
+  {
+    "exerciseId": "e41a4405-0304-44e3-ab87-943abe79a937",
+    "name": "Box jump",
+    "suggestedPattern": "vertical_push",
+    "confidence": 0.8,
+    "reasoning": "Explosive push off ground vertically onto box."
+  },
+  {
+    "exerciseId": "9286768c-1842-49eb-ba95-a35a921011e1",
+    "name": "Bradford press",
+    "suggestedPattern": "vertical_push",
+    "confidence": 1,
+    "reasoning": "Overhead pressing movement targeting shoulder muscles with barbell."
+  },
+  {
+    "exerciseId": "d78aba68-bf9a-44ac-b5c5-f5ffca3216ab",
+    "name": "Burpee",
+    "suggestedPattern": "isolation",
+    "confidence": 0.5,
+    "reasoning": "Fallback: guessed from muscle groups"
+  },
+  {
+    "exerciseId": "5cc66258-7a40-4708-9a73-016ee5d13d1c",
+    "name": "Caminata de granjero",
+    "suggestedPattern": "carry",
+    "confidence": 1,
+    "reasoning": "Involves carrying weights while walking for functional training."
+  },
+  {
+    "exerciseId": "c5eee069-779d-48b0-b2fc-5ab4c4debae5",
+    "name": "Clean",
+    "suggestedPattern": "hinge",
+    "confidence": 1,
+    "reasoning": "Full-body explosive movement involving hip hinge pattern."
+  },
+  {
+    "exerciseId": "b26e83a2-205d-4571-8e3a-13a914c102e9",
+    "name": "Clean and jerk",
+    "suggestedPattern": "vertical_push",
+    "confidence": 1,
+    "reasoning": "Combination of clean and jerk involves pushing overhead."
+  },
+  {
+    "exerciseId": "d3058e79-f620-4a41-8509-9da47302cd2e",
+    "name": "Clean con kettlebell",
+    "suggestedPattern": "hinge",
+    "confidence": 1,
+    "reasoning": "Hip-dominant movement pattern involving kettlebell clean"
+  },
+  {
+    "exerciseId": "e8dfd018-8df4-4d4d-84da-3b8cd014fba5",
+    "name": "Copenhagen plank",
+    "suggestedPattern": "core",
+    "confidence": 1,
+    "reasoning": "Emphasizes obliques and hip flexors in core stabilization."
+  },
+  {
+    "exerciseId": "5f9844dd-7a98-45b4-a89a-86a2330c8ffb",
+    "name": "Cruces en polea baja",
+    "suggestedPattern": "horizontal_push",
+    "confidence": 0.9,
+    "reasoning": "Emphasizes upper chest through horizontal pushing movement."
+  },
+  {
+    "exerciseId": "f3b91f20-1358-491b-85cb-ff310151a51a",
+    "name": "Crunch",
+    "suggestedPattern": "core",
+    "confidence": 1,
+    "reasoning": "Crunches primarily target the abdominal muscles for core strength."
+  },
+  {
+    "exerciseId": "5ded5dd3-54aa-4550-bb6c-463ac0a99c79",
+    "name": "Crunch en maquina",
+    "suggestedPattern": "core",
+    "confidence": 1,
+    "reasoning": "Crunch exercise targeting abdominal muscles on a machine."
+  },
+  {
+    "exerciseId": "20eb7a6c-fb01-4760-bf8d-edd0cbaf93ae",
+    "name": "Crunch en polea",
+    "suggestedPattern": "core",
+    "confidence": 1,
+    "reasoning": "Crunch exercise primarily targets the abdominal muscles."
+  },
+  {
+    "exerciseId": "fee85797-fe51-477b-b7a9-0222aa5c6b39",
+    "name": "Crunch inverso",
+    "suggestedPattern": "core",
+    "confidence": 1,
+    "reasoning": "Focus on lower abs, falls under core movement pattern"
+  },
+  {
+    "exerciseId": "edcf1db4-958f-440d-b241-a06c93be58f4",
+    "name": "Cuban press",
+    "suggestedPattern": "vertical_push",
+    "confidence": 1,
+    "reasoning": "Shoulder exercise involving pushing weight overhead."
+  },
+  {
+    "exerciseId": "aceddfd3-8c87-4100-9ba5-56bcc39493c4",
+    "name": "Curl 21s",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Focused on single-joint bicep movement for muscle isolation."
+  },
+  {
+    "exerciseId": "cd10025b-52a1-49ae-b07d-b07ea08c3fe6",
+    "name": "Curl araña",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Single-joint exercise targeting biceps with dumbbell curl"
+  },
+  {
+    "exerciseId": "e1a796b6-1dde-465a-909e-62aaf5184a4a",
+    "name": "Curl con barra",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Single-joint exercise targeting biceps specifically."
+  },
+  {
+    "exerciseId": "fd6f9b33-3be8-4211-8db2-df072c666a04",
+    "name": "Curl con cuerda",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Single-joint exercise targeting biceps with cable equipment"
+  },
+  {
+    "exerciseId": "8ca0aabb-0eb0-48f9-8da0-baf0b527b64d",
+    "name": "Curl con mancuernas",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Single-joint exercise targeting biceps with dumbbells."
+  },
+  {
+    "exerciseId": "3a805623-4169-4626-ad8a-85a79b219514",
+    "name": "Curl concentrado",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Single-joint exercise targeting biceps for isolation and hypertrophy."
+  },
+  {
+    "exerciseId": "b114be01-975e-4593-86d0-d012d2e6ea4c",
+    "name": "Curl de muneca",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Forearm curl exercise targets wrist flexors in isolation."
+  },
+  {
+    "exerciseId": "349f62b5-9166-44d6-9ab1-745258678cf1",
+    "name": "Curl de muneca inverso",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Forearm isolation exercise targeting extensors"
+  },
+  {
+    "exerciseId": "eaed7864-f9d6-4156-86d4-9508d9a725ad",
+    "name": "Curl de piernas acostado",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Single-joint exercise targeting hamstrings with machine equipment."
+  },
+  {
+    "exerciseId": "f61d3452-c46a-42c5-8133-1db12d39cf50",
+    "name": "Curl de piernas sentado",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Single-joint hamstring exercise on machine"
+  },
+  {
+    "exerciseId": "c490f708-8251-4339-ab8f-e13d6ff4f207",
+    "name": "Curl en polea",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Single-joint exercise targeting biceps with cable equipment"
+  },
+  {
+    "exerciseId": "46590f63-4a36-4afb-8b21-0b0efd049d53",
+    "name": "Curl en polea alta",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Single-joint bicep exercise targeting biceps muscle group."
+  },
+  {
+    "exerciseId": "8fe9fe8c-9ead-45bc-8a18-b09fb63bdd6e",
+    "name": "Curl inclinado",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Focused on single-joint bicep movement with dumbbell"
+  },
+  {
+    "exerciseId": "95b8e393-6aab-4d37-a4b5-462c484eb9d1",
+    "name": "Curl inverso",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Focuses on biceps and forearms with single-joint movement."
+  },
+  {
+    "exerciseId": "3b5ab5cb-2854-4fa0-9d6d-7b04bdf69493",
+    "name": "Curl martillo",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Focuses on single-joint movement of biceps and forearms."
+  },
+  {
+    "exerciseId": "2b24d5ea-c46c-4759-ba1d-846a0f0e6a78",
+    "name": "Curl nordico",
+    "suggestedPattern": "hinge",
+    "confidence": 1,
+    "reasoning": "Eccentric hamstring exercise focusing on hip-dominant movement."
+  },
+  {
+    "exerciseId": "9f19869f-79e3-4582-b9ed-e9c87065fa66",
+    "name": "Curl predicador",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Focuses on single-joint movement of the biceps muscle."
+  },
+  {
+    "exerciseId": "40813bbc-61a9-4c66-a4a5-09556ac55267",
+    "name": "Curl Scott",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Single-joint exercise targeting biceps with barbell curl"
+  },
+  {
+    "exerciseId": "34a94477-007d-4a1b-aa68-2c1214cd33ab",
+    "name": "Curl Zottman",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Targets biceps and forearms with single-joint movement."
+  },
+  {
+    "exerciseId": "094afc08-2c3e-4802-958c-bf43c3a5be63",
+    "name": "Dead bug",
+    "suggestedPattern": "core",
+    "confidence": 1,
+    "reasoning": "Core stabilization exercise targeting abs and lower back."
+  },
+  {
+    "exerciseId": "e73b39d9-446b-4542-a254-d307b2547e71",
+    "name": "Deficit deadlift",
+    "suggestedPattern": "hinge",
+    "confidence": 1,
+    "reasoning": "Deadlift movement pattern with increased range of motion."
+  },
+  {
+    "exerciseId": "e5e512be-1d3e-4f08-985c-8b1135ca52f2",
+    "name": "Devil press",
+    "suggestedPattern": "vertical_push",
+    "confidence": 0.9,
+    "reasoning": "Combines burpee (squat) with dumbbell snatch (vertical push)"
+  },
+  {
+    "exerciseId": "1cb00b31-6b32-4303-abcd-3b14f3db7a40",
+    "name": "Diamond push-ups",
+    "suggestedPattern": "horizontal_push",
+    "confidence": 0.9,
+    "reasoning": "Emphasizes triceps and chest in a horizontal pushing motion."
+  },
+  {
+    "exerciseId": "bb67e460-1a00-46f1-9ce0-636dce435cc7",
+    "name": "Dominadas",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Exercise involves pulling from above using a pull-up bar."
+  },
+  {
+    "exerciseId": "115929dc-a6db-4789-b0d0-00dcf028a84c",
+    "name": "Dominadas asistidas",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Pulling from above on assisted pull-up machine for beginners."
+  },
+  {
+    "exerciseId": "52d332f2-fdf0-446c-91a0-a6f58b95c707",
+    "name": "Dominadas con agarre supino",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 0.9,
+    "reasoning": "Pulling from above using back and biceps on pull-up bar"
+  },
+  {
+    "exerciseId": "8613c656-3c28-4798-8ed7-45e8eb414c8c",
+    "name": "Double under",
+    "suggestedPattern": "vertical_push",
+    "confidence": 0.5,
+    "reasoning": "Fallback: guessed from muscle groups"
+  },
+  {
+    "exerciseId": "34a557c7-15d3-4bb2-b967-d693b75b970e",
+    "name": "Drag curl",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Single-joint bicep exercise sliding bar along body"
+  },
+  {
+    "exerciseId": "c75101d4-b496-4775-bdec-d3f110974997",
+    "name": "Dragon flag",
+    "suggestedPattern": "core",
+    "confidence": 1,
+    "reasoning": "Advanced core stabilization exercise targeting abs and lower back."
+  },
+  {
+    "exerciseId": "c49b063e-3960-4cd7-9b09-1077126f39c4",
+    "name": "Elevacion de piernas colgado",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Exercise involves pulling legs up while hanging from bar."
+  },
+  {
+    "exerciseId": "ee6155b7-f96f-4707-8d92-a25efccb807c",
+    "name": "Elevacion de rodillas colgado",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Exercise involves pulling the knees up while hanging from bar."
+  },
+  {
+    "exerciseId": "3371164c-eec8-4104-a024-edad68110720",
+    "name": "Elevacion de talones de pie",
+    "suggestedPattern": "vertical_push",
+    "confidence": 0.9,
+    "reasoning": "Machine exercise targeting calves by pushing weight vertically."
+  },
+  {
+    "exerciseId": "cccf767a-69ca-45a6-ae7c-6202c6d1a4ec",
+    "name": "Elevacion de talones sentado",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Focused calf muscle isolation exercise with machine equipment."
+  },
+  {
+    "exerciseId": "82aba9ab-8a6b-47bc-b021-3c6a6aaeda7e",
+    "name": "Elevacion lateral inclinado",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Shoulder abduction with dumbbells in lateral plane"
+  },
+  {
+    "exerciseId": "5733b997-94a0-4678-93c6-9f072baf2a78",
+    "name": "Elevaciones de cadera",
+    "suggestedPattern": "hinge",
+    "confidence": 0.5,
+    "reasoning": "Fallback: guessed from muscle groups"
+  },
+  {
+    "exerciseId": "c24e7008-e685-4805-be32-396930ff88e5",
+    "name": "Elevaciones frontales",
+    "suggestedPattern": "vertical_push",
+    "confidence": 1,
+    "reasoning": "Shoulder isolation exercise involving overhead pushing movement."
+  },
+  {
+    "exerciseId": "f34b52d2-0985-4942-aff4-76df8e379107",
+    "name": "Elevaciones laterales",
+    "suggestedPattern": "vertical_push",
+    "confidence": 1,
+    "reasoning": "Isolation exercise for lateral deltoids involving overhead pushing."
+  },
+  {
+    "exerciseId": "1cadd75e-c4e0-40d1-848b-8c1fc1be25b9",
+    "name": "Elevaciones laterales en polea",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Lateral shoulder pull from above using cable equipment."
+  },
+  {
+    "exerciseId": "ee53d0b0-e0b1-456d-b6d1-94eb1c368bec",
+    "name": "Encogimiento de hombros en trampa",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Barbell shrugs involve pulling weight vertically towards shoulders."
+  },
+  {
+    "exerciseId": "9542e8ac-1e8d-46d8-a57b-28d5ec101e88",
+    "name": "Encogimientos con barra",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Barbell shrugs target the upper back in a vertical pull."
+  },
+  {
+    "exerciseId": "a37fb848-af41-4ab6-91cc-0399c9546dd7",
+    "name": "Encogimientos con mancuernas",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Exercise involves pulling movement pattern for the back muscles."
+  },
+  {
+    "exerciseId": "8c7470c5-f440-41fd-968a-7fb34244c1cf",
+    "name": "Extension con barra EZ",
+    "suggestedPattern": "vertical_push",
+    "confidence": 0.9,
+    "reasoning": "Extension movement overhead targeting triceps with EZ bar"
+  },
+  {
+    "exerciseId": "5786c7be-4540-4667-ae60-8b9f0c1f9e49",
+    "name": "Extension con cuerda",
+    "suggestedPattern": "vertical_push",
+    "confidence": 0.9,
+    "reasoning": "Triceps extension with cable involves pushing overhead vertically."
+  },
+  {
+    "exerciseId": "b888b75d-174f-4418-9fd5-6e0fd27d0ba1",
+    "name": "Extension con mancuerna acostado",
+    "suggestedPattern": "vertical_push",
+    "confidence": 0.9,
+    "reasoning": "Triceps extension movement pattern pushing weight overhead unilaterally."
+  },
+  {
+    "exerciseId": "425cb5e2-cf9d-4841-a141-8ace2a90b707",
+    "name": "Extension de piernas",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Single-joint exercise targeting quadriceps with machine isolation."
+  },
+  {
+    "exerciseId": "32c910ec-5339-4380-b189-0c74bfe1823b",
+    "name": "Extension de triceps en maquina",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Single-joint triceps extension exercise on machine."
+  },
+  {
+    "exerciseId": "29005f87-c709-4fcc-bac1-9ea29c61b66b",
+    "name": "Extension de triceps en polea",
+    "suggestedPattern": "vertical_push",
+    "confidence": 0.8,
+    "reasoning": "Triceps extension movement pattern pushing overhead with cable equipment."
+  },
+  {
+    "exerciseId": "599b4f0b-57bc-4fc0-b831-4ed272f3e702",
+    "name": "Extension en polea sobre cabeza",
+    "suggestedPattern": "vertical_push",
+    "confidence": 1,
+    "reasoning": "Overhead extension movement pattern targeting triceps with cable equipment."
+  },
+  {
+    "exerciseId": "7fdb6bad-2f34-4ab7-bbd6-446f12fb2f09",
+    "name": "Extension sobre cabeza",
+    "suggestedPattern": "vertical_push",
+    "confidence": 1,
+    "reasoning": "Overhead extension primarily targets triceps in vertical pushing motion."
+  },
+  {
+    "exerciseId": "59acdf9a-c523-407b-9afa-8183a91d3415",
+    "name": "Extension unilateral en polea",
+    "suggestedPattern": "vertical_push",
+    "confidence": 1,
+    "reasoning": "Unilateral tricep extension overhead with cable equipment."
+  },
+  {
+    "exerciseId": "5917709c-7e70-4185-b3ad-114a1fe3b245",
+    "name": "Face pull",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Exercise involves pulling movement from above using cable equipment."
+  },
+  {
+    "exerciseId": "479dfe2d-606d-4092-9964-3e098cb07684",
+    "name": "Face pull con rotacion",
+    "suggestedPattern": "horizontal_pull",
+    "confidence": 1,
+    "reasoning": "Pulling movement targeting shoulders and back with cable equipment."
+  },
+  {
+    "exerciseId": "94bbf103-c83b-4bdd-99b8-8125d4a792a7",
+    "name": "Flexiones con pies elevados",
+    "suggestedPattern": "horizontal_push",
+    "confidence": 0.9,
+    "reasoning": "Pushing away from body horizontally with emphasis on chest"
+  },
+  {
+    "exerciseId": "40fb7583-c2e1-488e-af97-c29ad85e1031",
+    "name": "Floor press",
+    "suggestedPattern": "horizontal_push",
+    "confidence": 0.9,
+    "reasoning": "Pushing horizontally with limited range, emphasizing triceps"
+  },
+  {
+    "exerciseId": "53c4fe93-ff7b-4adc-8808-6e1f8cfc15b3",
+    "name": "Fondos en banco",
+    "suggestedPattern": "vertical_push",
+    "confidence": 0.8,
+    "reasoning": "Triceps and chest push exercise overhead with body weight"
+  },
+  {
+    "exerciseId": "11c8fe47-3e61-4a19-bc20-e755e050faf8",
+    "name": "Fondos en paralelas",
+    "suggestedPattern": "vertical_push",
+    "confidence": 0.9,
+    "reasoning": "Involves pushing overhead primarily targeting chest, triceps, shoulders."
+  },
+  {
+    "exerciseId": "77c06fd0-1895-4e31-8dd6-19cb685142ae",
+    "name": "Glute ham raise",
+    "suggestedPattern": "hinge",
+    "confidence": 1,
+    "reasoning": "Targets hamstrings and glutes through hip extension"
+  },
+  {
+    "exerciseId": "cabac3c5-3687-4026-b311-055bec495a9b",
+    "name": "Goblet reverse lunge",
+    "suggestedPattern": "lunge",
+    "confidence": 1,
+    "reasoning": "Unilateral lower body movement with knee-dominant focus."
+  },
+  {
+    "exerciseId": "f8aca06b-f61a-4034-b61e-69ae5b223308",
+    "name": "Goblet squat clean",
+    "suggestedPattern": "squat",
+    "confidence": 1,
+    "reasoning": "Knee-dominant lower body movement with kettlebell clean"
+  },
+  {
+    "exerciseId": "ea0e95a4-3f46-4e4e-b4b8-db69f276ca60",
+    "name": "Good morning",
+    "suggestedPattern": "hinge",
+    "confidence": 1,
+    "reasoning": "Hip-dominant movement pattern targeting lower back, hamstrings, glutes"
+  },
+  {
+    "exerciseId": "53fb678f-213b-4f81-aaad-cac283106e98",
+    "name": "Hack squat",
+    "suggestedPattern": "squat",
+    "confidence": 1,
+    "reasoning": "Knee-dominant lower body exercise targeting quadriceps and glutes."
+  },
+  {
+    "exerciseId": "1272bc70-ace4-4735-be0d-a5b8c246bbd5",
+    "name": "Handstand push-ups",
+    "suggestedPattern": "vertical_push",
+    "confidence": 1,
+    "reasoning": "Pushing overhead with bodyweight, targeting shoulders and triceps."
+  },
+  {
+    "exerciseId": "a1a769ca-d708-4545-863e-0f16730bce2a",
+    "name": "Handstand walk",
+    "suggestedPattern": "vertical_push",
+    "confidence": 0.9,
+    "reasoning": "Involves pushing body weight overhead in a vertical direction."
+  },
+  {
+    "exerciseId": "f1e6927e-001a-46a2-bcde-7ed0eb4a1606",
+    "name": "Hang clean",
+    "suggestedPattern": "hinge",
+    "confidence": 1,
+    "reasoning": "Explosive hip extension in Olympic lift from hang position."
+  },
+  {
+    "exerciseId": "efe4e068-2695-435b-ba2a-5e4b93e07be4",
+    "name": "Hip thrust",
+    "suggestedPattern": "hinge",
+    "confidence": 1,
+    "reasoning": "Hip-dominant movement targeting glutes and hamstrings."
+  },
+  {
+    "exerciseId": "44681bfd-f0f5-4191-bb11-2c1b8f9e81bc",
+    "name": "Hiperextensiones",
+    "suggestedPattern": "hinge",
+    "confidence": 1,
+    "reasoning": "Strengthens lower back, glutes, and hamstrings through hip extension"
+  },
+  {
+    "exerciseId": "20c56a04-6818-40f4-830e-3141ac55d30e",
+    "name": "Hollow body hold",
+    "suggestedPattern": "core",
+    "confidence": 1,
+    "reasoning": "Exercise specifically targets core muscles for stabilization and strength."
+  },
+  {
+    "exerciseId": "eb9531ae-49be-4fd5-8516-2796e98192d5",
+    "name": "Jalon al pecho",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Pulling movement pattern targeting back and biceps."
+  },
+  {
+    "exerciseId": "2fc33c04-d6df-4f09-8b19-14dddb8b12a1",
+    "name": "Jalon con agarre cerrado",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Exercise involves pulling from above using a cable machine."
+  },
+  {
+    "exerciseId": "22818ab8-1528-41b6-9f90-4953b66f1186",
+    "name": "Jalon tras nuca",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Exercise involves pulling from above using a cable machine."
+  },
+  {
+    "exerciseId": "4eadd6c6-1e31-47ff-bc49-d01724c26ed1",
+    "name": "JM Press",
+    "suggestedPattern": "horizontal_push",
+    "confidence": 0.9,
+    "reasoning": "Combines close grip press and tricep extension horizontally."
+  },
+  {
+    "exerciseId": "d5b8ec06-7ae4-4d6f-b530-b3f0eb0f1126",
+    "name": "Kettlebell swing",
+    "suggestedPattern": "hinge",
+    "confidence": 1,
+    "reasoning": "Hip-dominant movement pattern involving explosive hip extension."
+  },
+  {
+    "exerciseId": "b5861f73-8ab0-4a63-beb9-ec72264782bb",
+    "name": "Kipping pull-up",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Pulling movement pattern involving the back and biceps."
+  },
+  {
+    "exerciseId": "b53ae766-eed2-47ec-a895-423be02dd468",
+    "name": "L-sit",
+    "suggestedPattern": "core",
+    "confidence": 1,
+    "reasoning": "L-sit primarily engages the core muscles for stabilization."
+  },
+  {
+    "exerciseId": "7878da8b-2dfe-4826-a18e-7ede16e3d9d2",
+    "name": "Landmine lateral raise",
+    "suggestedPattern": "vertical_push",
+    "confidence": 1,
+    "reasoning": "Shoulder exercise involving pushing weight overhead vertically."
+  },
+  {
+    "exerciseId": "6fc9286c-9604-4fe1-aa9e-3b4edccc27cd",
+    "name": "Landmine press",
+    "suggestedPattern": "vertical_push",
+    "confidence": 1,
+    "reasoning": "Unilateral overhead press with barbell"
+  },
+  {
+    "exerciseId": "06d271b3-5180-44c6-b58e-587a2a69ea1e",
+    "name": "Lu raises",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Shoulder exercise involving pulling motion from above"
+  },
+  {
+    "exerciseId": "4c341908-b102-48ed-b227-cd76633d6686",
+    "name": "Manmakers",
+    "suggestedPattern": "isolation",
+    "confidence": 0.5,
+    "reasoning": "Fallback: guessed from muscle groups"
+  },
+  {
+    "exerciseId": "b8fb36b3-6ffc-4f03-8d51-8ec608a7d61d",
+    "name": "Mountain climbers",
+    "suggestedPattern": "core",
+    "confidence": 1,
+    "reasoning": "Cardio exercise engaging abs and hip flexors for core stability."
+  },
+  {
+    "exerciseId": "e3701a45-6ca8-4e8f-8b17-8a326790615b",
+    "name": "Muscle-up",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Pulling from above the body on a pull-up bar"
+  },
+  {
+    "exerciseId": "a60573f3-ce64-446a-b29f-1387031b225d",
+    "name": "Pajaros",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Targets posterior deltoids and back muscles through vertical pulling."
+  },
+  {
+    "exerciseId": "9d55f048-69f8-49ad-8ee0-f715867903c3",
+    "name": "Pajaros en maquina",
+    "suggestedPattern": "horizontal_pull",
+    "confidence": 1,
+    "reasoning": "Machine exercise targeting back muscles with horizontal pulling motion."
+  },
+  {
+    "exerciseId": "1c639b4b-4cee-43ee-af06-f3f678791638",
+    "name": "Pallof press",
+    "suggestedPattern": "rotation",
+    "confidence": 1,
+    "reasoning": "Anti-rotation core exercise targeting abs and obliques."
+  },
+  {
+    "exerciseId": "75169e0c-9050-4354-a5b8-9d790480bbd2",
+    "name": "Patada de triceps",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Single-joint exercise targeting triceps for isolation and strength."
+  },
+  {
+    "exerciseId": "02cb7548-42fa-4746-81d4-1d98a04c7695",
+    "name": "Pec deck",
+    "suggestedPattern": "horizontal_push",
+    "confidence": 1,
+    "reasoning": "Machine exercise for chest pushing away horizontally."
+  },
+  {
+    "exerciseId": "6d912cdd-b822-4fff-bc1c-1ffec73c5a37",
+    "name": "Pendulum squat",
+    "suggestedPattern": "squat",
+    "confidence": 1,
+    "reasoning": "Knee-dominant lower body exercise targeting quadriceps and glutes."
+  },
+  {
+    "exerciseId": "61306bc5-541d-40f5-9795-938be593d089",
+    "name": "Peso muerto",
+    "suggestedPattern": "hinge",
+    "confidence": 1,
+    "reasoning": "Hip-dominant movement pattern involving back, glutes, and hamstrings."
+  },
+  {
+    "exerciseId": "d9adb209-000b-4f5c-986b-2a8ab196a376",
+    "name": "Peso muerto con piernas rigidas",
+    "suggestedPattern": "hinge",
+    "confidence": 1,
+    "reasoning": "Emphasis on hamstrings and glutes in hip-dominant movement."
+  },
+  {
+    "exerciseId": "5900d181-c088-4c4e-9031-83010664ac8d",
+    "name": "Peso muerto rumano",
+    "suggestedPattern": "hinge",
+    "confidence": 1,
+    "reasoning": "Hip-dominant movement pattern targeting hamstrings and glutes."
+  },
+  {
+    "exerciseId": "578667a8-3f4e-4520-b224-1937785be84f",
+    "name": "Peso muerto sumo",
+    "suggestedPattern": "hinge",
+    "confidence": 1,
+    "reasoning": "Hip-dominant movement pattern involving wide stance deadlift variation."
+  },
+  {
+    "exerciseId": "99cda563-017d-4f87-aafa-36b292ba108a",
+    "name": "Plancha",
+    "suggestedPattern": "core",
+    "confidence": 1,
+    "reasoning": "Isometric core stabilization exercise"
+  },
+  {
+    "exerciseId": "e8b6fac8-189a-491c-8a51-333f47f29338",
+    "name": "Plancha lateral",
+    "suggestedPattern": "core",
+    "confidence": 1,
+    "reasoning": "Isometric oblique and ab stabilization exercise for core muscles."
+  },
+  {
+    "exerciseId": "506a4169-a107-4a34-a3e7-e96fcc918c13",
+    "name": "Prensa de pantorrillas",
+    "suggestedPattern": "isolation",
+    "confidence": 0.5,
+    "reasoning": "Fallback: guessed from muscle groups"
+  },
+  {
+    "exerciseId": "23ddf777-1bd3-49b8-9a4a-61fa29a0398a",
+    "name": "Prensa de piernas",
+    "suggestedPattern": "squat",
+    "confidence": 1,
+    "reasoning": "Lower body knee-dominant exercise targeting quadriceps, glutes, hamstrings"
+  },
+  {
+    "exerciseId": "b856f5fa-72f6-4dc8-9240-e67f17ad9c6c",
+    "name": "Press Arnold",
+    "suggestedPattern": "vertical_push",
+    "confidence": 1,
+    "reasoning": "Exercise involves pressing overhead, targeting shoulders and triceps."
+  },
+  {
+    "exerciseId": "e532d225-1730-44b4-b47c-387767a54b97",
+    "name": "Press Banca Custom",
+    "suggestedPattern": "horizontal_push",
+    "confidence": 1,
+    "reasoning": "Pressing away from body horizontally with barbell and bench."
+  },
+  {
+    "exerciseId": "fc00c763-bbd9-4d0e-a1e1-a125e06f24fc",
+    "name": "Press cerrado en maquina Smith",
+    "suggestedPattern": "horizontal_push",
+    "confidence": 1,
+    "reasoning": "Pressing away from body horizontally on a guided machine"
+  },
+  {
+    "exerciseId": "a512954e-46d8-43a6-998e-2c0e3ddfd626",
+    "name": "Press con agarre cerrado",
+    "suggestedPattern": "horizontal_push",
+    "confidence": 0.9,
+    "reasoning": "Emphasizes triceps and chest with horizontal pushing movement."
+  },
+  {
+    "exerciseId": "6e4a285f-62bc-4646-b04b-06899b31b9ee",
+    "name": "Press con kettlebell",
+    "suggestedPattern": "vertical_push",
+    "confidence": 1,
+    "reasoning": "Shoulder press movement pattern with kettlebell overhead"
+  },
+  {
+    "exerciseId": "0b6d448f-a975-4bc7-8218-b5bd0a25f3f3",
+    "name": "Press con mancuernas",
+    "suggestedPattern": "vertical_push",
+    "confidence": 1,
+    "reasoning": "Pressing overhead with dumbbells targets chest, triceps, shoulders."
+  },
+  {
+    "exerciseId": "096359b5-a9d4-491f-83c6-af2edb7dcbce",
+    "name": "Press con mancuernas sentado",
+    "suggestedPattern": "vertical_push",
+    "confidence": 1,
+    "reasoning": "Shoulder press exercise pushing weight overhead vertically."
+  },
+  {
+    "exerciseId": "07b0eea6-ddb2-4437-8cec-f86e60c51767",
+    "name": "Press de banca con barra",
+    "suggestedPattern": "horizontal_push",
+    "confidence": 1,
+    "reasoning": "Barbell bench press involves pushing horizontally away from body."
+  },
+  {
+    "exerciseId": "31d90943-8970-43d7-ac4e-d73e7677f2ec",
+    "name": "Press de banca declinado",
+    "suggestedPattern": "horizontal_push",
+    "confidence": 0.9,
+    "reasoning": "Barbell press emphasizing lower chest, triceps; pushing horizontally."
+  },
+  {
+    "exerciseId": "e0738657-d135-4e1f-ab50-21ec342abc1c",
+    "name": "Press de banca inclinado",
+    "suggestedPattern": "horizontal_push",
+    "confidence": 0.9,
+    "reasoning": "Pressing away from body horizontally with emphasis on upper chest."
+  },
+  {
+    "exerciseId": "2d1b2c3d-b210-4b52-991b-e61a44bfed66",
+    "name": "Press en maquina",
+    "suggestedPattern": "horizontal_push",
+    "confidence": 1,
+    "reasoning": "Chest press movement on a machine, pushing horizontally away"
+  },
+  {
+    "exerciseId": "ba9b23d2-064c-45bb-a138-d5e0ec840d31",
+    "name": "Press en maquina de hombros",
+    "suggestedPattern": "vertical_push",
+    "confidence": 1,
+    "reasoning": "Shoulder press movement pattern pushing weight overhead."
+  },
+  {
+    "exerciseId": "9bd91c09-732b-4e94-8389-586ee1c65469",
+    "name": "Press frances",
+    "suggestedPattern": "vertical_push",
+    "confidence": 1,
+    "reasoning": "Triceps extension performed in overhead position with barbell"
+  },
+  {
+    "exerciseId": "36d71f68-d440-43ad-9c46-45a88d299fed",
+    "name": "Press inclinado con mancuernas",
+    "suggestedPattern": "vertical_push",
+    "confidence": 0.9,
+    "reasoning": "Overhead pressing movement targeting chest, shoulders, triceps."
+  },
+  {
+    "exerciseId": "0ea7c2bf-b5d7-4e16-bc5f-b09bbfdd9627",
+    "name": "Press militar",
+    "suggestedPattern": "vertical_push",
+    "confidence": 1,
+    "reasoning": "Overhead press primarily targets shoulders and triceps."
+  },
+  {
+    "exerciseId": "288b4ba8-32f6-444b-b3b8-3d9b33cae791",
+    "name": "Press Svend",
+    "suggestedPattern": "horizontal_push",
+    "confidence": 1,
+    "reasoning": "Isometric chest contraction in a horizontal pushing motion."
+  },
+  {
+    "exerciseId": "f830e7cf-5ca4-4049-b025-7f1229a8e593",
+    "name": "Press Tate",
+    "suggestedPattern": "horizontal_push",
+    "confidence": 1,
+    "reasoning": "Triceps extension in a horizontal pushing motion"
+  },
+  {
+    "exerciseId": "9c802be3-1311-410e-ba01-f047a76fca7a",
+    "name": "Press tras nuca",
+    "suggestedPattern": "vertical_push",
+    "confidence": 1,
+    "reasoning": "Overhead press movement targeting shoulders and triceps."
+  },
+  {
+    "exerciseId": "6ac31b9e-fa46-40ee-9ea0-fdf9c21628e7",
+    "name": "Puente de gluteos",
+    "suggestedPattern": "hinge",
+    "confidence": 1,
+    "reasoning": "Hip-dominant movement targeting glutes and hamstrings."
+  },
+  {
+    "exerciseId": "b2848cfe-a701-4a43-bce7-b2b6351af2e9",
+    "name": "Pullover con mancuerna",
+    "suggestedPattern": "horizontal_pull",
+    "confidence": 1,
+    "reasoning": "Involves pulling a weight towards the body horizontally."
+  },
+  {
+    "exerciseId": "68b221fd-f20f-4470-9d51-2161ecd498d7",
+    "name": "Pullover en polea",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Pulling movement from above targeting back muscles."
+  },
+  {
+    "exerciseId": "8a96717c-58ea-457f-987c-f44955cafbc3",
+    "name": "Push jerk",
+    "suggestedPattern": "vertical_push",
+    "confidence": 1,
+    "reasoning": "Overhead movement with barbell, shoulders and triceps primary"
+  },
+  {
+    "exerciseId": "e6f1b23c-afe0-4492-921b-8ac0ead861ca",
+    "name": "Push press",
+    "suggestedPattern": "vertical_push",
+    "confidence": 1,
+    "reasoning": "Overhead pressing movement pattern using legs for momentum."
+  },
+  {
+    "exerciseId": "39d50e74-1a92-4e20-bd06-48fe01097b2c",
+    "name": "Push-ups",
+    "suggestedPattern": "horizontal_push",
+    "confidence": 1,
+    "reasoning": "Pushing away from body horizontally using chest, triceps, shoulders"
+  },
+  {
+    "exerciseId": "f793d4f3-86f3-431a-95ca-b47917f4d2d7",
+    "name": "Push-ups diamante",
+    "suggestedPattern": "horizontal_push",
+    "confidence": 0.9,
+    "reasoning": "Pushing away from body horizontally, emphasizing triceps."
+  },
+  {
+    "exerciseId": "4651662c-9715-4ce5-abc6-4241f0edc1a8",
+    "name": "Rack pull",
+    "suggestedPattern": "hinge",
+    "confidence": 1,
+    "reasoning": "Partial deadlift movement pattern from elevated position"
+  },
+  {
+    "exerciseId": "52fb7a3b-086f-4d00-aae2-3fa0e69b79fb",
+    "name": "Remo al menton",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Exercise involves pulling from above targeting shoulders and back."
+  },
+  {
+    "exerciseId": "5acb9d60-5ebe-4db3-950f-fcaeb9e3bda7",
+    "name": "Remo con agarre ancho",
+    "suggestedPattern": "horizontal_pull",
+    "confidence": 1,
+    "reasoning": "Pulling toward body horizontally, targeting back muscles."
+  },
+  {
+    "exerciseId": "e68f9abf-6b24-4f99-8f95-c9de1597047d",
+    "name": "Remo con barra",
+    "suggestedPattern": "horizontal_pull",
+    "confidence": 1,
+    "reasoning": "Barbell row targets back and biceps with horizontal pulling motion."
+  },
+  {
+    "exerciseId": "d33f0fef-1a69-4ca2-ac54-00393b364397",
+    "name": "Remo con mancuerna",
+    "suggestedPattern": "horizontal_pull",
+    "confidence": 1,
+    "reasoning": "Unilateral back exercise involving pulling towards body horizontally."
+  },
+  {
+    "exerciseId": "c1c866f2-7572-4f61-8794-bcbf02d247c3",
+    "name": "Remo en maquina",
+    "suggestedPattern": "horizontal_pull",
+    "confidence": 1,
+    "reasoning": "Back and biceps involved in pulling motion towards body"
+  },
+  {
+    "exerciseId": "cf01f13f-0728-4502-87dd-44ce1058fba8",
+    "name": "Remo en polea baja",
+    "suggestedPattern": "horizontal_pull",
+    "confidence": 1,
+    "reasoning": "Pulling toward body horizontally engages back and biceps."
+  },
+  {
+    "exerciseId": "0e520efc-9acc-45ae-86c4-33964953e730",
+    "name": "Remo invertido",
+    "suggestedPattern": "horizontal_pull",
+    "confidence": 1,
+    "reasoning": "Pulling toward body horizontally engages back and biceps."
+  },
+  {
+    "exerciseId": "f1872673-ce84-44ff-92c8-951986929286",
+    "name": "Remo Pendlay",
+    "suggestedPattern": "horizontal_pull",
+    "confidence": 1,
+    "reasoning": "Barbell row movement pattern targeting back and biceps."
+  },
+  {
+    "exerciseId": "fee810a7-ce39-4dba-bfe2-d34e8db05b2b",
+    "name": "Remo T-bar",
+    "suggestedPattern": "horizontal_pull",
+    "confidence": 1,
+    "reasoning": "Pulling towards body horizontally with neutral grip"
+  },
+  {
+    "exerciseId": "7cf1b0a7-a277-4c17-b077-2dfbeffdbdb9",
+    "name": "Renegade row",
+    "suggestedPattern": "horizontal_pull",
+    "confidence": 1,
+    "reasoning": "Rowing motion pulling dumbbell towards body horizontally"
+  },
+  {
+    "exerciseId": "f3c6533c-d493-4a43-8462-236a8e5e82be",
+    "name": "Reverse hyper",
+    "suggestedPattern": "hinge",
+    "confidence": 1,
+    "reasoning": "Hip extension movement pattern targeting lower back and glutes"
+  },
+  {
+    "exerciseId": "7130fa16-bc1e-4aa9-8622-6674242a9271",
+    "name": "Reverse lunge",
+    "suggestedPattern": "lunge",
+    "confidence": 1,
+    "reasoning": "Reverse lunge primarily involves a single-leg lower body movement."
+  },
+  {
+    "exerciseId": "7109a5c2-2f79-4a39-b11b-818c916ce046",
+    "name": "Rope climb",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Exercise involves pulling body weight vertically up the rope."
+  },
+  {
+    "exerciseId": "4f482c91-4499-427f-be42-50a23c0acd19",
+    "name": "Rowing",
+    "suggestedPattern": "horizontal_pull",
+    "confidence": 1,
+    "reasoning": "Rowing involves pulling motion towards the body horizontally."
+  },
+  {
+    "exerciseId": "fc0f642f-6c64-45a1-b54c-1a501eee5b68",
+    "name": "Russian twist",
+    "suggestedPattern": "rotation",
+    "confidence": 1,
+    "reasoning": "Exercise involves rotational movement for obliques and core."
+  },
+  {
+    "exerciseId": "c9ca7fe1-d326-4740-9f64-cc740a473314",
+    "name": "Seated good morning",
+    "suggestedPattern": "hinge",
+    "confidence": 1,
+    "reasoning": "Hip-dominant movement pattern targeting lower back and hamstrings."
+  },
+  {
+    "exerciseId": "ed3901ea-e889-4f15-834d-462e7b386374",
+    "name": "Sentadilla bulgara",
+    "suggestedPattern": "lunge",
+    "confidence": 1,
+    "reasoning": "Unilateral lower body exercise with dumbbell and bench"
+  },
+  {
+    "exerciseId": "aa23f267-b6fa-4167-8957-28cb0a300b02",
+    "name": "Sentadilla con barra",
+    "suggestedPattern": "squat",
+    "confidence": 1,
+    "reasoning": "Primary lower body movement pattern involving knee flexion"
+  },
+  {
+    "exerciseId": "c0d54983-3c81-4e8e-8664-b0d1c821a8ba",
+    "name": "Sentadilla frontal",
+    "suggestedPattern": "squat",
+    "confidence": 1,
+    "reasoning": "Mayor enfasis en cuadriceps indicates knee-dominant lower body movement."
+  },
+  {
+    "exerciseId": "b7635d3b-d6d5-43af-8b48-df7249501709",
+    "name": "Sentadilla goblet",
+    "suggestedPattern": "squat",
+    "confidence": 1,
+    "reasoning": "Lower body knee-dominant movement pattern with weight in front"
+  },
+  {
+    "exerciseId": "a8faf1a2-5710-4558-8563-42764910d991",
+    "name": "Sentadilla Jefferson",
+    "suggestedPattern": "squat",
+    "confidence": 1,
+    "reasoning": "Lower body knee-dominant exercise involving quadriceps and glutes."
+  },
+  {
+    "exerciseId": "bec104d4-1c47-45b8-bf90-98d60680c913",
+    "name": "Sentadilla pistola",
+    "suggestedPattern": "lunge",
+    "confidence": 1,
+    "reasoning": "Unilateral advanced squat variation"
+  },
+  {
+    "exerciseId": "ea95037b-138e-4b09-957b-e6d069e187fa",
+    "name": "Sentadilla sumo",
+    "suggestedPattern": "squat",
+    "confidence": 1,
+    "reasoning": "Emphasizes adductors and glutes in a squatting movement."
+  },
+  {
+    "exerciseId": "1cb4778d-700f-4303-afdb-5446617acbbb",
+    "name": "Single leg deadlift",
+    "suggestedPattern": "hinge",
+    "confidence": 1,
+    "reasoning": "Unilateral hip-dominant movement pattern targeting hamstrings and glutes."
+  },
+  {
+    "exerciseId": "49634b91-4d28-4ad3-83a0-e08275db2cc5",
+    "name": "Sissy squat",
+    "suggestedPattern": "isolation",
+    "confidence": 1,
+    "reasoning": "Extreme isolation exercise for quadriceps"
+  },
+  {
+    "exerciseId": "bce10889-a161-4881-9e82-93de273c4bba",
+    "name": "Sled pull",
+    "suggestedPattern": "carry",
+    "confidence": 1,
+    "reasoning": "Exercise involves pulling a sled, which is a form of loaded locomotion."
+  },
+  {
+    "exerciseId": "c1ebb65a-0946-48ca-b6aa-265117b4a331",
+    "name": "Sled push",
+    "suggestedPattern": "carry",
+    "confidence": 1,
+    "reasoning": "Pushing a sled involves loaded locomotion with functional movement."
+  },
+  {
+    "exerciseId": "7b37f89f-b660-4a08-999c-e07bebd8e709",
+    "name": "Snatch",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Full-body vertical pulling movement with a barbell."
+  },
+  {
+    "exerciseId": "aead5bbe-99f7-4bd5-bc51-7a5664b48a2f",
+    "name": "Snatch con kettlebell",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Snatch con kettlebell involves pulling a weight from above."
+  },
+  {
+    "exerciseId": "221349db-c238-4cee-a534-9e963b22e9d1",
+    "name": "Snatch grip deadlift",
+    "suggestedPattern": "hinge",
+    "confidence": 1,
+    "reasoning": "Hip-dominant movement pattern involving deadlift with wide grip."
+  },
+  {
+    "exerciseId": "e777d439-1a23-4aa5-91dc-8bf0a2d4ffe1",
+    "name": "Step-ups",
+    "suggestedPattern": "lunge",
+    "confidence": 1,
+    "reasoning": "Step-ups involve a single-leg lower body movement pattern."
+  },
+  {
+    "exerciseId": "9c3bd6a7-6c1c-4d18-aaef-2dd715789911",
+    "name": "Superman",
+    "suggestedPattern": "hinge",
+    "confidence": 0.5,
+    "reasoning": "Fallback: guessed from muscle groups"
+  },
+  {
+    "exerciseId": "a2ea7789-4523-4987-832b-7472f4a140c6",
+    "name": "Thruster",
+    "suggestedPattern": "vertical_push",
+    "confidence": 1,
+    "reasoning": "Combines squat with overhead press movement"
+  },
+  {
+    "exerciseId": "0ddc5470-3bb9-493a-a3a1-6689ab20a792",
+    "name": "Toes to bar",
+    "suggestedPattern": "core",
+    "confidence": 1,
+    "reasoning": "Toes to bar primarily targets the core muscles."
+  },
+  {
+    "exerciseId": "527279fa-477c-4288-90af-402565c3e98e",
+    "name": "Turkish get-up",
+    "suggestedPattern": "carry",
+    "confidence": 1,
+    "reasoning": "Involves loaded locomotion with kettlebell overhead during movement."
+  },
+  {
+    "exerciseId": "a869aee8-67e1-4543-829f-b9a2e3f15b2a",
+    "name": "V-ups",
+    "suggestedPattern": "core",
+    "confidence": 1,
+    "reasoning": "Primary focus on abdominal muscles and hip flexors."
+  },
+  {
+    "exerciseId": "bee81a07-9016-410d-9448-f51b1f1d7743",
+    "name": "W raises",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 0.9,
+    "reasoning": "Shoulder and back muscles engaged in vertical pulling motion."
+  },
+  {
+    "exerciseId": "4d621d5f-f553-4e03-9835-f062df86c1c6",
+    "name": "Wall ball",
+    "suggestedPattern": "vertical_push",
+    "confidence": 0.9,
+    "reasoning": "Involves pushing a medicine ball overhead from a squat position."
+  },
+  {
+    "exerciseId": "58170781-362f-4cfb-a431-e0af292ea260",
+    "name": "Wood chop",
+    "suggestedPattern": "rotation",
+    "confidence": 1,
+    "reasoning": "Rotational core exercise with cable resistance for obliques and abs"
+  },
+  {
+    "exerciseId": "bd33dcc0-91df-4bb6-af72-e336e8540cd3",
+    "name": "Y raises",
+    "suggestedPattern": "vertical_pull",
+    "confidence": 1,
+    "reasoning": "Exercise involves pulling movement pattern from above."
+  },
+  {
+    "exerciseId": "123d2611-c4f8-49c5-9ccd-55d9e30ab461",
+    "name": "Zancadas",
+    "suggestedPattern": "lunge",
+    "confidence": 1,
+    "reasoning": "Unilateral lower body exercise involving lunging movement pattern"
+  },
+  {
+    "exerciseId": "e9ea9658-e5ef-4f8d-a72d-b2278eddc3e6",
+    "name": "Zancadas caminando",
+    "suggestedPattern": "lunge",
+    "confidence": 1,
+    "reasoning": "Dynamic lunges targeting quadriceps, glutes, and hamstrings."
+  },
+  {
+    "exerciseId": "bd8b9246-3bb5-4867-b781-6dfa2c0565be",
+    "name": "Zancadas con mancuernas",
+    "suggestedPattern": "lunge",
+    "confidence": 1,
+    "reasoning": "Weighted lunges targeting quadriceps, glutes, and hamstrings."
+  }
+]

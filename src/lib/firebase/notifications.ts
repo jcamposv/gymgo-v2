@@ -151,6 +151,35 @@ export async function sendClassCancelledNotification(
 }
 
 /**
+ * Send schedule generated notification (bulk class creation)
+ * Used when generating multiple classes from templates
+ */
+export async function sendScheduleGeneratedNotification(
+  data: {
+    gymId: string;
+    classesCreated: number;
+    periodLabel: string; // e.g., "esta semana", "las próximas 2 semanas"
+  }
+): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  if (data.classesCreated === 0) {
+    return { success: true }; // No classes to notify about
+  }
+
+  const payload: NotificationPayload = {
+    title: 'Nuevas clases disponibles',
+    body: `Se agregaron ${data.classesCreated} clases para ${data.periodLabel}. ¡Revisa el horario y reserva!`,
+    data: {
+      type: 'announcement',
+      gymId: data.gymId,
+      classesCreated: String(data.classesCreated),
+      action: 'view_schedule',
+    },
+  };
+
+  return sendToGymTopic(data.gymId, payload);
+}
+
+/**
  * Format ISO time to readable string
  */
 function formatTime(isoString: string): string {

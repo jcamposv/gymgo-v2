@@ -14,6 +14,104 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_alternatives_cache: {
+        Row: {
+          alternatives: Json
+          created_at: string
+          difficulty_filter: string | null
+          equipment_hash: string
+          exercise_id: string
+          expires_at: string
+          hit_count: number
+          id: string
+          last_hit_at: string | null
+        }
+        Insert: {
+          alternatives: Json
+          created_at?: string
+          difficulty_filter?: string | null
+          equipment_hash: string
+          exercise_id: string
+          expires_at?: string
+          hit_count?: number
+          id?: string
+          last_hit_at?: string | null
+        }
+        Update: {
+          alternatives?: Json
+          created_at?: string
+          difficulty_filter?: string | null
+          equipment_hash?: string
+          exercise_id?: string
+          expires_at?: string
+          hit_count?: number
+          id?: string
+          last_hit_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_alternatives_cache_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_usage_log: {
+        Row: {
+          alternatives_count: number | null
+          created_at: string
+          exercise_id: string | null
+          feature: string
+          id: string
+          organization_id: string
+          response_time_ms: number | null
+          tokens_used: number
+          user_id: string | null
+          was_cached: boolean
+        }
+        Insert: {
+          alternatives_count?: number | null
+          created_at?: string
+          exercise_id?: string | null
+          feature: string
+          id?: string
+          organization_id: string
+          response_time_ms?: number | null
+          tokens_used?: number
+          user_id?: string | null
+          was_cached?: boolean
+        }
+        Update: {
+          alternatives_count?: number | null
+          created_at?: string
+          exercise_id?: string | null
+          feature?: string
+          id?: string
+          organization_id?: string
+          response_time_ms?: number | null
+          tokens_used?: number
+          user_id?: string | null
+          was_cached?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_log_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_usage_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           cancellation_reason: string | null
@@ -388,6 +486,7 @@ export type Database = {
           instructions: string[] | null
           is_active: boolean | null
           is_global: boolean | null
+          movement_pattern: string | null
           muscle_groups: string[] | null
           name: string
           name_en: string | null
@@ -410,6 +509,7 @@ export type Database = {
           instructions?: string[] | null
           is_active?: boolean | null
           is_global?: boolean | null
+          movement_pattern?: string | null
           muscle_groups?: string[] | null
           name: string
           name_en?: string | null
@@ -432,6 +532,7 @@ export type Database = {
           instructions?: string[] | null
           is_active?: boolean | null
           is_global?: boolean | null
+          movement_pattern?: string | null
           muscle_groups?: string[] | null
           name?: string
           name_en?: string | null
@@ -1317,6 +1418,106 @@ export type Database = {
           },
         ]
       }
+      organization_ai_usage: {
+        Row: {
+          ai_enabled: boolean
+          ai_plan: Database["public"]["Enums"]["ai_plan_tier"]
+          alert_sent: boolean
+          alert_threshold_percent: number
+          created_at: string
+          id: string
+          limit_reached_at: string | null
+          max_requests_per_user_daily: number | null
+          monthly_request_limit: number
+          monthly_token_limit: number
+          organization_id: string
+          period_end_date: string
+          period_start_date: string
+          requests_this_period: number
+          tokens_used_this_period: number
+          updated_at: string
+        }
+        Insert: {
+          ai_enabled?: boolean
+          ai_plan?: Database["public"]["Enums"]["ai_plan_tier"]
+          alert_sent?: boolean
+          alert_threshold_percent?: number
+          created_at?: string
+          id?: string
+          limit_reached_at?: string | null
+          max_requests_per_user_daily?: number | null
+          monthly_request_limit?: number
+          monthly_token_limit?: number
+          organization_id: string
+          period_end_date?: string
+          period_start_date?: string
+          requests_this_period?: number
+          tokens_used_this_period?: number
+          updated_at?: string
+        }
+        Update: {
+          ai_enabled?: boolean
+          ai_plan?: Database["public"]["Enums"]["ai_plan_tier"]
+          alert_sent?: boolean
+          alert_threshold_percent?: number
+          created_at?: string
+          id?: string
+          limit_reached_at?: string | null
+          max_requests_per_user_daily?: number | null
+          monthly_request_limit?: number
+          monthly_token_limit?: number
+          organization_id?: string
+          period_end_date?: string
+          period_start_date?: string
+          requests_this_period?: number
+          tokens_used_this_period?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_ai_usage_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_equipment: {
+        Row: {
+          available_equipment: string[]
+          created_at: string
+          id: string
+          organization_id: string
+          unavailable_equipment: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          available_equipment?: string[]
+          created_at?: string
+          id?: string
+          organization_id: string
+          unavailable_equipment?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          available_equipment?: string[]
+          created_at?: string
+          id?: string
+          organization_id?: string
+          unavailable_equipment?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_equipment_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           address_line1: string | null
@@ -1721,6 +1922,54 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_member_book_class: {
+        Args: {
+          p_class_start_time: string
+          p_exclude_booking_id?: string
+          p_member_id: string
+          p_organization_id: string
+        }
+        Returns: boolean
+      }
+      check_ai_tokens_available: { Args: { org_id: string }; Returns: boolean }
+      cleanup_ai_cache: { Args: never; Returns: number }
+      consume_ai_tokens: {
+        Args: {
+          alt_count?: number
+          exercise_uuid?: string
+          feature_name: string
+          org_id: string
+          response_ms?: number
+          tokens_to_consume: number
+          user_uuid?: string
+          was_cache_hit?: boolean
+        }
+        Returns: boolean
+      }
+      get_ai_usage_summary: {
+        Args: { org_id: string }
+        Returns: {
+          ai_enabled: boolean
+          days_remaining: number
+          plan: Database["public"]["Enums"]["ai_plan_tier"]
+          requests_limit: number
+          requests_percent: number
+          requests_used: number
+          tokens_limit: number
+          tokens_percent: number
+          tokens_used: number
+        }[]
+      }
+      get_member_daily_booking_count: {
+        Args: {
+          p_exclude_booking_id?: string
+          p_member_id: string
+          p_organization_id: string
+          p_target_date: string
+          p_timezone?: string
+        }
+        Returns: number
+      }
       get_user_organization_id: { Args: never; Returns: string }
       has_role: {
         Args: { required_role: Database["public"]["Enums"]["user_role"] }
@@ -1732,6 +1981,7 @@ export type Database = {
       is_staff_member: { Args: never; Returns: boolean }
     }
     Enums: {
+      ai_plan_tier: "free" | "pro" | "business" | "enterprise"
       booking_status:
         | "confirmed"
         | "cancelled"
@@ -1942,6 +2192,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      ai_plan_tier: ["free", "pro", "business", "enterprise"],
       booking_status: [
         "confirmed",
         "cancelled",
