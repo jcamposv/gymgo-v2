@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -19,6 +19,7 @@ import {
   MeasurementHistoryDialog,
   NoteFormDialog,
   NoteHistoryDialog,
+  MemberPRSection,
 } from '@/components/members'
 import { useMemberMeasurements, useMemberNotes } from '@/hooks'
 import { memberLabels, loadingLabels, toastMessages } from '@/lib/i18n'
@@ -145,6 +146,19 @@ export function MemberDetailsContent({
               onViewHistory={() => setMeasurementHistoryOpen(true)}
             />
           )}
+
+          {/* PRs / Benchmarks Section */}
+          <Suspense fallback={
+            <div className="flex items-center justify-center p-8 border rounded-lg bg-muted/30">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <span className="ml-2 text-sm text-muted-foreground">Cargando PRs...</span>
+            </div>
+          }>
+            <MemberPRSection
+              memberId={member.id}
+              memberName={member.full_name}
+            />
+          </Suspense>
         </div>
 
         {/* Right column - Sidebar */}

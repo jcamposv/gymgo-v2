@@ -4,6 +4,7 @@ export * from './use-organization-currency'
 export * from './use-media-query'
 export * from './use-member-measurements'
 export * from './use-member-notes'
+export * from './use-member-benchmarks'
 export * from './use-instructors'
 
 // Finance module hooks

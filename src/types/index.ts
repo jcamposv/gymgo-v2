@@ -17,3 +17,6 @@ export * from './supabase'
 
 // API types
 export * from './api.types'
+
+// Benchmark types
+export * from './benchmark.types'

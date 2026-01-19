@@ -25,3 +25,10 @@ export { MeasurementHistoryTable } from './measurement-history-table'
 export { NoteFormDialog } from './note-form-dialog'
 export { NoteHistoryDialog } from './note-history-dialog'
 export { NoteHistoryTable } from './note-history-table'
+
+// PR/Benchmark components
+export { MemberPRSection } from './member-pr-section'
+export { BenchmarkFormDialog } from './benchmark-form-dialog'
+export { PRCurrentSummary } from './pr-current-summary'
+export { PRHistoryTable } from './pr-history-table'
+export { PRProgressChart } from './pr-progress-chart'
