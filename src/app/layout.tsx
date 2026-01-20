@@ -1,18 +1,41 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { Toaster } from 'sonner'
+
 import { SWRProvider } from '@/components/providers/swr-provider'
-import { APP_NAME } from '@/lib/constants'
+import { JsonLd } from '@/components/seo/json-ld'
+import {
+  DEFAULT_METADATA,
+  ORGANIZATION_SCHEMA,
+  SOFTWARE_SCHEMA,
+  WEBSITE_SCHEMA,
+} from '@/lib/seo.config'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+})
 
-export const metadata: Metadata = {
-  title: {
-    default: APP_NAME,
-    template: `%s | ${APP_NAME}`,
-  },
-  description: 'Your fitness journey starts here',
+/**
+ * Global metadata for the application
+ * Individual pages can override or extend this
+ */
+export const metadata: Metadata = DEFAULT_METADATA
+
+/**
+ * Viewport configuration
+ * Separated from metadata per Next.js 14+ best practices
+ */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0a0a0a' },
+  ],
 }
 
 export default function RootLayout({
@@ -21,7 +44,13 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="es" suppressHydrationWarning className={inter.variable}>
+      <head>
+        {/* JSON-LD Structured Data */}
+        <JsonLd data={ORGANIZATION_SCHEMA} />
+        <JsonLd data={SOFTWARE_SCHEMA} />
+        <JsonLd data={WEBSITE_SCHEMA} />
+      </head>
       <body className={inter.className}>
         <SWRProvider>
           {children}

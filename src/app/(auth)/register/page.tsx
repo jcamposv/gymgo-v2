@@ -1,9 +1,13 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { RegisterForm } from '@/components/forms/register-form'
+import { generatePageMetadata } from '@/lib/seo.config'
 
-export const metadata = {
-  title: 'Crear cuenta - GymGo',
-}
+export const metadata: Metadata = generatePageMetadata({
+  title: 'Crear cuenta',
+  description: 'Crea tu cuenta en GymGo y comienza a administrar tu gimnasio, box de CrossFit o centro fitness de forma profesional.',
+  path: '/register',
+})
 
 export default function RegisterPage() {
   return (

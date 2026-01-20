@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { ROUTES } from '@/lib/constants'
@@ -5,6 +6,20 @@ import { AppShell } from '@/components/layout'
 import { mapLegacyRole, hasPermission } from '@/lib/rbac'
 import { getFilteredNavigation } from '@/lib/navigation/filter-navigation'
 import { getViewPreferences } from '@/lib/auth/get-view-preferences'
+
+/**
+ * Dashboard pages should NOT be indexed by search engines
+ */
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
+}
 
 export default async function DashboardLayout({
   children,

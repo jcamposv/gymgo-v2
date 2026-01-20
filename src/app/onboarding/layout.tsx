@@ -1,6 +1,23 @@
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import { OnboardingProvider } from '@/components/onboarding/onboarding-context'
 import { OnboardingStepper } from '@/components/onboarding/onboarding-stepper'
+
+/**
+ * Onboarding pages should NOT be indexed by search engines
+ */
+export const metadata: Metadata = {
+  title: 'Configurar gimnasio',
+  description: 'Configura tu gimnasio en GymGo en pocos pasos.',
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
+}
 
 export default function OnboardingLayout({
   children,
