@@ -104,7 +104,7 @@ export default function OnboardingStep4() {
     if (result.success) {
       clearData()
       toast.success('Organización creada exitosamente')
-      router.push('/dashboard')
+      router.push('/select-plan')
     } else {
       toast.error(result.message)
       setIsSubmitting(false)

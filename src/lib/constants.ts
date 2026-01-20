@@ -5,8 +5,10 @@ export const ROUTES = {
   LOGIN: '/login',
   REGISTER: '/register',
   ONBOARDING: '/onboarding',
+  SELECT_PLAN: '/select-plan',
   DASHBOARD: '/dashboard',
   SETTINGS: '/settings',
+  ACCOUNT_DISABLED: '/account-disabled',
 } as const
 
 export const API_ROUTES = {
@@ -38,6 +40,8 @@ export const PUBLIC_ROUTES = [
 // Routes that require authentication but not organization setup
 export const ONBOARDING_ROUTES = [
   ROUTES.ONBOARDING,
+  ROUTES.SELECT_PLAN,
+  ROUTES.ACCOUNT_DISABLED,
 ] as const
 
 // API routes that require API key but NOT user authentication

@@ -47,6 +47,22 @@ export default async function DashboardLayout({
     redirect(ROUTES.ONBOARDING)
   }
 
+  // Get organization status
+  const { data: orgData } = await supabase
+    .from('organizations')
+    .select('subscription_plan')
+    .eq('id', profile.organization_id)
+    .single()
+
+  const org = orgData as {
+    subscription_plan: string | null
+  } | null
+
+  // Check if user needs to select a plan
+  if (org && !org.subscription_plan) {
+    redirect(ROUTES.SELECT_PLAN)
+  }
+
   // Map database role to AppRole and check permissions
   const appRole = mapLegacyRole(profile.role)
   const userWithRole = {
