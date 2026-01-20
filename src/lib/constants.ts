@@ -28,7 +28,6 @@ export const API_ROUTES = {
 } as const
 
 export const PUBLIC_ROUTES = [
-  ROUTES.HOME,
   ROUTES.LOGIN,
   ROUTES.REGISTER,
   '/auth/callback',
