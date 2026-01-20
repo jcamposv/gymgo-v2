@@ -233,3 +233,6 @@ export const CURRENCY_OPTIONS = [
 // Type helpers
 export type CountryCode = (typeof COUNTRY_OPTIONS)[number]['value']
 export type CurrencyCode = (typeof CURRENCY_OPTIONS)[number]['value']
+
+// Type for form data (partial for context)
+export type OnboardingFormData = Partial<OnboardingData>
