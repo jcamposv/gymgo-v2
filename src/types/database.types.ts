@@ -137,6 +137,47 @@ export type Database = {
           },
         ]
       }
+      api_usage: {
+        Row: {
+          created_at: string | null
+          id: string
+          organization_id: string
+          read_requests: number | null
+          requests_count: number | null
+          updated_at: string | null
+          usage_date: string
+          write_requests: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          organization_id: string
+          read_requests?: number | null
+          requests_count?: number | null
+          updated_at?: string | null
+          usage_date: string
+          write_requests?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          organization_id?: string
+          read_requests?: number | null
+          requests_count?: number | null
+          updated_at?: string | null
+          usage_date?: string
+          write_requests?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_usage_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           cancellation_reason: string | null
@@ -494,6 +535,50 @@ export type Database = {
             columns: ["parent_class_id"]
             isOneToOne: false
             referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_usage: {
+        Row: {
+          created_at: string | null
+          emails_bounced: number | null
+          emails_delivered: number | null
+          emails_sent: number | null
+          id: string
+          month: number
+          organization_id: string
+          updated_at: string | null
+          year: number
+        }
+        Insert: {
+          created_at?: string | null
+          emails_bounced?: number | null
+          emails_delivered?: number | null
+          emails_sent?: number | null
+          id?: string
+          month: number
+          organization_id: string
+          updated_at?: string | null
+          year: number
+        }
+        Update: {
+          created_at?: string | null
+          emails_bounced?: number | null
+          emails_delivered?: number | null
+          emails_sent?: number | null
+          id?: string
+          month?: number
+          organization_id?: string
+          updated_at?: string | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_usage_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -1897,6 +1982,50 @@ export type Database = {
           },
         ]
       }
+      storage_usage: {
+        Row: {
+          created_at: string | null
+          documents_bytes: number | null
+          id: string
+          images_bytes: number | null
+          organization_id: string
+          other_bytes: number | null
+          total_bytes: number | null
+          total_files: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          documents_bytes?: number | null
+          id?: string
+          images_bytes?: number | null
+          organization_id: string
+          other_bytes?: number | null
+          total_bytes?: number | null
+          total_files?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          documents_bytes?: number | null
+          id?: string
+          images_bytes?: number | null
+          organization_id?: string
+          other_bytes?: number | null
+          total_bytes?: number | null
+          total_files?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storage_usage_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_history: {
         Row: {
           amount_usd: number | null
@@ -2086,6 +2215,50 @@ export type Database = {
           },
         ]
       }
+      whatsapp_usage: {
+        Row: {
+          created_at: string | null
+          id: string
+          messages_delivered: number | null
+          messages_failed: number | null
+          messages_sent: number | null
+          month: number
+          organization_id: string
+          updated_at: string | null
+          year: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          messages_delivered?: number | null
+          messages_failed?: number | null
+          messages_sent?: number | null
+          month: number
+          organization_id: string
+          updated_at?: string | null
+          year: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          messages_delivered?: number | null
+          messages_failed?: number | null
+          messages_sent?: number | null
+          month?: number
+          organization_id?: string
+          updated_at?: string | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_usage_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workout_exercise_overrides: {
         Row: {
           created_at: string
@@ -2241,6 +2414,15 @@ export type Database = {
         Returns: boolean
       }
       check_ai_tokens_available: { Args: { org_id: string }; Returns: boolean }
+      check_api_rate_limit: {
+        Args: { p_organization_id: string }
+        Returns: {
+          allowed: boolean
+          daily_limit: number
+          remaining: number
+          used: number
+        }[]
+      }
       check_expired_trials: { Args: never; Returns: number }
       cleanup_ai_cache: { Args: never; Returns: number }
       consume_ai_tokens: {
@@ -2255,6 +2437,29 @@ export type Database = {
           was_cache_hit?: boolean
         }
         Returns: Json
+      }
+      consume_api_request: {
+        Args: { p_is_write?: boolean; p_organization_id: string }
+        Returns: {
+          remaining: number
+          success: boolean
+        }[]
+      }
+      consume_email: {
+        Args: { p_count?: number; p_organization_id: string }
+        Returns: {
+          limit_reached: boolean
+          remaining: number
+          success: boolean
+        }[]
+      }
+      consume_whatsapp_message: {
+        Args: { p_count?: number; p_organization_id: string }
+        Returns: {
+          limit_reached: boolean
+          remaining: number
+          success: boolean
+        }[]
       }
       disable_organization: {
         Args: { org_id: string; reason?: string }
@@ -2275,6 +2480,14 @@ export type Database = {
           tokens_used: number
         }[]
       }
+      get_email_remaining: {
+        Args: { p_organization_id: string }
+        Returns: {
+          monthly_limit: number
+          remaining: number
+          used: number
+        }[]
+      }
       get_member_daily_booking_count: {
         Args: {
           p_exclude_booking_id?: string
@@ -2285,11 +2498,28 @@ export type Database = {
         }
         Returns: number
       }
+      get_storage_remaining: {
+        Args: { p_organization_id: string }
+        Returns: {
+          limit_bytes: number
+          remaining_bytes: number
+          used_bytes: number
+          used_percentage: number
+        }[]
+      }
       get_user_ai_remaining: {
         Args: { org_id: string; user_uuid: string }
         Returns: Json
       }
       get_user_organization_id: { Args: never; Returns: string }
+      get_whatsapp_remaining: {
+        Args: { p_organization_id: string }
+        Returns: {
+          monthly_limit: number
+          remaining: number
+          used: number
+        }[]
+      }
       get_workout_overrides: {
         Args: { p_date?: string; p_workout_id: string }
         Returns: {
@@ -2343,6 +2573,19 @@ export type Database = {
           org_id: string
         }
         Returns: Json
+      }
+      update_storage_usage: {
+        Args: {
+          p_bytes_change: number
+          p_file_type?: string
+          p_organization_id: string
+        }
+        Returns: {
+          limit_bytes: number
+          limit_reached: boolean
+          success: boolean
+          total_bytes: number
+        }[]
       }
     }
     Enums: {

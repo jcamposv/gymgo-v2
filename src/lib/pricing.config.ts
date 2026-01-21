@@ -33,7 +33,7 @@
 // TYPES
 // =============================================================================
 
-export type PlanTier = 'starter' | 'growth' | 'pro' | 'enterprise'
+export type PlanTier = 'free' | 'starter' | 'growth' | 'pro' | 'enterprise'
 
 export interface PlanLimits {
   // Members
@@ -101,33 +101,33 @@ export interface PricingPlan {
 // =============================================================================
 
 export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
-  starter: {
+  free: {
     // Members
-    maxMembers: 50,
-    maxActiveMembers: 50,
+    maxMembers: 15,
+    maxActiveMembers: 15,
 
     // Team
-    maxUsers: 2,
-    maxTrainers: -1, // Unlimited
+    maxUsers: 1,
+    maxTrainers: 2,
 
     // Classes & Schedules
     maxClasses: -1, // Unlimited
     maxClassesPerDay: -1, // Unlimited
 
     // AI Features - Very limited
-    aiRequestsPerMonth: 50,
+    aiRequestsPerMonth: 10,
     aiModel: 'gpt-3.5-turbo',
-    routineGenerationsPerMonth: 10,
-    exerciseAlternativesPerMonth: 20,
+    routineGenerationsPerMonth: 5,
+    exerciseAlternativesPerMonth: 10,
 
     // Communications
-    emailsPerMonth: 500,
-    whatsappMessagesPerMonth: 50,
-    pushNotificationsPerMonth: 500,
+    emailsPerMonth: 100,
+    whatsappMessagesPerMonth: 0,
+    pushNotificationsPerMonth: 100,
 
     // Storage
-    storageGB: 1,
-    maxFileUploadMB: 5,
+    storageGB: 0.5,
+    maxFileUploadMB: 2,
 
     // Integrations
     apiAccess: false,
@@ -148,10 +148,57 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     slaGuarantee: false,
   },
 
+  starter: {
+    // Members
+    maxMembers: 50,
+    maxActiveMembers: 50,
+
+    // Team
+    maxUsers: 2,
+    maxTrainers: -1, // Unlimited
+
+    // Classes & Schedules
+    maxClasses: -1, // Unlimited
+    maxClassesPerDay: -1, // Unlimited
+
+    // AI Features - Basic
+    aiRequestsPerMonth: 100,
+    aiModel: 'gpt-3.5-turbo',
+    routineGenerationsPerMonth: 20,
+    exerciseAlternativesPerMonth: 50,
+
+    // Communications
+    emailsPerMonth: 500,
+    whatsappMessagesPerMonth: 50,
+    pushNotificationsPerMonth: 500,
+
+    // Storage
+    storageGB: 2,
+    maxFileUploadMB: 5,
+
+    // Integrations
+    apiAccess: false,
+    apiRequestsPerDay: 0,
+    webhooks: false,
+    maxWebhooks: 0,
+
+    // Features
+    customBranding: false,
+    whiteLabel: false,
+    advancedReports: false,
+    exportData: true,
+    multiLocation: false,
+    maxLocations: 1,
+
+    // Support
+    supportLevel: 'email',
+    slaGuarantee: false,
+  },
+
   growth: {
     // Members
-    maxMembers: 200,
-    maxActiveMembers: 200,
+    maxMembers: 150,
+    maxActiveMembers: 150,
 
     // Team
     maxUsers: 5,
@@ -165,12 +212,12 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     aiRequestsPerMonth: 300,
     aiModel: 'gpt-3.5-turbo',
     routineGenerationsPerMonth: 50,
-    exerciseAlternativesPerMonth: 100,
+    exerciseAlternativesPerMonth: 150,
 
     // Communications
-    emailsPerMonth: 3000,
-    whatsappMessagesPerMonth: 500,
-    pushNotificationsPerMonth: 3000,
+    emailsPerMonth: 2000,
+    whatsappMessagesPerMonth: 200,
+    pushNotificationsPerMonth: 2000,
 
     // Storage
     storageGB: 5,
@@ -185,7 +232,7 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     // Features
     customBranding: true,
     whiteLabel: false,
-    advancedReports: false,
+    advancedReports: true,
     exportData: true,
     multiLocation: false,
     maxLocations: 1,
@@ -197,11 +244,11 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
 
   pro: {
     // Members
-    maxMembers: 500,
-    maxActiveMembers: 500,
+    maxMembers: -1, // Unlimited
+    maxActiveMembers: -1,
 
     // Team
-    maxUsers: 15,
+    maxUsers: -1, // Unlimited
     maxTrainers: -1, // Unlimited
 
     // Classes & Schedules
@@ -215,12 +262,12 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     exerciseAlternativesPerMonth: 500,
 
     // Communications
-    emailsPerMonth: 10000,
-    whatsappMessagesPerMonth: 2000,
-    pushNotificationsPerMonth: 10000,
+    emailsPerMonth: 5000,
+    whatsappMessagesPerMonth: 500,
+    pushNotificationsPerMonth: 5000,
 
     // Storage
-    storageGB: 20,
+    storageGB: 15,
     maxFileUploadMB: 25,
 
     // Integrations
@@ -296,13 +343,42 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
 
 export const PRICING_PLANS: PricingPlan[] = [
   {
+    id: 'free',
+    name: 'Gratis',
+    description: 'Perfecto para probar GymGo o para entrenadores personales.',
+    priceMonthlyUSD: 0,
+    priceYearlyUSD: 0,
+    priceMonthlyMXN: 0,
+    priceYearlyMXN: 0,
+    limits: PLAN_LIMITS.free,
+    features: [
+      'Hasta 15 miembros',
+      '1 usuario admin',
+      '2 entrenadores',
+      'Clases ilimitadas',
+      'Gestión de miembros',
+      'Control de pagos',
+      'Check-in digital',
+      '10 consultas AI/mes',
+      '100 emails/mes',
+      'App para miembros',
+      'Soporte comunidad',
+    ],
+    notIncluded: [
+      'WhatsApp',
+      'Branding personalizado',
+      'Reportes avanzados',
+      'Acceso API',
+    ],
+  },
+  {
     id: 'starter',
     name: 'Starter',
-    description: 'Ideal para gimnasios pequeños o entrenadores personales que inician.',
-    priceMonthlyUSD: 29,
-    priceYearlyUSD: 278, // $23.17/mo (20% off)
-    priceMonthlyMXN: 499,
-    priceYearlyMXN: 4790, // ~20% off
+    description: 'Ideal para gimnasios pequeños o boxes que inician.',
+    priceMonthlyUSD: 19,
+    priceYearlyUSD: 182, // ~$15.17/mo (20% off)
+    priceMonthlyMXN: 349,
+    priceYearlyMXN: 3350, // ~20% off
     limits: PLAN_LIMITS.starter,
     features: [
       'Hasta 50 miembros',
@@ -312,13 +388,15 @@ export const PRICING_PLANS: PricingPlan[] = [
       'Gestión de miembros',
       'Control de pagos',
       'Check-in digital',
-      '50 consultas AI/mes',
+      '100 consultas AI/mes',
       '500 emails/mes',
       '50 mensajes WhatsApp/mes',
+      'Exportar datos',
       'App para miembros',
-      'Soporte por comunidad',
+      'Soporte por email',
     ],
     notIncluded: [
+      'Branding personalizado',
       'Reportes avanzados',
       'Acceso API',
       'Multi-ubicación',
@@ -327,27 +405,27 @@ export const PRICING_PLANS: PricingPlan[] = [
   {
     id: 'growth',
     name: 'Growth',
-    description: 'Para gimnasios en crecimiento que necesitan más capacidad y comunicación.',
-    priceMonthlyUSD: 79,
-    priceYearlyUSD: 758, // $63.17/mo (20% off)
-    priceMonthlyMXN: 1399,
-    priceYearlyMXN: 13430,
+    description: 'Para gimnasios en crecimiento con más miembros y comunicación.',
+    priceMonthlyUSD: 39,
+    priceYearlyUSD: 374, // ~$31.17/mo (20% off)
+    priceMonthlyMXN: 699,
+    priceYearlyMXN: 6710, // ~20% off
     limits: PLAN_LIMITS.growth,
     popular: true,
     features: [
-      'Hasta 200 miembros',
+      'Hasta 150 miembros',
       '5 usuarios del sistema',
       'Entrenadores ilimitados',
       'Clases ilimitadas',
       '300 consultas AI/mes',
-      '3,000 emails/mes',
-      '500 mensajes WhatsApp/mes',
+      '2,000 emails/mes',
+      '200 mensajes WhatsApp/mes',
       'Branding personalizado',
+      'Reportes avanzados',
       'Exportar datos',
       'Soporte por email',
     ],
     notIncluded: [
-      'Reportes avanzados',
       'Acceso API',
       'Multi-ubicación',
     ],
@@ -355,20 +433,20 @@ export const PRICING_PLANS: PricingPlan[] = [
   {
     id: 'pro',
     name: 'Pro',
-    description: 'Para gimnasios establecidos con múltiples ubicaciones y equipos grandes.',
-    priceMonthlyUSD: 149,
-    priceYearlyUSD: 1430, // $119.17/mo (20% off)
-    priceMonthlyMXN: 2599,
-    priceYearlyMXN: 24950,
+    description: 'Todo ilimitado para gimnasios establecidos y múltiples ubicaciones.',
+    priceMonthlyUSD: 59,
+    priceYearlyUSD: 566, // ~$47.17/mo (20% off)
+    priceMonthlyMXN: 999,
+    priceYearlyMXN: 9590, // ~20% off
     limits: PLAN_LIMITS.pro,
     features: [
-      'Hasta 500 miembros',
-      '15 usuarios del sistema',
+      'Miembros ilimitados',
+      'Usuarios ilimitados',
       'Entrenadores ilimitados',
       'Clases ilimitadas',
       '1,000 consultas AI/mes (GPT-4)',
-      '10,000 emails/mes',
-      '2,000 mensajes WhatsApp/mes',
+      '5,000 emails/mes',
+      '500 mensajes WhatsApp/mes',
       'Reportes avanzados',
       'Acceso API (1,000 req/día)',
       'Webhooks (5 endpoints)',
@@ -386,9 +464,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     priceYearlyMXN: 0,
     limits: PLAN_LIMITS.enterprise,
     features: [
-      'Miembros ilimitados',
-      'Usuarios ilimitados',
-      'Clases ilimitadas',
+      'Todo en Pro, más:',
       'AI ilimitado (GPT-4)',
       'Comunicaciones ilimitadas',
       'White-label completo',
@@ -412,10 +488,11 @@ export const PRICING_PLANS: PricingPlan[] = [
  * Used for margin calculations
  */
 export const ESTIMATED_COSTS_USD: Record<PlanTier, number> = {
-  starter: 5, // ~$5/mo (minimal Supabase, few AI calls, minimal email)
-  growth: 20, // ~$20/mo (Supabase Pro share, moderate AI, WhatsApp)
-  pro: 50, // ~$50/mo (Supabase Pro, heavy AI/GPT-4, WhatsApp, storage)
-  enterprise: 150, // ~$150+/mo (dedicated resources, unlimited usage)
+  free: 1, // ~$1/mo (minimal usage, shared infrastructure)
+  starter: 4, // ~$4/mo (minimal Supabase, few AI calls, minimal email)
+  growth: 10, // ~$10/mo (moderate AI, WhatsApp, shared Supabase)
+  pro: 20, // ~$20/mo (GPT-4 AI, WhatsApp, more storage)
+  enterprise: 100, // ~$100+/mo (dedicated resources, unlimited usage)
 }
 
 /**

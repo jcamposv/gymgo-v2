@@ -4,6 +4,7 @@ import {
   generateInvitationEmailText,
   type InvitationEmailProps,
 } from './templates/invitation'
+import { checkEmailLimit, consumeEmail } from '@/lib/plan-limits'
 
 // =============================================================================
 // EMAIL SERVICE
@@ -11,11 +12,24 @@ import {
 
 /**
  * Sends a member invitation email
+ * @param organizationId - Optional org ID for tracking email usage limits
  */
 export async function sendInvitationEmail(
   to: string,
-  props: InvitationEmailProps
+  props: InvitationEmailProps,
+  organizationId?: string
 ): Promise<SendEmailResult> {
+  // Check email limit if organizationId provided
+  if (organizationId) {
+    const limitCheck = await checkEmailLimit(organizationId)
+    if (!limitCheck.allowed) {
+      return {
+        success: false,
+        error: limitCheck.message || 'Límite de emails alcanzado',
+      }
+    }
+  }
+
   try {
     const { data, error } = await resend.emails.send({
       from: emailConfig.from,
@@ -34,6 +48,11 @@ export async function sendInvitationEmail(
       }
     }
 
+    // Track email usage
+    if (organizationId) {
+      await consumeEmail(organizationId, 1)
+    }
+
     return {
       success: true,
       messageId: data?.id,
@@ -49,6 +68,7 @@ export async function sendInvitationEmail(
 
 /**
  * Sends a password reset email (custom branded version)
+ * @param organizationId - Optional org ID for tracking email usage limits
  */
 export async function sendPasswordResetEmail(
   to: string,
@@ -57,8 +77,20 @@ export async function sendPasswordResetEmail(
     gymName: string
     gymLogoUrl: string | null
     resetUrl: string
-  }
+  },
+  organizationId?: string
 ): Promise<SendEmailResult> {
+  // Check email limit if organizationId provided
+  if (organizationId) {
+    const limitCheck = await checkEmailLimit(organizationId)
+    if (!limitCheck.allowed) {
+      return {
+        success: false,
+        error: limitCheck.message || 'Límite de emails alcanzado',
+      }
+    }
+  }
+
   try {
     const { data, error } = await resend.emails.send({
       from: emailConfig.from,
@@ -75,6 +107,11 @@ export async function sendPasswordResetEmail(
         success: false,
         error: error.message,
       }
+    }
+
+    // Track email usage
+    if (organizationId) {
+      await consumeEmail(organizationId, 1)
     }
 
     return {

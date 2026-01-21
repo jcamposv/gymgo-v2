@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { sendInvitationEmail } from '@/lib/email'
 import type { AppRole } from '@/lib/rbac'
 import { mapToDbRole } from '@/lib/rbac/helpers'
+import { checkMemberLimit } from '@/lib/plan-limits'
 
 // =============================================================================
 // TYPES
@@ -403,7 +404,13 @@ export async function createMemberWithInvitation(
       return { success: false, message: profileError ?? 'No autenticado' }
     }
 
-    // 2. Create the member
+    // 2. Check member limit
+    const limitCheck = await checkMemberLimit(profile.organization_id)
+    if (!limitCheck.allowed) {
+      return { success: false, message: limitCheck.message || 'Límite de miembros alcanzado' }
+    }
+
+    // 3. Create the member
     const supabase = await createClient()
     const { data: memberResult, error: createError } = await supabase
       .from('members')
@@ -423,7 +430,7 @@ export async function createMemberWithInvitation(
 
     const createdMember = memberResult as { id: string } | null
 
-    // 3. Send invitation if requested
+    // 4. Send invitation if requested
     if (sendInvitation && createdMember?.id) {
       const inviteResult = await sendMemberInvitation(createdMember.id, assignRole)
       if (!inviteResult.success) {

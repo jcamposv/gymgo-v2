@@ -55,6 +55,10 @@ export default function SelectPlanPage() {
       return 'Personalizado'
     }
 
+    if (plan.id === 'free') {
+      return '$0'
+    }
+
     const price = billingPeriod === 'monthly'
       ? plan.priceMonthlyUSD
       : Math.round(plan.priceYearlyUSD / 12)
@@ -120,7 +124,7 @@ export default function SelectPlanPage() {
 
       {/* Plans Grid */}
       <div className="container mx-auto px-4 py-8 sm:py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-5 max-w-[1400px] mx-auto">
           {PRICING_PLANS.map((plan) => {
             const isEnterprise = plan.id === 'enterprise'
             const isPopular = plan.popular
@@ -162,13 +166,23 @@ export default function SelectPlanPage() {
                       <span className="text-3xl sm:text-4xl font-bold tracking-tight">
                         {formatPrice(plan)}
                       </span>
-                      {!isEnterprise && (
+                      {!isEnterprise && plan.id !== 'free' && (
                         <span className="text-muted-foreground text-sm">
                           USD / mes
                         </span>
                       )}
+                      {plan.id === 'free' && (
+                        <span className="text-muted-foreground text-sm">
+                          para siempre
+                        </span>
+                      )}
                     </div>
-                    {!isEnterprise && (
+                    {plan.id === 'free' && (
+                      <p className="text-xs text-primary font-medium mt-1">
+                        Sin tarjeta de crédito requerida
+                      </p>
+                    )}
+                    {!isEnterprise && plan.id !== 'free' && (
                       <p className="text-xs text-primary font-medium mt-1">
                         3 meses gratis, después ${billingPeriod === 'yearly' ? Math.round(plan.priceYearlyUSD / 12) : plan.priceMonthlyUSD} USD/mes
                       </p>
@@ -229,6 +243,11 @@ export default function SelectPlanPage() {
                     ) : isEnterprise ? (
                       <>
                         Contactar ventas
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </>
+                    ) : plan.id === 'free' ? (
+                      <>
+                        Comenzar gratis
                         <ArrowRight className="h-4 w-4 ml-2" />
                       </>
                     ) : (

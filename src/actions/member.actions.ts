@@ -16,6 +16,7 @@ import {
   forbiddenResult,
   unauthorizedResult,
 } from '@/lib/auth/server-auth'
+import { checkMemberLimit } from '@/lib/plan-limits'
 
 // Legacy type export for backward compatibility
 export type ActionState = ActionResult
@@ -155,6 +156,12 @@ export async function createMember(
 
   if (!authorized) {
     return user ? forbiddenResult() : unauthorizedResult(error || undefined)
+  }
+
+  // Check member limit before creating
+  const limitCheck = await checkMemberLimit(user!.organizationId)
+  if (!limitCheck.allowed) {
+    return errorResult(limitCheck.message || 'Límite de miembros alcanzado')
   }
 
   const rawData = {
@@ -355,6 +362,12 @@ export async function createMemberData(data: MemberFormData): Promise<ActionStat
 
   if (!authorized) {
     return user ? forbiddenResult() : unauthorizedResult(error || undefined)
+  }
+
+  // Check member limit before creating
+  const limitCheck = await checkMemberLimit(user!.organizationId)
+  if (!limitCheck.allowed) {
+    return errorResult(limitCheck.message || 'Límite de miembros alcanzado')
   }
 
   const validated = memberSchema.safeParse(data)

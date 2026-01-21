@@ -2,13 +2,20 @@ import { type NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { API_HEADERS, API_PUBLIC_ROUTES } from '@/lib/constants'
 import type { Database } from '@/types/database.types'
+import { checkApiAccess, checkApiRateLimit, consumeApiRequest } from '@/lib/plan-limits'
 
 export interface ApiAuthContext {
   isValid: boolean
   userId?: string
   tenantId?: string
+  organizationId?: string
   email?: string
   error?: string
+  rateLimitInfo?: {
+    used: number
+    remaining: number
+    dailyLimit: number
+  }
 }
 
 const validApiKeys = new Set(
@@ -177,4 +184,143 @@ export function extractTenantId(request: NextRequest, context?: ApiAuthContext):
   }
 
   return null
+}
+
+/**
+ * Gets the organization ID for a user from their profile
+ */
+async function getOrganizationIdForUser(userId: string): Promise<string | null> {
+  const supabase = createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
+  )
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('organization_id')
+    .eq('id', userId)
+    .single()
+
+  return profile?.organization_id || null
+}
+
+/**
+ * Validates API access and rate limits for an authenticated request
+ * @param organizationId - The organization making the API request
+ * @param isWriteOperation - Whether this is a write operation (counts double against rate limit)
+ * @returns AuthContext with rate limit info or error
+ */
+export async function checkApiLimits(
+  organizationId: string,
+  isWriteOperation = false
+): Promise<{
+  allowed: boolean
+  error?: string
+  errorCode?: 'FORBIDDEN' | 'RATE_LIMIT_EXCEEDED'
+  rateLimitInfo?: {
+    used: number
+    remaining: number
+    dailyLimit: number
+  }
+}> {
+  // 1. Check if organization has API access in their plan
+  const accessCheck = await checkApiAccess(organizationId)
+  if (!accessCheck.allowed) {
+    return {
+      allowed: false,
+      error: accessCheck.message || 'API access not available on your plan',
+      errorCode: 'FORBIDDEN',
+    }
+  }
+
+  // 2. Check rate limit
+  const rateLimitCheck = await checkApiRateLimit(organizationId)
+  if (!rateLimitCheck.allowed) {
+    return {
+      allowed: false,
+      error: rateLimitCheck.message || 'Rate limit exceeded',
+      errorCode: 'RATE_LIMIT_EXCEEDED',
+      rateLimitInfo: {
+        used: rateLimitCheck.used,
+        remaining: 0,
+        dailyLimit: rateLimitCheck.dailyLimit,
+      },
+    }
+  }
+
+  // 3. Consume the request
+  const consumeResult = await consumeApiRequest(organizationId, isWriteOperation)
+
+  return {
+    allowed: true,
+    rateLimitInfo: {
+      used: rateLimitCheck.used + 1,
+      remaining: consumeResult.remaining,
+      dailyLimit: rateLimitCheck.dailyLimit,
+    },
+  }
+}
+
+/**
+ * Full API validation including rate limits
+ * Use this for API routes that need rate limiting
+ * @param request - The incoming request
+ * @param options - Options for validation
+ */
+export async function validateApiRequestWithLimits(
+  request: NextRequest,
+  options: {
+    requireAuth?: boolean
+    checkRateLimits?: boolean
+    isWriteOperation?: boolean
+  } = {}
+): Promise<ApiAuthContext> {
+  const { requireAuth = true, checkRateLimits = true, isWriteOperation = false } = options
+
+  // 1. Perform standard API validation
+  const authContext = await validateApiRequest(request, requireAuth)
+
+  if (!authContext.isValid) {
+    return authContext
+  }
+
+  // 2. If not checking rate limits or no user, return early
+  if (!checkRateLimits || !authContext.userId) {
+    return authContext
+  }
+
+  // 3. Get organization ID
+  const organizationId = await getOrganizationIdForUser(authContext.userId)
+  if (!organizationId) {
+    return {
+      ...authContext,
+      error: 'User not associated with an organization',
+      isValid: false,
+    }
+  }
+
+  authContext.organizationId = organizationId
+
+  // 4. Check API limits
+  const limitsCheck = await checkApiLimits(organizationId, isWriteOperation)
+
+  if (!limitsCheck.allowed) {
+    return {
+      ...authContext,
+      isValid: false,
+      error: limitsCheck.error,
+      rateLimitInfo: limitsCheck.rateLimitInfo,
+    }
+  }
+
+  return {
+    ...authContext,
+    rateLimitInfo: limitsCheck.rateLimitInfo,
+  }
 }

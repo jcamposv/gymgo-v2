@@ -138,7 +138,7 @@ export async function getSubscriptionInfo(): Promise<{
 
   return {
     data: {
-      plan: (org.subscription_plan || 'starter') as PlanTier,
+      plan: (org.subscription_plan || 'free') as PlanTier,
       status: 'trial' as SubscriptionStatus, // Default to trial for now
       billingPeriod: 'monthly' as 'monthly' | 'yearly',
       trialEndsAt: null,
