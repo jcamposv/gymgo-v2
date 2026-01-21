@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       ai_alternatives_cache: {
@@ -105,6 +130,47 @@ export type Database = {
           },
           {
             foreignKeyName: "ai_usage_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_usage: {
+        Row: {
+          created_at: string | null
+          id: string
+          organization_id: string
+          read_requests: number | null
+          requests_count: number | null
+          updated_at: string | null
+          usage_date: string
+          write_requests: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          organization_id: string
+          read_requests?: number | null
+          requests_count?: number | null
+          updated_at?: string | null
+          usage_date: string
+          write_requests?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          organization_id?: string
+          read_requests?: number | null
+          requests_count?: number | null
+          updated_at?: string | null
+          usage_date?: string
+          write_requests?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_usage_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -469,6 +535,133 @@ export type Database = {
             columns: ["parent_class_id"]
             isOneToOne: false
             referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_usage: {
+        Row: {
+          created_at: string | null
+          emails_bounced: number | null
+          emails_delivered: number | null
+          emails_sent: number | null
+          id: string
+          month: number
+          organization_id: string
+          updated_at: string | null
+          year: number
+        }
+        Insert: {
+          created_at?: string | null
+          emails_bounced?: number | null
+          emails_delivered?: number | null
+          emails_sent?: number | null
+          id?: string
+          month: number
+          organization_id: string
+          updated_at?: string | null
+          year: number
+        }
+        Update: {
+          created_at?: string | null
+          emails_bounced?: number | null
+          emails_delivered?: number | null
+          emails_sent?: number | null
+          id?: string
+          month?: number
+          organization_id?: string
+          updated_at?: string | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_usage_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exercise_benchmarks: {
+        Row: {
+          achieved_at: string
+          created_at: string | null
+          exercise_id: string
+          id: string
+          is_pr: boolean | null
+          member_id: string
+          notes: string | null
+          organization_id: string
+          recorded_by_id: string | null
+          reps: number | null
+          rpe: number | null
+          sets: number | null
+          unit: Database["public"]["Enums"]["benchmark_unit"]
+          updated_at: string | null
+          value: number
+        }
+        Insert: {
+          achieved_at?: string
+          created_at?: string | null
+          exercise_id: string
+          id?: string
+          is_pr?: boolean | null
+          member_id: string
+          notes?: string | null
+          organization_id: string
+          recorded_by_id?: string | null
+          reps?: number | null
+          rpe?: number | null
+          sets?: number | null
+          unit: Database["public"]["Enums"]["benchmark_unit"]
+          updated_at?: string | null
+          value: number
+        }
+        Update: {
+          achieved_at?: string
+          created_at?: string | null
+          exercise_id?: string
+          id?: string
+          is_pr?: boolean | null
+          member_id?: string
+          notes?: string | null
+          organization_id?: string
+          recorded_by_id?: string | null
+          reps?: number | null
+          rpe?: number | null
+          sets?: number | null
+          unit?: Database["public"]["Enums"]["benchmark_unit"]
+          updated_at?: string | null
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_benchmarks_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_benchmarks_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_benchmarks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_benchmarks_recorded_by_id_fkey"
+            columns: ["recorded_by_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1424,7 +1617,9 @@ export type Database = {
           ai_plan: Database["public"]["Enums"]["ai_plan_tier"]
           alert_sent: boolean
           alert_threshold_percent: number
+          cost_per_extra_request: number
           created_at: string
+          extra_requests_per_user: number
           id: string
           limit_reached_at: string | null
           max_requests_per_user_daily: number | null
@@ -1433,6 +1628,7 @@ export type Database = {
           organization_id: string
           period_end_date: string
           period_start_date: string
+          requests_per_user_monthly: number
           requests_this_period: number
           tokens_used_this_period: number
           updated_at: string
@@ -1442,7 +1638,9 @@ export type Database = {
           ai_plan?: Database["public"]["Enums"]["ai_plan_tier"]
           alert_sent?: boolean
           alert_threshold_percent?: number
+          cost_per_extra_request?: number
           created_at?: string
+          extra_requests_per_user?: number
           id?: string
           limit_reached_at?: string | null
           max_requests_per_user_daily?: number | null
@@ -1451,6 +1649,7 @@ export type Database = {
           organization_id: string
           period_end_date?: string
           period_start_date?: string
+          requests_per_user_monthly?: number
           requests_this_period?: number
           tokens_used_this_period?: number
           updated_at?: string
@@ -1460,7 +1659,9 @@ export type Database = {
           ai_plan?: Database["public"]["Enums"]["ai_plan_tier"]
           alert_sent?: boolean
           alert_threshold_percent?: number
+          cost_per_extra_request?: number
           created_at?: string
+          extra_requests_per_user?: number
           id?: string
           limit_reached_at?: string | null
           max_requests_per_user_daily?: number | null
@@ -1469,6 +1670,7 @@ export type Database = {
           organization_id?: string
           period_end_date?: string
           period_start_date?: string
+          requests_per_user_monthly?: number
           requests_this_period?: number
           tokens_used_this_period?: number
           updated_at?: string
@@ -1522,14 +1724,18 @@ export type Database = {
         Row: {
           address_line1: string | null
           address_line2: string | null
+          billing_period: string | null
           business_type: Database["public"]["Enums"]["business_type"]
           city: string | null
           country: string | null
           created_at: string | null
           currency: string | null
+          disabled_at: string | null
+          disabled_reason: string | null
           email: string | null
           features: Json | null
           id: string
+          is_active: boolean | null
           language: string | null
           logo_url: string | null
           max_admin_users: number | null
@@ -1544,21 +1750,30 @@ export type Database = {
           slug: string
           state: string | null
           subscription_plan: Database["public"]["Enums"]["subscription_plan"]
+          subscription_started_at: string | null
+          subscription_status:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
           timezone: string | null
+          trial_ends_at: string | null
           updated_at: string | null
           website: string | null
         }
         Insert: {
           address_line1?: string | null
           address_line2?: string | null
+          billing_period?: string | null
           business_type?: Database["public"]["Enums"]["business_type"]
           city?: string | null
           country?: string | null
           created_at?: string | null
           currency?: string | null
+          disabled_at?: string | null
+          disabled_reason?: string | null
           email?: string | null
           features?: Json | null
           id?: string
+          is_active?: boolean | null
           language?: string | null
           logo_url?: string | null
           max_admin_users?: number | null
@@ -1573,21 +1788,30 @@ export type Database = {
           slug: string
           state?: string | null
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
+          subscription_started_at?: string | null
+          subscription_status?:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
           timezone?: string | null
+          trial_ends_at?: string | null
           updated_at?: string | null
           website?: string | null
         }
         Update: {
           address_line1?: string | null
           address_line2?: string | null
+          billing_period?: string | null
           business_type?: Database["public"]["Enums"]["business_type"]
           city?: string | null
           country?: string | null
           created_at?: string | null
           currency?: string | null
+          disabled_at?: string | null
+          disabled_reason?: string | null
           email?: string | null
           features?: Json | null
           id?: string
+          is_active?: boolean | null
           language?: string | null
           logo_url?: string | null
           max_admin_users?: number | null
@@ -1602,7 +1826,12 @@ export type Database = {
           slug?: string
           state?: string | null
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
+          subscription_started_at?: string | null
+          subscription_status?:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
           timezone?: string | null
+          trial_ends_at?: string | null
           updated_at?: string | null
           website?: string | null
         }
@@ -1753,6 +1982,213 @@ export type Database = {
           },
         ]
       }
+      storage_usage: {
+        Row: {
+          created_at: string | null
+          documents_bytes: number | null
+          id: string
+          images_bytes: number | null
+          organization_id: string
+          other_bytes: number | null
+          total_bytes: number | null
+          total_files: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          documents_bytes?: number | null
+          id?: string
+          images_bytes?: number | null
+          organization_id: string
+          other_bytes?: number | null
+          total_bytes?: number | null
+          total_files?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          documents_bytes?: number | null
+          id?: string
+          images_bytes?: number | null
+          organization_id?: string
+          other_bytes?: number | null
+          total_bytes?: number | null
+          total_files?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storage_usage_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_history: {
+        Row: {
+          amount_usd: number | null
+          billing_period: string | null
+          created_at: string | null
+          created_by: string | null
+          event_type: string
+          from_plan: Database["public"]["Enums"]["subscription_plan"] | null
+          id: string
+          notes: string | null
+          organization_id: string
+          payment_method: string | null
+          payment_reference: string | null
+          to_plan: Database["public"]["Enums"]["subscription_plan"] | null
+        }
+        Insert: {
+          amount_usd?: number | null
+          billing_period?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          event_type: string
+          from_plan?: Database["public"]["Enums"]["subscription_plan"] | null
+          id?: string
+          notes?: string | null
+          organization_id: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          to_plan?: Database["public"]["Enums"]["subscription_plan"] | null
+        }
+        Update: {
+          amount_usd?: number | null
+          billing_period?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          event_type?: string
+          from_plan?: Database["public"]["Enums"]["subscription_plan"] | null
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          to_plan?: Database["public"]["Enums"]["subscription_plan"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_history_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      upgrade_requests: {
+        Row: {
+          admin_notes: string | null
+          contact_email: string
+          contact_name: string | null
+          created_at: string
+          current_plan: string | null
+          id: string
+          message: string | null
+          organization_id: string
+          processed_at: string | null
+          processed_by: string | null
+          requested_plan: string
+          seats: number | null
+          status: Database["public"]["Enums"]["upgrade_request_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          contact_email: string
+          contact_name?: string | null
+          created_at?: string
+          current_plan?: string | null
+          id?: string
+          message?: string | null
+          organization_id: string
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_plan: string
+          seats?: number | null
+          status?: Database["public"]["Enums"]["upgrade_request_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          contact_email?: string
+          contact_name?: string | null
+          created_at?: string
+          current_plan?: string | null
+          id?: string
+          message?: string | null
+          organization_id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_plan?: string
+          seats?: number | null
+          status?: Database["public"]["Enums"]["upgrade_request_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upgrade_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_ai_usage: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          period_month: string
+          requests_this_month: number
+          tokens_used_this_month: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          period_month?: string
+          requests_this_month?: number
+          tokens_used_this_month?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          period_month?: string
+          requests_this_month?: number
+          tokens_used_this_month?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_ai_usage_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_templates: {
         Row: {
           body_text: string
@@ -1837,6 +2273,114 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_usage: {
+        Row: {
+          created_at: string | null
+          id: string
+          messages_delivered: number | null
+          messages_failed: number | null
+          messages_sent: number | null
+          month: number
+          organization_id: string
+          updated_at: string | null
+          year: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          messages_delivered?: number | null
+          messages_failed?: number | null
+          messages_sent?: number | null
+          month: number
+          organization_id: string
+          updated_at?: string | null
+          year: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          messages_delivered?: number | null
+          messages_failed?: number | null
+          messages_sent?: number | null
+          month?: number
+          organization_id?: string
+          updated_at?: string | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_usage_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_exercise_overrides: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          member_id: string
+          organization_id: string
+          original_exercise_id: string
+          original_exercise_order: number
+          override_date: string
+          reason: string | null
+          replacement_exercise_id: string
+          workout_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          member_id: string
+          organization_id: string
+          original_exercise_id: string
+          original_exercise_order: number
+          override_date: string
+          reason?: string | null
+          replacement_exercise_id: string
+          workout_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          member_id?: string
+          organization_id?: string
+          original_exercise_id?: string
+          original_exercise_order?: number
+          override_date?: string
+          reason?: string | null
+          replacement_exercise_id?: string
+          workout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_exercise_overrides_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_exercise_overrides_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_exercise_overrides_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workouts"
             referencedColumns: ["id"]
           },
         ]
@@ -1932,20 +2476,58 @@ export type Database = {
         Returns: boolean
       }
       check_ai_tokens_available: { Args: { org_id: string }; Returns: boolean }
+      check_api_rate_limit: {
+        Args: { p_organization_id: string }
+        Returns: {
+          allowed: boolean
+          daily_limit: number
+          remaining: number
+          used: number
+        }[]
+      }
+      check_expired_trials: { Args: never; Returns: number }
       cleanup_ai_cache: { Args: never; Returns: number }
       consume_ai_tokens: {
         Args: {
           alt_count?: number
           exercise_uuid?: string
-          feature_name: string
+          feature_name?: string
           org_id: string
           response_ms?: number
           tokens_to_consume: number
           user_uuid?: string
           was_cache_hit?: boolean
         }
+        Returns: Json
+      }
+      consume_api_request: {
+        Args: { p_is_write?: boolean; p_organization_id: string }
+        Returns: {
+          remaining: number
+          success: boolean
+        }[]
+      }
+      consume_email: {
+        Args: { p_count?: number; p_organization_id: string }
+        Returns: {
+          limit_reached: boolean
+          remaining: number
+          success: boolean
+        }[]
+      }
+      consume_whatsapp_message: {
+        Args: { p_count?: number; p_organization_id: string }
+        Returns: {
+          limit_reached: boolean
+          remaining: number
+          success: boolean
+        }[]
+      }
+      disable_organization: {
+        Args: { org_id: string; reason?: string }
         Returns: boolean
       }
+      enable_organization: { Args: { org_id: string }; Returns: boolean }
       get_ai_usage_summary: {
         Args: { org_id: string }
         Returns: {
@@ -1960,6 +2542,28 @@ export type Database = {
           tokens_used: number
         }[]
       }
+      get_email_remaining: {
+        Args: { p_organization_id: string }
+        Returns: {
+          monthly_limit: number
+          remaining: number
+          used: number
+        }[]
+      }
+      get_latest_upgrade_request: {
+        Args: { p_organization_id: string }
+        Returns: {
+          contact_email: string
+          contact_name: string
+          created_at: string
+          current_plan: string
+          id: string
+          message: string
+          requested_plan: string
+          seats: number
+          status: Database["public"]["Enums"]["upgrade_request_status"]
+        }[]
+      }
       get_member_daily_booking_count: {
         Args: {
           p_exclude_booking_id?: string
@@ -1970,7 +2574,43 @@ export type Database = {
         }
         Returns: number
       }
+      get_storage_remaining: {
+        Args: { p_organization_id: string }
+        Returns: {
+          limit_bytes: number
+          remaining_bytes: number
+          used_bytes: number
+          used_percentage: number
+        }[]
+      }
+      get_user_ai_remaining: {
+        Args: { org_id: string; user_uuid: string }
+        Returns: Json
+      }
       get_user_organization_id: { Args: never; Returns: string }
+      get_whatsapp_remaining: {
+        Args: { p_organization_id: string }
+        Returns: {
+          monthly_limit: number
+          remaining: number
+          used: number
+        }[]
+      }
+      get_workout_overrides: {
+        Args: { p_date?: string; p_workout_id: string }
+        Returns: {
+          original_exercise_id: string
+          original_exercise_order: number
+          reason: string
+          replacement_category: string
+          replacement_difficulty: string
+          replacement_exercise_id: string
+          replacement_gif_url: string
+          replacement_muscle_groups: string[]
+          replacement_name: string
+          replacement_name_es: string
+        }[]
+      }
       has_role: {
         Args: { required_role: Database["public"]["Enums"]["user_role"] }
         Returns: boolean
@@ -1979,9 +2619,62 @@ export type Database = {
       is_admin_or_owner: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       is_staff_member: { Args: never; Returns: boolean }
+      select_subscription_plan: {
+        Args: {
+          p_billing_period: string
+          p_features: Json
+          p_max_admin_users: number
+          p_max_locations: number
+          p_max_members: number
+          p_organization_id: string
+          p_plan: Database["public"]["Enums"]["subscription_plan"]
+          p_trial_ends_at: string
+        }
+        Returns: boolean
+      }
+      substitute_exercise: {
+        Args: {
+          p_original_exercise_id: string
+          p_original_exercise_order: number
+          p_reason?: string
+          p_replacement_exercise_id: string
+          p_workout_id: string
+        }
+        Returns: Json
+      }
+      update_ai_user_limits: {
+        Args: {
+          new_base_limit?: number
+          new_extra_requests?: number
+          org_id: string
+        }
+        Returns: Json
+      }
+      update_storage_usage: {
+        Args: {
+          p_bytes_change: number
+          p_file_type?: string
+          p_organization_id: string
+        }
+        Returns: {
+          limit_bytes: number
+          limit_reached: boolean
+          success: boolean
+          total_bytes: number
+        }[]
+      }
     }
     Enums: {
       ai_plan_tier: "free" | "pro" | "business" | "enterprise"
+      benchmark_unit:
+        | "kg"
+        | "lbs"
+        | "reps"
+        | "seconds"
+        | "minutes"
+        | "meters"
+        | "calories"
+        | "rounds"
       booking_status:
         | "confirmed"
         | "cancelled"
@@ -2036,6 +2729,13 @@ export type Database = {
       payment_status: "pending" | "paid" | "failed" | "refunded"
       preferred_view_type: "dashboard" | "member"
       subscription_plan: "starter" | "growth" | "pro" | "enterprise"
+      subscription_status:
+        | "trial"
+        | "active"
+        | "past_due"
+        | "cancelled"
+        | "disabled"
+      upgrade_request_status: "pending" | "approved" | "rejected"
       user_role:
         | "owner"
         | "admin"
@@ -2190,9 +2890,22 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       ai_plan_tier: ["free", "pro", "business", "enterprise"],
+      benchmark_unit: [
+        "kg",
+        "lbs",
+        "reps",
+        "seconds",
+        "minutes",
+        "meters",
+        "calories",
+        "rounds",
+      ],
       booking_status: [
         "confirmed",
         "cancelled",
@@ -2253,6 +2966,14 @@ export const Constants = {
       payment_status: ["pending", "paid", "failed", "refunded"],
       preferred_view_type: ["dashboard", "member"],
       subscription_plan: ["starter", "growth", "pro", "enterprise"],
+      subscription_status: [
+        "trial",
+        "active",
+        "past_due",
+        "cancelled",
+        "disabled",
+      ],
+      upgrade_request_status: ["pending", "approved", "rejected"],
       user_role: [
         "owner",
         "admin",

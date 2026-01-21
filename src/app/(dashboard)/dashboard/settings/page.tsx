@@ -1,12 +1,14 @@
 import { redirect } from 'next/navigation'
-import { Globe, MessageSquare, AlertCircle, CalendarDays } from 'lucide-react'
+import { Globe, MessageSquare, AlertCircle, CalendarDays, CreditCard } from 'lucide-react'
 
+import { createClient } from '@/lib/supabase/server'
 import { getCurrentOrganization } from '@/actions/organization.actions'
 import { getWhatsAppSettings } from '@/actions/whatsapp.actions'
 import { BrandingForm } from './branding-form'
 import { InfoForm } from './info-form'
 import { RegionalForm } from './regional-form'
 import { BookingLimitsForm } from './booking-limits-form'
+import { PlanSection } from './plan-section'
 import { SettingsForm as WhatsAppSettingsForm } from './whatsapp/settings-form'
 import { DeliveryLogSection } from './whatsapp/delivery-log-section'
 import { SandboxTest } from '@/components/whatsapp/sandbox-test'
@@ -20,6 +22,7 @@ import {
 } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { Tables } from '@/types/database.types'
+import type { PlanTier } from '@/lib/pricing.config'
 
 export const metadata = {
   title: 'Configuracion | GymGo',
@@ -33,9 +36,13 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   const params = await searchParams
   const defaultTab = params.tab || 'branding'
 
-  const [orgResult, whatsappResult] = await Promise.all([
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const [orgResult, whatsappResult, profileResult] = await Promise.all([
     getCurrentOrganization(),
     getWhatsAppSettings(),
+    user ? supabase.from('profiles').select('full_name').eq('id', user.id).single() : null,
   ])
 
   if (!orgResult.success || !orgResult.data) {
@@ -45,6 +52,9 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   const organization = orgResult.data as Tables<'organizations'>
   const whatsappSettings = whatsappResult.data
   const whatsappAvailable = whatsappSettings && whatsappSettings.setup_status === 'active'
+  const currentPlan = (organization.subscription_plan || 'free') as PlanTier
+  const userEmail = user?.email || ''
+  const userName = profileResult?.data?.full_name || user?.user_metadata?.full_name || ''
 
   return (
     <div className="space-y-6">
@@ -56,12 +66,16 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
       </div>
 
       <Tabs defaultValue={defaultTab} className="space-y-6">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="branding">Branding</TabsTrigger>
           <TabsTrigger value="info">Informacion</TabsTrigger>
           <TabsTrigger value="regional">Regional</TabsTrigger>
           <TabsTrigger value="classes">Clases</TabsTrigger>
           <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
+          <TabsTrigger value="plan" className="gap-1">
+            <CreditCard className="h-4 w-4" />
+            Plan
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="branding">
@@ -214,6 +228,14 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               {process.env.NODE_ENV === 'development' && <SandboxTest />}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="plan">
+          <PlanSection
+            currentPlan={currentPlan}
+            userEmail={userEmail}
+            userName={userName}
+          />
         </TabsContent>
       </Tabs>
     </div>

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/server'
@@ -5,6 +6,20 @@ import { ROUTES } from '@/lib/constants'
 import { mapLegacyRole, hasPermission } from '@/lib/rbac'
 import { MemberShell } from '@/components/layout/member-shell'
 import { getViewPreferences } from '@/lib/auth/get-view-preferences'
+
+/**
+ * Member portal pages should NOT be indexed by search engines
+ */
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
+}
 
 export default async function MemberLayout({
   children,

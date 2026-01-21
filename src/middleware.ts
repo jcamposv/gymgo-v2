@@ -14,7 +14,9 @@ export async function middleware(request: NextRequest) {
   const { supabaseResponse, user } = await updateSession(request)
 
   const isPublicRoute = PUBLIC_ROUTES.some(route => pathname === route)
-  const isOnboardingRoute = ONBOARDING_ROUTES.some(route => pathname === route)
+  const isOnboardingRoute = ONBOARDING_ROUTES.some(route =>
+    pathname === route || pathname.startsWith(route + '/')
+  )
 
   // Redirect unauthenticated users to login
   if (!user && !isPublicRoute && !isOnboardingRoute) {

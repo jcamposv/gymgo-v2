@@ -9,6 +9,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { requirePermission, requireAdmin } from '@/lib/auth/server-auth'
+import { checkWhatsAppLimit, consumeWhatsAppMessage } from '@/lib/plan-limits'
 import {
   whatsappSettingsSchema,
   whatsappTemplateSchema,
@@ -588,6 +589,12 @@ export async function sendTestWhatsAppMessage(
     return errorResponse(error || 'No autorizado')
   }
 
+  // Check WhatsApp message limit
+  const limitCheck = await checkWhatsAppLimit(user.organizationId)
+  if (!limitCheck.allowed) {
+    return errorResponse(limitCheck.message || 'Límite de mensajes WhatsApp alcanzado')
+  }
+
   const validated = testSendSchema.safeParse(data)
 
   if (!validated.success) {
@@ -675,6 +682,9 @@ export async function sendTestWhatsAppMessage(
       status: 'sent',
       sent_at: new Date().toISOString(),
     })
+
+    // Track WhatsApp usage
+    await consumeWhatsAppMessage(user.organizationId, 1)
 
     return successResponse(
       { messageSid: result.messageSid },

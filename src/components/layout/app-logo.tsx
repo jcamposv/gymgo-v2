@@ -2,7 +2,6 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { Dumbbell } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { useOrganizationSettings } from '@/providers'
@@ -20,12 +19,13 @@ interface AppLogoProps {
 }
 
 /**
- * App logo component that displays organization logo with fallback
+ * App logo component that displays organization logo with fallback to default GymGo logo
  * Uses OrganizationContext to get the logo URL
  */
 export function AppLogo({ collapsed, className, onClick }: AppLogoProps) {
   const { settings, loading } = useOrganizationSettings()
 
+  const hasCustomLogo = !!settings?.logoUrl
   const logoUrl = settings?.logoUrl || DEFAULT_LOGO_PATH
   const orgName = settings?.name || 'GymGo'
 
@@ -39,8 +39,8 @@ export function AppLogo({ collapsed, className, onClick }: AppLogoProps) {
     )
   }
 
-  // Logo image or fallback icon
-  const logoElement = settings?.logoUrl ? (
+  // Logo image - custom org logo or default GymGo logo
+  const logoElement = hasCustomLogo ? (
     <Image
       src={logoUrl}
       alt={orgName}
@@ -49,19 +49,22 @@ export function AppLogo({ collapsed, className, onClick }: AppLogoProps) {
       className="h-10 w-10 rounded-md object-contain shrink-0"
     />
   ) : (
-    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary shrink-0">
-      <Dumbbell className="h-5 w-5 text-primary-foreground" />
-    </div>
+    <Image
+      src={DEFAULT_LOGO_PATH}
+      alt="GymGo"
+      width={120}
+      height={32}
+      className={cn(
+        'h-8 w-auto shrink-0',
+        collapsed && 'h-8 w-8 object-contain'
+      )}
+    />
   )
 
-  // Full content with optional text
-  const content = (
-    <>
-      {logoElement}
-    </>
-  )
+  // Full content
+  const content = <>{logoElement}</>
 
-  // If onClick is provided, use a button/div instead of Link
+  // If onClick is provided, use a button instead of Link
   if (onClick) {
     return (
       <button

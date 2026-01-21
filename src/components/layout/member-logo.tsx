@@ -2,7 +2,6 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { Dumbbell } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { useOrganizationSettings } from '@/providers'
@@ -16,12 +15,13 @@ interface MemberLogoProps {
 }
 
 /**
- * Member logo component that displays organization logo with fallback
+ * Member logo component that displays organization logo with fallback to default GymGo logo
  * Similar to AppLogo but links to /member instead of /dashboard
  */
 export function MemberLogo({ className }: MemberLogoProps) {
   const { settings, loading } = useOrganizationSettings()
 
+  const hasCustomLogo = !!settings?.logoUrl
   const logoUrl = settings?.logoUrl || DEFAULT_LOGO_PATH
   const orgName = settings?.name || 'GymGo'
 
@@ -34,8 +34,8 @@ export function MemberLogo({ className }: MemberLogoProps) {
     )
   }
 
-  // Logo image or fallback icon
-  const logoElement = settings?.logoUrl ? (
+  // Logo image - custom org logo or default GymGo logo
+  const logoElement = hasCustomLogo ? (
     <Image
       src={logoUrl}
       alt={orgName}
@@ -44,9 +44,13 @@ export function MemberLogo({ className }: MemberLogoProps) {
       className="h-8 w-8 rounded-md object-contain shrink-0"
     />
   ) : (
-    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-lime-600 shrink-0">
-      <Dumbbell className="h-5 w-5 text-white" />
-    </div>
+    <Image
+      src={DEFAULT_LOGO_PATH}
+      alt="GymGo"
+      width={120}
+      height={32}
+      className="h-7 w-auto shrink-0"
+    />
   )
 
   return (
@@ -58,7 +62,9 @@ export function MemberLogo({ className }: MemberLogoProps) {
       )}
     >
       {logoElement}
-      <span className="font-bold hidden sm:inline">{orgName}</span>
+      {hasCustomLogo && (
+        <span className="font-bold hidden sm:inline">{orgName}</span>
+      )}
     </Link>
   )
 }
