@@ -2086,6 +2086,68 @@ export type Database = {
           },
         ]
       }
+      upgrade_requests: {
+        Row: {
+          admin_notes: string | null
+          contact_email: string
+          contact_name: string | null
+          created_at: string
+          current_plan: string | null
+          id: string
+          message: string | null
+          organization_id: string
+          processed_at: string | null
+          processed_by: string | null
+          requested_plan: string
+          seats: number | null
+          status: Database["public"]["Enums"]["upgrade_request_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          contact_email: string
+          contact_name?: string | null
+          created_at?: string
+          current_plan?: string | null
+          id?: string
+          message?: string | null
+          organization_id: string
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_plan: string
+          seats?: number | null
+          status?: Database["public"]["Enums"]["upgrade_request_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          contact_email?: string
+          contact_name?: string | null
+          created_at?: string
+          current_plan?: string | null
+          id?: string
+          message?: string | null
+          organization_id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_plan?: string
+          seats?: number | null
+          status?: Database["public"]["Enums"]["upgrade_request_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upgrade_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_ai_usage: {
         Row: {
           created_at: string
@@ -2488,6 +2550,20 @@ export type Database = {
           used: number
         }[]
       }
+      get_latest_upgrade_request: {
+        Args: { p_organization_id: string }
+        Returns: {
+          contact_email: string
+          contact_name: string
+          created_at: string
+          current_plan: string
+          id: string
+          message: string
+          requested_plan: string
+          seats: number
+          status: Database["public"]["Enums"]["upgrade_request_status"]
+        }[]
+      }
       get_member_daily_booking_count: {
         Args: {
           p_exclude_booking_id?: string
@@ -2659,6 +2735,7 @@ export type Database = {
         | "past_due"
         | "cancelled"
         | "disabled"
+      upgrade_request_status: "pending" | "approved" | "rejected"
       user_role:
         | "owner"
         | "admin"
@@ -2896,6 +2973,7 @@ export const Constants = {
         "cancelled",
         "disabled",
       ],
+      upgrade_request_status: ["pending", "approved", "rejected"],
       user_role: [
         "owner",
         "admin",
