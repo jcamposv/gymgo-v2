@@ -1,0 +1,21 @@
+{
+  "name": "GymGo",
+  "short_name": "GymGo",
+  "description": "Software de gestión para gimnasios y centros fitness",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#84cc16",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-app.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "fitness", "productivity"],
+  "lang": "es",
+  "dir": "ltr"
+}

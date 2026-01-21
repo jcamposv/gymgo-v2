@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { ROUTES } from '@/lib/constants'
@@ -5,6 +6,20 @@ import { AppShell } from '@/components/layout'
 import { mapLegacyRole, hasPermission } from '@/lib/rbac'
 import { getFilteredNavigation } from '@/lib/navigation/filter-navigation'
 import { getViewPreferences } from '@/lib/auth/get-view-preferences'
+
+/**
+ * Dashboard pages should NOT be indexed by search engines
+ */
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
+}
 
 export default async function DashboardLayout({
   children,
@@ -30,6 +45,22 @@ export default async function DashboardLayout({
   // Check if user has completed onboarding (has an organization)
   if (!profile?.organization_id) {
     redirect(ROUTES.ONBOARDING)
+  }
+
+  // Get organization status
+  const { data: orgData } = await supabase
+    .from('organizations')
+    .select('subscription_plan')
+    .eq('id', profile.organization_id)
+    .single()
+
+  const org = orgData as {
+    subscription_plan: string | null
+  } | null
+
+  // Check if user needs to select a plan
+  if (org && !org.subscription_plan) {
+    redirect(ROUTES.SELECT_PLAN)
   }
 
   // Map database role to AppRole and check permissions

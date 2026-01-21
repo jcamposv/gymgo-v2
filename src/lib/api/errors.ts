@@ -77,11 +77,20 @@ export function conflictError(message: string): NextResponse {
   })
 }
 
-export function rateLimitError(): NextResponse {
+export function rateLimitError(message?: string, details?: { used: number; limit: number }): NextResponse {
   return apiError({
     code: 'RATE_LIMIT_EXCEEDED',
-    message: 'Too many requests, please try again later',
+    message: message || 'Too many requests, please try again later',
     status: 429,
+    ...(details && { details: { usage: [`${details.used}/${details.limit} requests used today`] } }),
+  })
+}
+
+export function planAccessDeniedError(message = 'This feature is not available on your plan'): NextResponse {
+  return apiError({
+    code: 'FORBIDDEN',
+    message,
+    status: 403,
   })
 }
 

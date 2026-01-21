@@ -9,7 +9,7 @@
 import { type NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import {
-  validateApiRequest,
+  validateApiRequestWithLimits,
   createApiClient,
   extractToken,
 } from '@/lib/api/auth'
@@ -19,6 +19,7 @@ import {
   notFoundError,
   forbiddenError,
   rateLimitError,
+  planAccessDeniedError,
   internalError,
   validationError,
 } from '@/lib/api/errors'
@@ -83,11 +84,25 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now()
 
   try {
-    // 1. Validate API key and Bearer token
-    const authContext = await validateApiRequest(request, true)
+    // 1. Validate API key, Bearer token, plan-based API access, and rate limits
+    const authContext = await validateApiRequestWithLimits(request, {
+      requireAuth: true,
+      checkRateLimits: true,
+      isWriteOperation: false,
+    })
+
     if (!authContext.isValid) {
       if (authContext.error?.includes('API key')) {
         return invalidApiKeyError()
+      }
+      if (authContext.error?.includes('not available on your plan') || authContext.error?.includes('API access')) {
+        return planAccessDeniedError(authContext.error)
+      }
+      if (authContext.error?.includes('Rate limit') || authContext.error?.includes('requests/día')) {
+        return rateLimitError(authContext.error, authContext.rateLimitInfo ? {
+          used: authContext.rateLimitInfo.used,
+          limit: authContext.rateLimitInfo.dailyLimit,
+        } : undefined)
       }
       return unauthorizedError(authContext.error)
     }
@@ -112,24 +127,19 @@ export async function POST(request: NextRequest) {
 
     const { exercise_id, difficulty_filter, limit } = parseResult.data
 
-    // 3. Get authenticated client and user profile
+    // 3. Get authenticated client (organization already validated in rate limit check)
     const token = extractToken(request)
     if (!token) {
       return unauthorizedError('Missing authorization token')
     }
 
     const supabase = createApiClient(token)
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('organization_id')
-      .eq('id', authContext.userId!)
-      .single()
 
-    if (profileError || !profile?.organization_id) {
+    // Organization ID is already available from the rate limit check
+    const organizationId = authContext.organizationId
+    if (!organizationId) {
       return notFoundError('User profile or organization not found')
     }
-
-    const organizationId = profile.organization_id
 
     // 4. Check AI tokens available (using untyped admin client for new AI tables)
     const adminClient = createUntypedAdminClient()
