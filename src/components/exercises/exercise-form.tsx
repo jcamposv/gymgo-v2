@@ -438,6 +438,39 @@ export function ExerciseForm({ exercise, mode }: ExerciseFormProps) {
                     </FormItem>
                   )}
                 />
+
+                <div className="border-t pt-4 mt-4">
+                  <FormField
+                    control={form.control}
+                    name="thumbnail_url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Thumbnail / Vista previa</FormLabel>
+                        <FormDescription className="text-xs mb-2">
+                          Imagen que se mostrara en la lista de ejercicios
+                        </FormDescription>
+                        {organizationId ? (
+                          <ImageUpload
+                            value={field.value}
+                            onChange={field.onChange}
+                            organizationId={organizationId}
+                            bucket="exercises"
+                            folder="thumbnails"
+                            accept="images"
+                            aspectRatio="square"
+                            placeholder="Arrastra una imagen para el thumbnail"
+                          />
+                        ) : (
+                          <div className="border rounded-lg p-8 flex flex-col items-center justify-center bg-muted/30 text-muted-foreground">
+                            <Loader2 className="h-8 w-8 animate-spin mb-2" />
+                            <p className="text-sm">Cargando...</p>
+                          </div>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>
