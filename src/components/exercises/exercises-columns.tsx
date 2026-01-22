@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import type { ColumnDef } from '@tanstack/react-table'
-import { Eye, Pencil, Trash2, Power, Copy, Globe } from 'lucide-react'
+import { Eye, Pencil, Trash2, Power, Copy, Globe, Play } from 'lucide-react'
 
 import type { Tables } from '@/types/database.types'
 import {
@@ -27,7 +27,7 @@ import {
 type Exercise = Tables<'exercises'>
 
 export const exerciseColumns: ColumnDef<Exercise>[] = [
-  // Media column
+  // Media column - Priority: thumbnail_url > gif_url > video placeholder > N/A
   {
     id: 'media',
     header: 'Media',
@@ -35,16 +35,49 @@ export const exerciseColumns: ColumnDef<Exercise>[] = [
     enableSorting: false,
     cell: ({ row }) => {
       const exercise = row.original
-      return exercise.gif_url ? (
-        <img
-          src={exercise.gif_url}
-          alt={exercise.name}
-          className="w-12 h-12 object-cover rounded"
-          onError={(e) => {
-            e.currentTarget.style.display = 'none'
-          }}
-        />
-      ) : (
+
+      // Priority 1: thumbnail_url (always preferred)
+      if (exercise.thumbnail_url) {
+        return (
+          <img
+            src={exercise.thumbnail_url}
+            alt={exercise.name}
+            className="w-12 h-12 object-cover rounded"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none'
+            }}
+          />
+        )
+      }
+
+      // Priority 2: gif_url (image/gif)
+      if (exercise.gif_url) {
+        return (
+          <img
+            src={exercise.gif_url}
+            alt={exercise.name}
+            className="w-12 h-12 object-cover rounded"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none'
+            }}
+          />
+        )
+      }
+
+      // Priority 3: video_url exists - show video placeholder with badge
+      if (exercise.video_url) {
+        return (
+          <div className="relative w-12 h-12 bg-muted rounded flex items-center justify-center">
+            <Play className="h-5 w-5 text-muted-foreground" />
+            <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] px-1 rounded">
+              Video
+            </div>
+          </div>
+        )
+      }
+
+      // Fallback: No media
+      return (
         <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
           <span className="text-xs text-muted-foreground">N/A</span>
         </div>

@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, Pencil, Globe, Play, Image as ImageIcon } from 'lucide-react'
+import { ArrowLeft, Pencil, Globe } from 'lucide-react'
 
 import { getExercise } from '@/actions/exercise.actions'
+import { ExerciseMediaPlayer } from '@/components/exercises/exercise-media-player'
 import {
   categoryLabels,
   difficultyLabels,
@@ -79,34 +80,12 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
             <CardTitle>Demostracion</CardTitle>
           </CardHeader>
           <CardContent>
-            {exercise.gif_url ? (
-              <div className="rounded-lg overflow-hidden bg-muted">
-                <img
-                  src={exercise.gif_url}
-                  alt={exercise.name}
-                  className="w-full object-contain max-h-80"
-                />
-              </div>
-            ) : exercise.video_url ? (
-              <div className="aspect-video rounded-lg bg-muted flex items-center justify-center">
-                <a
-                  href={exercise.video_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-primary hover:underline"
-                >
-                  <Play className="h-8 w-8" />
-                  Ver video
-                </a>
-              </div>
-            ) : (
-              <div className="aspect-video rounded-lg bg-muted flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
-                  <ImageIcon className="h-12 w-12 mx-auto mb-2" />
-                  <p>Sin demostracion disponible</p>
-                </div>
-              </div>
-            )}
+            <ExerciseMediaPlayer
+              videoUrl={exercise.video_url}
+              gifUrl={exercise.gif_url}
+              thumbnailUrl={exercise.thumbnail_url}
+              title={exercise.name}
+            />
           </CardContent>
         </Card>
 
