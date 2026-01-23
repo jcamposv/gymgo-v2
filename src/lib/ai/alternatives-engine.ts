@@ -260,6 +260,7 @@ export async function getAlternatives(
     difficultyFilter,
     limit,
     aiEnabled,
+    model,
   } = options
 
   // Calculate cache key
@@ -319,7 +320,8 @@ export async function getAlternatives(
       const aiRankings = await rankWithOpenAI(
         sourceExercise,
         candidates,
-        availableEquipment
+        availableEquipment,
+        { model }
       )
 
       // Estimate tokens used (rough estimate: ~150 tokens per request)

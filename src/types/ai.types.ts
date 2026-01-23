@@ -119,6 +119,7 @@ export interface AlternativesEngineOptions {
   difficultyFilter?: string | null
   limit: number
   aiEnabled: boolean
+  model?: string // AI model to use (default: gpt-3.5-turbo, Pro/Enterprise: gpt-4-turbo)
 }
 
 export interface AlternativesEngineResult {
