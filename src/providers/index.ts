@@ -4,3 +4,10 @@ export {
   useOrganizationSettings,
   type OrganizationSettings,
 } from './organization-provider'
+
+export {
+  LocationProvider,
+  useLocationContext,
+  useCurrentLocation,
+  useLocations,
+} from './location-provider'

@@ -64,7 +64,8 @@ export const locationCreateSchema = z.object({
   country: z
     .string()
     .max(100, 'El país no puede exceder 100 caracteres')
-    .default('MX'),
+    .optional()
+    .or(z.literal('')),
 
   // Contact
   phone: z

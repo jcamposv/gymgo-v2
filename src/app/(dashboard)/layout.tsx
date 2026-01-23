@@ -6,6 +6,8 @@ import { AppShell } from '@/components/layout'
 import { mapLegacyRole, hasPermission } from '@/lib/rbac'
 import { getFilteredNavigation } from '@/lib/navigation/filter-navigation'
 import { getViewPreferences } from '@/lib/auth/get-view-preferences'
+import { getPlanLimits, type PlanTier } from '@/lib/pricing.config'
+import type { Location } from '@/schemas/location.schema'
 
 /**
  * Dashboard pages should NOT be indexed by search engines
@@ -51,18 +53,34 @@ export default async function DashboardLayout({
   // This field is set when user explicitly selects a plan
   const { data: orgData } = await supabase
     .from('organizations')
-    .select('subscription_started_at')
+    .select('subscription_started_at, subscription_plan')
     .eq('id', profile.organization_id)
     .single()
 
   const org = orgData as {
     subscription_started_at: string | null
+    subscription_plan: string | null
   } | null
 
   // Check if user needs to select a plan (subscription_started_at is null until plan is selected)
   if (!org?.subscription_started_at) {
     redirect(ROUTES.SELECT_PLAN)
   }
+
+  // Get locations for the organization
+  const { data: locationsData } = await supabase
+    .from('locations')
+    .select('*')
+    .eq('organization_id', profile.organization_id)
+    .eq('is_active', true)
+    .order('is_primary', { ascending: false })
+    .order('name', { ascending: true })
+
+  const locations = (locationsData ?? []) as Location[]
+
+  // Get plan limits for maxLocations
+  const planTier = (org.subscription_plan || 'free') as PlanTier
+  const planLimits = getPlanLimits(planTier)
 
   // Map database role to AppRole and check permissions
   const appRole = mapLegacyRole(profile.role)
@@ -89,7 +107,13 @@ export default async function DashboardLayout({
   const viewPreferences = await getViewPreferences(userWithRole)
 
   return (
-    <AppShell user={user} navigation={navigation} viewPreferences={viewPreferences}>
+    <AppShell
+      user={user}
+      navigation={navigation}
+      viewPreferences={viewPreferences}
+      locations={locations}
+      maxLocations={planLimits.maxLocations}
+    >
       {children}
     </AppShell>
   )
