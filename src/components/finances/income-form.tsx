@@ -6,12 +6,12 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Loader2, MapPin } from 'lucide-react'
 
-import { createExpense } from '@/actions/finance.actions'
+import { createIncome } from '@/actions/finance.actions'
 import {
-  expenseSchema,
-  EXPENSE_CATEGORY_LABELS,
-  type ExpenseFormData,
-  type ExpenseCategory,
+  incomeSchema,
+  INCOME_CATEGORY_LABELS,
+  type IncomeFormData,
+  type IncomeCategory,
 } from '@/schemas/finance.schema'
 import { getCurrencySymbol } from '@/lib/utils'
 import { useLocationContext } from '@/providers/location-provider'
@@ -19,7 +19,6 @@ import { useLocationContext } from '@/providers/location-provider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Switch } from '@/components/ui/switch'
 import {
   Select,
   SelectContent,
@@ -37,40 +36,36 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
 
-interface ExpenseFormProps {
+interface IncomeFormProps {
   currency: string
 }
 
-export function ExpenseForm({ currency }: ExpenseFormProps) {
+export function IncomeForm({ currency }: IncomeFormProps) {
   const router = useRouter()
   const symbol = getCurrencySymbol(currency)
   const { activeLocationId, activeLocationName, isAllLocationsMode, hasMultipleLocations } = useLocationContext()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const form = useForm<ExpenseFormData>({
-    resolver: zodResolver(expenseSchema) as any,
+  const form = useForm<IncomeFormData>({
+    resolver: zodResolver(incomeSchema) as any,
     defaultValues: {
       description: '',
       amount: 0,
       category: 'other',
-      expense_date: new Date(),
-      vendor: '',
-      receipt_url: '',
+      income_date: new Date(),
       notes: '',
-      is_recurring: false,
       // Auto-assign from dashboard context (no selector)
       location_id: activeLocationId,
     },
   })
 
-  const onSubmit = async (data: ExpenseFormData) => {
+  const onSubmit = async (data: IncomeFormData) => {
     // Ensure location_id is set from context
     const submitData = {
       ...data,
@@ -78,23 +73,23 @@ export function ExpenseForm({ currency }: ExpenseFormProps) {
     }
 
     try {
-      const result = await createExpense(submitData)
+      const result = await createIncome(submitData)
 
       if (result.success) {
         toast.success(result.message)
-        router.push('/dashboard/finances/expenses')
+        router.push('/dashboard/finances/income')
       } else {
         toast.error(result.message)
         if (result.errors) {
           Object.entries(result.errors).forEach(([field, errors]) => {
-            form.setError(field as keyof ExpenseFormData, {
+            form.setError(field as keyof IncomeFormData, {
               message: Array.isArray(errors) ? errors[0] : errors,
             })
           })
         }
       }
     } catch {
-      toast.error('Error al registrar el gasto')
+      toast.error('Error al registrar el ingreso')
     }
   }
 
@@ -115,7 +110,7 @@ export function ExpenseForm({ currency }: ExpenseFormProps) {
                       Se registrara en: {activeLocationName}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Este gasto se asociara a la sucursal actual del dashboard
+                      Este ingreso se asociara a la sucursal actual del dashboard
                     </p>
                   </div>
                 </div>
@@ -125,9 +120,9 @@ export function ExpenseForm({ currency }: ExpenseFormProps) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Informacion del gasto</CardTitle>
+              <CardTitle>Informacion del ingreso</CardTitle>
               <CardDescription>
-                Registra un nuevo gasto del gimnasio
+                Registra un nuevo ingreso adicional (productos, servicios, etc.)
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -139,7 +134,7 @@ export function ExpenseForm({ currency }: ExpenseFormProps) {
                     <FormLabel>Descripcion *</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Ej: Pago de renta mensual"
+                        placeholder="Ej: Venta de suplementos"
                         {...field}
                       />
                     </FormControl>
@@ -189,7 +184,7 @@ export function ExpenseForm({ currency }: ExpenseFormProps) {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {(Object.entries(EXPENSE_CATEGORY_LABELS) as [ExpenseCategory, string][]).map(
+                          {(Object.entries(INCOME_CATEGORY_LABELS) as [IncomeCategory, string][]).map(
                             ([value, label]) => (
                               <SelectItem key={value} value={value}>
                                 {label}
@@ -204,63 +199,22 @@ export function ExpenseForm({ currency }: ExpenseFormProps) {
                 />
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="expense_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Fecha del gasto</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          value={field.value instanceof Date
-                            ? field.value.toISOString().split('T')[0]
-                            : ''}
-                          onChange={(e) => field.onChange(new Date(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="vendor"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Proveedor</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Nombre del proveedor"
-                          {...field}
-                          value={field.value ?? ''}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
               <FormField
                 control={form.control}
-                name="is_recurring"
+                name="income_date"
                 render={({ field }) => (
-                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel>Gasto recurrente</FormLabel>
-                      <FormDescription>
-                        Marcar si este gasto se repite mensualmente
-                      </FormDescription>
-                    </div>
+                  <FormItem>
+                    <FormLabel>Fecha del ingreso</FormLabel>
                     <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
+                      <Input
+                        type="date"
+                        value={field.value instanceof Date
+                          ? field.value.toISOString().split('T')[0]
+                          : ''}
+                        onChange={(e) => field.onChange(new Date(e.target.value))}
                       />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -273,7 +227,7 @@ export function ExpenseForm({ currency }: ExpenseFormProps) {
                     <FormLabel>Notas</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Notas adicionales sobre el gasto..."
+                        placeholder="Notas adicionales sobre el ingreso..."
                         rows={3}
                         {...field}
                         value={field.value ?? ''}
@@ -290,7 +244,7 @@ export function ExpenseForm({ currency }: ExpenseFormProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.push('/dashboard/finances/expenses')}
+              onClick={() => router.push('/dashboard/finances/income')}
               disabled={form.formState.isSubmitting}
             >
               Cancelar
@@ -302,7 +256,7 @@ export function ExpenseForm({ currency }: ExpenseFormProps) {
                   Registrando...
                 </>
               ) : (
-                'Registrar gasto'
+                'Registrar ingreso'
               )}
             </Button>
           </div>

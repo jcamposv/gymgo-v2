@@ -15,6 +15,7 @@ import {
   Clock,
   Send,
   AlertCircle,
+  MapPin,
 } from 'lucide-react'
 
 import type { Tables } from '@/types/database.types'
@@ -64,6 +65,7 @@ import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 import { usePlanLimit, isPlanLimitError } from '@/hooks/use-plan-limit'
 import { PlanLimitDialog } from '@/components/shared/plan-limit-dialog'
+import { useLocationContext } from '@/providers/location-provider'
 
 // =============================================================================
 // TYPES
@@ -145,6 +147,7 @@ function TabTriggerWithError({ value, label, hasError }: TabTriggerWithErrorProp
 
 export function MemberForm({ member, mode, accountStatus, profileRole, canEditRole }: MemberFormProps) {
   const router = useRouter()
+  const { activeLocation, activeLocationId, activeLocationName, isAllLocationsMode, canCreate } = useLocationContext()
   const [plans, setPlans] = useState<MembershipPlan[]>([])
   const [isLoadingPlans, setIsLoadingPlans] = useState(true)
   const [activeTab, setActiveTab] = useState<TabName>('basic')
@@ -170,6 +173,9 @@ export function MemberForm({ member, mode, accountStatus, profileRole, canEditRo
   const form = useForm({
     resolver: zodResolver(memberFormSchema),
     defaultValues: {
+      // Location is auto-assigned from dashboard context (not user-selectable)
+      location_id: member?.location_id ?? activeLocationId ?? '',
+      // Basic info
       email: member?.email ?? '',
       full_name: member?.full_name ?? '',
       phone: member?.phone ?? '',
@@ -191,6 +197,13 @@ export function MemberForm({ member, mode, accountStatus, profileRole, canEditRo
     },
     mode: 'onBlur', // Validate on blur for better UX
   })
+
+  // Auto-set location_id from dashboard context (for create mode)
+  useEffect(() => {
+    if (mode === 'create' && activeLocationId && !form.getValues('location_id')) {
+      form.setValue('location_id', activeLocationId)
+    }
+  }, [activeLocationId, mode, form])
 
   const { formState: { errors } } = form
 
@@ -363,6 +376,25 @@ export function MemberForm({ member, mode, accountStatus, profileRole, canEditRo
 
             {/* TAB 1: Basic Info */}
             <TabsContent value="basic" className="space-y-4 mt-4">
+              {/* Location Context Indicator (read-only) */}
+              <Card className="border-primary/20 bg-primary/5">
+                <CardContent className="py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 shrink-0">
+                      <MapPin className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">
+                        {mode === 'create' ? 'Se registrara en:' : 'Sucursal:'} {activeLocationName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Los ingresos y reportes se asociaran a esta sucursal
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle>Datos personales</CardTitle>

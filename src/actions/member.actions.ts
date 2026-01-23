@@ -29,6 +29,7 @@ export async function getMembers(params?: {
   query?: string
   status?: MemberStatus
   experience_level?: 'beginner' | 'intermediate' | 'advanced'
+  location_id?: string
   page?: number
   per_page?: number
   sort_by?: string
@@ -59,6 +60,11 @@ export async function getMembers(params?: {
     .eq('organization_id', user.organizationId)
     .order(sortBy, { ascending })
     .range(from, to)
+
+  // Filter by location if specified
+  if (params?.location_id) {
+    dbQuery = dbQuery.eq('location_id', params.location_id)
+  }
 
   if (params?.query) {
     dbQuery = dbQuery.or(`full_name.ilike.%${params.query}%,email.ilike.%${params.query}%`)

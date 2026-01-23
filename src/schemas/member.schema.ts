@@ -9,6 +9,12 @@ import { z } from 'zod'
  * Incluye campos de invitación y rol para modo create
  */
 export const memberFormSchema = z.object({
+  // Sucursal (requerido)
+  location_id: z
+    .string()
+    .min(1, 'La sucursal es obligatoria')
+    .uuid('Selecciona una sucursal valida'),
+
   // Información básica
   email: z
     .string()
@@ -100,6 +106,12 @@ export type MemberFormValues = z.infer<typeof memberFormSchema>
  * Transforma strings vacíos a null para la base de datos
  */
 export const memberSchema = z.object({
+  // Sucursal (requerido)
+  location_id: z
+    .string()
+    .min(1, 'La sucursal es obligatoria')
+    .uuid('Selecciona una sucursal valida'),
+
   email: z
     .string()
     .min(1, 'El correo electronico es obligatorio')
@@ -241,7 +253,7 @@ export const genderLabels: Record<string, string> = {
 type TabName = 'basic' | 'membership' | 'contact' | 'fitness'
 
 const TAB_FIELDS: Record<TabName, string[]> = {
-  basic: ['full_name', 'email', 'phone', 'date_of_birth', 'gender', 'status'],
+  basic: ['location_id', 'full_name', 'email', 'phone', 'date_of_birth', 'gender', 'status'],
   membership: ['current_plan_id', 'membership_start_date', 'membership_end_date'],
   contact: ['emergency_contact_name', 'emergency_contact_phone'],
   fitness: ['experience_level', 'medical_conditions', 'injuries', 'internal_notes'],

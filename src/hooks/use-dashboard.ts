@@ -82,11 +82,21 @@ const swrConfig = {
 // DASHBOARD METRICS HOOK
 // =============================================================================
 
-export function useDashboardMetrics() {
+interface UseDashboardMetricsParams {
+  location_id?: string | null
+}
+
+export function useDashboardMetrics(params?: UseDashboardMetricsParams) {
+  const locationId = params?.location_id
+  // Include location in cache key so switching locations refetches data
+  const swrKey = `dashboard-metrics-${locationId ?? 'all'}`
+
   const { data, error, isLoading, isValidating, mutate } = useSWR<DashboardMetrics | null>(
-    dashboardKeys.metrics(),
+    swrKey,
     async () => {
-      const result = await getDashboardMetrics()
+      const result = await getDashboardMetrics({
+        location_id: locationId ?? undefined,
+      })
       if (result.error) {
         throw new FetcherError(result.error, 400)
       }
@@ -108,13 +118,35 @@ export function useDashboardMetrics() {
 // REVENUE KPI HOOK (for KPI card)
 // =============================================================================
 
-export function useRevenueKpi(range: 'today' | 'week' | 'month' | 'year' = 'month') {
-  const swrKey = `revenue-kpi-${range}`
+interface UseRevenueKpiParams {
+  range?: 'today' | 'week' | 'month' | 'year'
+  location_id?: string | null
+  include_org_wide?: boolean
+}
+
+export function useRevenueKpi(
+  rangeOrParams: 'today' | 'week' | 'month' | 'year' | UseRevenueKpiParams = 'month'
+) {
+  // Support both legacy string param and new object param
+  const params: UseRevenueKpiParams = typeof rangeOrParams === 'string'
+    ? { range: rangeOrParams }
+    : rangeOrParams
+
+  const range = params.range ?? 'month'
+  const locationId = params.location_id
+  const includeOrgWide = params.include_org_wide
+
+  // Include location in the cache key so switching locations refetches data
+  const swrKey = `revenue-kpi-${range}-${locationId ?? 'all'}`
 
   const { data, error, isLoading, isValidating, mutate } = useSWR<RevenueKpi | null>(
     swrKey,
     async () => {
-      const result = await getRevenueKpi({ range })
+      const result = await getRevenueKpi({
+        range,
+        location_id: locationId ?? undefined,
+        include_org_wide: includeOrgWide,
+      })
       if (result.error) {
         throw new FetcherError(result.error, 403) // Permission error
       }
