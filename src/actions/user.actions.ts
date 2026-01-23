@@ -14,6 +14,7 @@ import {
 import { type AppRole } from '@/lib/rbac'
 import { mapToDbRole, type DatabaseRole } from '@/lib/rbac/helpers'
 import { ROLE_LABELS, ROLE_DESCRIPTIONS, ASSIGNABLE_ROLES } from '@/lib/rbac/role-labels'
+import { checkRoleLimit, PLAN_LIMIT_ERROR_CODE } from '@/lib/plan-limits'
 
 // =============================================================================
 // TYPES
@@ -156,6 +157,20 @@ export async function updateUserRole(
 
   // Convert AppRole to database role
   const dbRole = mapToDbRole(newRole)
+
+  // Check plan limits before changing role (only if assigning a staff role)
+  if (newRole !== 'client' && target.role !== dbRole) {
+    const limitCheck = await checkRoleLimit(user!.organizationId, dbRole)
+    if (!limitCheck.allowed) {
+      return {
+        success: false,
+        message: limitCheck.message || 'Límite de plan alcanzado',
+        errors: {
+          [PLAN_LIMIT_ERROR_CODE]: [limitCheck.message || 'Límite alcanzado'],
+        },
+      }
+    }
+  }
 
   // Update the role
   const { error: updateError } = await supabase
@@ -384,6 +399,20 @@ export async function updateMemberProfileRole(
 
   // Convert AppRole to database role
   const dbRole = mapToDbRole(newRole)
+
+  // Check plan limits before changing role (only if assigning a staff role)
+  if (newRole !== 'client' && profileData.role !== dbRole) {
+    const limitCheck = await checkRoleLimit(user!.organizationId, dbRole)
+    if (!limitCheck.allowed) {
+      return {
+        success: false,
+        message: limitCheck.message || 'Límite de plan alcanzado',
+        errors: {
+          [PLAN_LIMIT_ERROR_CODE]: [limitCheck.message || 'Límite alcanzado'],
+        },
+      }
+    }
+  }
 
   // Update the role
   const { error: updateError } = await supabase

@@ -25,6 +25,35 @@ export interface LimitCheckResult {
   message?: string
 }
 
+// Standardized error code for plan limit violations
+export const PLAN_LIMIT_ERROR_CODE = 'PLAN_LIMIT_EXCEEDED' as const
+
+export interface PlanLimitError {
+  code: typeof PLAN_LIMIT_ERROR_CODE
+  limitType: string
+  message: string
+  current: number
+  limit: number
+  resetDate?: string
+}
+
+export function createPlanLimitError(
+  limitType: string,
+  message: string,
+  current: number,
+  limit: number,
+  resetDate?: string
+): PlanLimitError {
+  return {
+    code: PLAN_LIMIT_ERROR_CODE,
+    limitType,
+    message,
+    current,
+    limit,
+    resetDate,
+  }
+}
+
 export interface OrganizationLimits {
   plan: PlanTier
   maxMembers: number
@@ -112,8 +141,14 @@ export async function checkMemberLimit(
 }
 
 // =============================================================================
-// CHECK USER LIMIT (Admin users)
+// CHECK USER LIMIT (System users: admin, assistant, nutritionist - NOT trainers)
 // =============================================================================
+
+// Roles that count against maxUsers limit
+const SYSTEM_USER_ROLES = ['owner', 'admin', 'assistant', 'nutritionist'] as const
+
+// Roles that count against maxTrainers limit
+const TRAINER_ROLES = ['trainer', 'instructor'] as const
 
 export async function checkUserLimit(
   organizationId: string
@@ -130,13 +165,12 @@ export async function checkUserLimit(
     return { allowed: true, current: 0, limit: -1 }
   }
 
-  // Count current admin users (excluding members role)
-  // Valid roles are: owner, admin, instructor, trainer, assistant, nutritionist
+  // Count current system users (excluding trainers - they have separate limit)
   const { count, error } = await supabase
     .from('profiles')
     .select('*', { count: 'exact', head: true })
     .eq('organization_id', organizationId)
-    .in('role', ['owner', 'admin', 'instructor', 'trainer', 'assistant', 'nutritionist'])
+    .in('role', SYSTEM_USER_ROLES)
 
   if (error) {
     console.error('Error counting users:', error)
@@ -150,7 +184,7 @@ export async function checkUserLimit(
       allowed: false,
       current: currentCount,
       limit: limits.maxUsers,
-      message: `Has alcanzado el límite de ${limits.maxUsers} usuarios de tu plan. Actualiza tu plan para agregar más.`,
+      message: `Has alcanzado el límite de ${limits.maxUsers} usuarios del sistema de tu plan. Actualiza tu plan para agregar más.`,
     }
   }
 
@@ -159,6 +193,79 @@ export async function checkUserLimit(
     current: currentCount,
     limit: limits.maxUsers,
   }
+}
+
+// =============================================================================
+// CHECK TRAINER LIMIT
+// =============================================================================
+
+export async function checkTrainerLimit(
+  organizationId: string
+): Promise<LimitCheckResult> {
+  const supabase = await createClient()
+
+  const limits = await getOrganizationLimits(organizationId)
+  if (!limits) {
+    return { allowed: false, current: 0, limit: 0, message: 'Organización no encontrada' }
+  }
+
+  const planLimits = PLAN_LIMITS[limits.plan]
+
+  // Unlimited check
+  if (planLimits.maxTrainers === -1) {
+    return { allowed: true, current: 0, limit: -1 }
+  }
+
+  // Count current trainers
+  const { count, error } = await supabase
+    .from('profiles')
+    .select('*', { count: 'exact', head: true })
+    .eq('organization_id', organizationId)
+    .in('role', TRAINER_ROLES)
+
+  if (error) {
+    console.error('Error counting trainers:', error)
+    return { allowed: false, current: 0, limit: planLimits.maxTrainers, message: 'Error al verificar límites' }
+  }
+
+  const currentCount = count || 0
+
+  if (currentCount >= planLimits.maxTrainers) {
+    return {
+      allowed: false,
+      current: currentCount,
+      limit: planLimits.maxTrainers,
+      message: `Has alcanzado el límite de ${planLimits.maxTrainers} entrenadores de tu plan. Actualiza tu plan para agregar más.`,
+    }
+  }
+
+  return {
+    allowed: true,
+    current: currentCount,
+    limit: planLimits.maxTrainers,
+  }
+}
+
+// =============================================================================
+// CHECK ROLE LIMIT (Unified check for any role)
+// =============================================================================
+
+export async function checkRoleLimit(
+  organizationId: string,
+  targetRole: string
+): Promise<LimitCheckResult> {
+  // If assigning trainer/instructor role, check trainer limit
+  if (TRAINER_ROLES.includes(targetRole as typeof TRAINER_ROLES[number])) {
+    return checkTrainerLimit(organizationId)
+  }
+
+  // If assigning system user role, check user limit
+  if (SYSTEM_USER_ROLES.includes(targetRole as typeof SYSTEM_USER_ROLES[number])) {
+    return checkUserLimit(organizationId)
+  }
+
+  // Client role has no limit
+  return { allowed: true, current: 0, limit: -1 }
 }
 
 // =============================================================================
@@ -536,4 +643,236 @@ export async function consumeApiRequest(
 
   const result = data as { success: boolean; remaining: number } | null
   return result || { success: false, remaining: 0 }
+}
+
+// =============================================================================
+// AI LIMITS
+// =============================================================================
+
+export async function checkAILimit(
+  organizationId: string
+): Promise<LimitCheckResult & { resetDate?: string }> {
+  const supabase = await createClient()
+
+  const limits = await getOrganizationLimits(organizationId)
+  if (!limits) {
+    return { allowed: false, current: 0, limit: 0, message: 'Organización no encontrada' }
+  }
+
+  const planLimits = PLAN_LIMITS[limits.plan]
+
+  // Unlimited check
+  if (planLimits.aiRequestsPerMonth === -1) {
+    return { allowed: true, current: 0, limit: -1 }
+  }
+
+  // Get current month usage from organization_ai_usage table
+  const now = new Date()
+
+  // Use RPC or direct query - try to get usage from the table
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('organization_ai_usage')
+    .select('requests_this_period')
+    .eq('organization_id', organizationId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) {
+    console.error('Error checking AI limit:', error)
+    // If table doesn't exist or query fails, allow by default
+    return { allowed: true, current: 0, limit: planLimits.aiRequestsPerMonth }
+  }
+
+  const currentUsage = (data as { requests_this_period?: number } | null)?.requests_this_period || 0
+
+  // Calculate reset date (first of next month)
+  const resetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+  const resetDateStr = resetDate.toLocaleDateString('es-MX', { day: 'numeric', month: 'long' })
+
+  if (currentUsage >= planLimits.aiRequestsPerMonth) {
+    return {
+      allowed: false,
+      current: currentUsage,
+      limit: planLimits.aiRequestsPerMonth,
+      message: `Has alcanzado el límite de ${planLimits.aiRequestsPerMonth} consultas AI/mes de tu plan. Se reinicia el ${resetDateStr}.`,
+      resetDate: resetDateStr,
+    }
+  }
+
+  return {
+    allowed: true,
+    current: currentUsage,
+    limit: planLimits.aiRequestsPerMonth,
+    resetDate: resetDateStr,
+  }
+}
+
+export async function consumeAIRequest(
+  organizationId: string,
+  tokensUsed: number = 0
+): Promise<{ success: boolean; remaining: number }> {
+  const supabase = await createClient()
+
+  const limits = await getOrganizationLimits(organizationId)
+  if (!limits) {
+    return { success: false, remaining: 0 }
+  }
+
+  const planLimits = PLAN_LIMITS[limits.plan]
+
+  // Use RPC if available, otherwise just return success
+  // The actual tracking is done via the consume_ai_tokens RPC in the API
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc('consume_ai_tokens', {
+      org_id: organizationId,
+      tokens_to_consume: tokensUsed,
+    })
+
+    if (error) {
+      console.error('Error consuming AI tokens:', error)
+      return { success: true, remaining: planLimits.aiRequestsPerMonth } // Allow on error
+    }
+
+    const result = data as { success?: boolean; remaining?: number } | null
+    return {
+      success: result?.success ?? true,
+      remaining: result?.remaining ?? planLimits.aiRequestsPerMonth,
+    }
+  } catch {
+    // RPC might not exist, just return success
+    return { success: true, remaining: planLimits.aiRequestsPerMonth }
+  }
+}
+
+// =============================================================================
+// LOCATION LIMITS
+// =============================================================================
+
+export async function checkLocationLimit(
+  organizationId: string
+): Promise<LimitCheckResult> {
+  const supabase = await createClient()
+
+  const limits = await getOrganizationLimits(organizationId)
+  if (!limits) {
+    return { allowed: false, current: 0, limit: 0, message: 'Organización no encontrada' }
+  }
+
+  // Unlimited check
+  if (limits.maxLocations === -1 || limits.maxLocations >= 999) {
+    return { allowed: true, current: 0, limit: -1 }
+  }
+
+  // Count current locations (table might not exist yet)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { count, error } = await (supabase as any)
+    .from('locations')
+    .select('*', { count: 'exact', head: true })
+    .eq('organization_id', organizationId)
+
+  if (error) {
+    // Table might not exist yet - allow by default
+    console.error('Error counting locations:', error)
+    return { allowed: true, current: 0, limit: limits.maxLocations }
+  }
+
+  const currentCount = count || 0
+
+  if (currentCount >= limits.maxLocations) {
+    return {
+      allowed: false,
+      current: currentCount,
+      limit: limits.maxLocations,
+      message: `Has alcanzado el límite de ${limits.maxLocations} ubicaciones de tu plan. Actualiza tu plan para agregar más.`,
+    }
+  }
+
+  return {
+    allowed: true,
+    current: currentCount,
+    limit: limits.maxLocations,
+  }
+}
+
+// =============================================================================
+// CLASS LIMITS
+// =============================================================================
+
+export async function checkClassLimit(
+  organizationId: string
+): Promise<LimitCheckResult> {
+  const supabase = await createClient()
+
+  const limits = await getOrganizationLimits(organizationId)
+  if (!limits) {
+    return { allowed: false, current: 0, limit: 0, message: 'Organización no encontrada' }
+  }
+
+  const planLimits = PLAN_LIMITS[limits.plan]
+
+  // Unlimited check (most plans have unlimited classes)
+  if (planLimits.maxClasses === -1) {
+    return { allowed: true, current: 0, limit: -1 }
+  }
+
+  // Count current classes
+  const { count, error } = await supabase
+    .from('classes')
+    .select('*', { count: 'exact', head: true })
+    .eq('organization_id', organizationId)
+
+  if (error) {
+    console.error('Error counting classes:', error)
+    return { allowed: false, current: 0, limit: planLimits.maxClasses, message: 'Error al verificar límites' }
+  }
+
+  const currentCount = count || 0
+
+  if (currentCount >= planLimits.maxClasses) {
+    return {
+      allowed: false,
+      current: currentCount,
+      limit: planLimits.maxClasses,
+      message: `Has alcanzado el límite de ${planLimits.maxClasses} clases de tu plan. Actualiza tu plan para agregar más.`,
+    }
+  }
+
+  return {
+    allowed: true,
+    current: currentCount,
+    limit: planLimits.maxClasses,
+  }
+}
+
+// =============================================================================
+// FILE SIZE LIMIT
+// =============================================================================
+
+export async function checkFileSizeLimit(
+  organizationId: string,
+  fileSizeBytes: number
+): Promise<{ allowed: boolean; maxSizeMB: number; message?: string }> {
+  const limits = await getOrganizationLimits(organizationId)
+  if (!limits) {
+    return { allowed: false, maxSizeMB: 0, message: 'Organización no encontrada' }
+  }
+
+  const planLimits = PLAN_LIMITS[limits.plan]
+  const maxSizeBytes = planLimits.maxFileUploadMB * 1024 * 1024
+
+  if (fileSizeBytes > maxSizeBytes) {
+    return {
+      allowed: false,
+      maxSizeMB: planLimits.maxFileUploadMB,
+      message: `El archivo excede el límite de ${planLimits.maxFileUploadMB} MB de tu plan.`,
+    }
+  }
+
+  return {
+    allowed: true,
+    maxSizeMB: planLimits.maxFileUploadMB,
+  }
 }
