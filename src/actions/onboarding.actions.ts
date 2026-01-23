@@ -114,6 +114,8 @@ export async function completeOnboarding(data: OnboardingData): Promise<ActionSt
   }
 
   // Create organization
+  // Note: subscription_started_at is left null - it's set when user selects a plan
+  // post-login-redirect uses this field to detect when plan selection is needed
   const organizationData: TablesInsert<'organizations'> = {
     name: validated.data.name,
     slug: validated.data.slug.toLowerCase(),
@@ -124,7 +126,8 @@ export async function completeOnboarding(data: OnboardingData): Promise<ActionSt
     language: validated.data.language,
     primary_color: validated.data.primary_color,
     secondary_color: validated.data.secondary_color,
-    subscription_plan: 'starter',
+    // subscription_started_at left null - set during plan selection
+    // Default limits for trial/free tier before plan selection
     max_members: 50,
     max_locations: 1,
     max_admin_users: 2,

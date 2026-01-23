@@ -62,11 +62,21 @@ export async function selectSubscriptionPlan(input: SelectPlanInput): Promise<Ac
   // Get plan limits
   const planLimits = PLAN_LIMITS[input.plan]
 
-  // Update organization with selected plan (using only original fields)
+  // Calculate trial end date (90 days from now)
+  const trialEndsAt = new Date()
+  trialEndsAt.setDate(trialEndsAt.getDate() + 90)
+
+  // Map plan to database enum (free -> starter in DB, since DB doesn't have 'free')
+  const dbPlan = input.plan === 'free' ? 'starter' : input.plan
+
+  // Update organization with selected plan
   const { error } = await supabase
     .from('organizations')
     .update({
-      subscription_plan: input.plan,
+      subscription_plan: dbPlan,
+      subscription_status: 'trial', // Mark that user has selected a plan
+      subscription_started_at: new Date().toISOString(),
+      trial_ends_at: trialEndsAt.toISOString(),
       max_members: planLimits.maxMembers === -1 ? 999999 : planLimits.maxMembers,
       max_locations: planLimits.maxLocations === -1 ? 999 : planLimits.maxLocations,
       max_admin_users: planLimits.maxUsers === -1 ? 999 : planLimits.maxUsers,
@@ -88,9 +98,6 @@ export async function selectSubscriptionPlan(input: SelectPlanInput): Promise<Ac
     console.error('Error updating subscription:', error)
     return { success: false, message: 'Error al actualizar el plan: ' + error.message }
   }
-
-  // Note: trial_ends_at, subscription_status, billing_period will be added
-  // once PostgREST schema cache updates
 
   revalidatePath('/', 'layout')
 
