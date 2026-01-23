@@ -1,12 +1,14 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { Plus } from 'lucide-react'
+import { Plus, Sparkles } from 'lucide-react'
 
 import type { WorkoutWithMember } from '@/actions/routine.actions'
 import { workoutTypes } from '@/schemas/routine.schema'
 import { DataTable, type FilterConfig } from '@/components/data-table'
 import { routineColumns } from './routines-columns'
+import { AIRoutineGenerator } from '@/components/ai'
+import { Button } from '@/components/ui/button'
 
 interface RoutinesDataTableProps {
   routines: WorkoutWithMember[]
@@ -45,23 +47,37 @@ export function RoutinesDataTable({ routines, totalItems }: RoutinesDataTablePro
   const router = useRouter()
 
   return (
-    <DataTable
-      columns={routineColumns}
-      data={routines}
-      mode="server"
-      totalItems={totalItems}
-      defaultPageSize={20}
-      searchable
-      searchPlaceholder="Buscar rutinas..."
-      filters={routineFilters}
-      primaryAction={{
-        id: 'new',
-        label: 'Nueva rutina',
-        icon: Plus,
-        onClick: () => router.push('/dashboard/routines/new'),
-      }}
-      emptyTitle="No hay rutinas"
-      emptyDescription="Crea tu primera rutina para comenzar a asignarlas a tus miembros"
-    />
+    <div className="space-y-4">
+      {/* AI Generation Button Row */}
+      <div className="flex justify-end">
+        <AIRoutineGenerator
+          trigger={
+            <Button variant="outline" className="gap-2">
+              <Sparkles className="h-4 w-4" />
+              Generar con AI
+            </Button>
+          }
+        />
+      </div>
+
+      <DataTable
+        columns={routineColumns}
+        data={routines}
+        mode="server"
+        totalItems={totalItems}
+        defaultPageSize={20}
+        searchable
+        searchPlaceholder="Buscar rutinas..."
+        filters={routineFilters}
+        primaryAction={{
+          id: 'new',
+          label: 'Nueva rutina',
+          icon: Plus,
+          onClick: () => router.push('/dashboard/routines/new'),
+        }}
+        emptyTitle="No hay rutinas"
+        emptyDescription="Crea tu primera rutina para comenzar a asignarlas a tus miembros"
+      />
+    </div>
   )
 }
