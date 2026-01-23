@@ -12,6 +12,7 @@ import {
 import { SidebarNav } from './sidebar-nav'
 import { SidebarUserMenu } from './sidebar-user-menu'
 import { AppLogo } from './app-logo'
+import { LocationSwitcher } from './location-switcher'
 import type { FilteredNavigation } from '@/lib/navigation/filter-navigation'
 import type { ViewPreferences } from '@/lib/auth/get-view-preferences'
 
@@ -39,7 +40,12 @@ export function MobileSidebar({ user, navigation, viewPreferences, open, onOpenC
           </SheetTitle>
         </SheetHeader>
 
-        <div className="flex flex-col h-[calc(100vh-57px)]">
+        {/* Location Switcher */}
+        <div className="border-b px-2 py-2">
+          <LocationSwitcher />
+        </div>
+
+        <div className="flex flex-col h-[calc(100vh-120px)]">
           {/* Main Navigation */}
           <ScrollArea className="flex-1 py-4">
             <SidebarNav items={mainNavigation} onItemClick={handleItemClick} />

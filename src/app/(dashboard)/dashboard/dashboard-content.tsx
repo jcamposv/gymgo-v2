@@ -25,6 +25,7 @@ import {
   useCalendarEvents,
   useCheckInsChart,
 } from '@/hooks/use-dashboard'
+import { useActiveLocation } from '@/providers/location-provider'
 import type { DashboardKpi, RevenuePeriod } from '@/types/dashboard.types'
 
 // =============================================================================
@@ -120,8 +121,17 @@ function EmptyState({ message }: { message: string }) {
 // =============================================================================
 
 function KpiCardsSection() {
-  const { data: metrics, isLoading: metricsLoading } = useDashboardMetrics()
-  const { data: revenueKpi, isLoading: revenueLoading } = useRevenueKpi('month')
+  const { locationId } = useActiveLocation()
+  // Pass active location to filter metrics by branch (null = all locations)
+  const { data: metrics, isLoading: metricsLoading } = useDashboardMetrics({
+    location_id: locationId,
+  })
+  // Pass active location to filter revenue by branch
+  const { data: revenueKpi, isLoading: revenueLoading } = useRevenueKpi({
+    range: 'month',
+    location_id: locationId,
+    include_org_wide: true, // Include org-wide income when filtering by location
+  })
 
   if (metricsLoading || revenueLoading) {
     return (

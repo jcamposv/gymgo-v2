@@ -1,5 +1,6 @@
 import { getExpenses } from '@/actions/finance.actions'
 import { ExpensesDataTable } from '@/components/finances/expenses-data-table'
+import { getCurrentLocationId } from '@/lib/auth/get-current-location'
 
 export const metadata = {
   title: 'Gastos | GymGo',
@@ -21,9 +22,14 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
   const page = params.page ? parseInt(params.page) : 1
   const pageSize = params.pageSize ? parseInt(params.pageSize) : 20
 
+  // Get current location from cookie for filtering
+  const locationId = await getCurrentLocationId()
+
   const { data: expenses, count, error } = await getExpenses({
     query: params.search,
     category: params.filter_category,
+    location_id: locationId || undefined,
+    include_org_wide: true, // Include org-wide expenses when filtering by location
     page,
     per_page: pageSize,
   })

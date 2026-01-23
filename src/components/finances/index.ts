@@ -1,5 +1,6 @@
 export { PaymentForm } from './payment-form'
 export { ExpenseForm } from './expense-form'
+export { IncomeForm } from './income-form'
 export { FinanceOverviewCards } from './finance-overview'
 export { FinanceDateToolbar } from './finance-date-toolbar'
 

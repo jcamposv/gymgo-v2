@@ -338,7 +338,274 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
 }
 
 // =============================================================================
-// PRICING PLANS
+// FEATURE DISPLAY CONFIGURATION
+// User-friendly feature labels (no technical jargon)
+// =============================================================================
+
+export interface PlanFeatureSection {
+  title: string
+  features: PlanFeatureItem[]
+}
+
+export interface PlanFeatureItem {
+  label: string
+  tooltip?: string  // Optional explanation for "Limited" features
+  status: 'included' | 'limited' | 'coming_soon' | 'not_included'
+  value?: string    // e.g., "50", "Ilimitado"
+}
+
+/**
+ * User-friendly feature sections for plan display
+ * Organized by how gym owners think about their business
+ */
+export const PLAN_FEATURE_SECTIONS: Record<PlanTier, PlanFeatureSection[]> = {
+  free: [
+    {
+      title: 'Tu gimnasio',
+      features: [
+        { label: 'Miembros', status: 'limited', value: 'Hasta 15' },
+        { label: 'Clases grupales', status: 'included', value: 'Ilimitadas' },
+        { label: 'Check-in digital', status: 'included' },
+        { label: 'Control de pagos', status: 'included' },
+      ],
+    },
+    {
+      title: 'Tu equipo',
+      features: [
+        { label: 'Administradores', status: 'limited', value: '1' },
+        { label: 'Entrenadores', status: 'limited', value: 'Hasta 2' },
+      ],
+    },
+    {
+      title: 'Comunicación',
+      features: [
+        { label: 'Correos a miembros', status: 'limited', value: '100/mes' },
+        { label: 'WhatsApp', status: 'not_included' },
+        { label: 'App móvil para miembros', status: 'included' },
+      ],
+    },
+    {
+      title: 'Inteligencia artificial',
+      features: [
+        { label: 'Generación de rutinas con IA', status: 'limited', value: '10 rutinas/mes', tooltip: 'Crea rutinas personalizadas automáticamente' },
+      ],
+    },
+    {
+      title: 'Soporte',
+      features: [
+        { label: 'Centro de ayuda', status: 'included' },
+      ],
+    },
+  ],
+
+  starter: [
+    {
+      title: 'Tu gimnasio',
+      features: [
+        { label: 'Miembros', status: 'limited', value: 'Hasta 50' },
+        { label: 'Clases grupales', status: 'included', value: 'Ilimitadas' },
+        { label: 'Check-in digital', status: 'included' },
+        { label: 'Control de pagos', status: 'included' },
+        { label: 'Exportar datos', status: 'included' },
+      ],
+    },
+    {
+      title: 'Tu equipo',
+      features: [
+        { label: 'Administradores', status: 'limited', value: '2' },
+        { label: 'Entrenadores', status: 'included', value: 'Ilimitados' },
+      ],
+    },
+    {
+      title: 'Comunicación',
+      features: [
+        { label: 'Correos a miembros', status: 'limited', value: '500/mes' },
+        { label: 'WhatsApp a miembros', status: 'limited', value: '50/mes' },
+        { label: 'App móvil para miembros', status: 'included' },
+      ],
+    },
+    {
+      title: 'Inteligencia artificial',
+      features: [
+        { label: 'Generación de rutinas con IA', status: 'limited', value: '100 rutinas/mes' },
+      ],
+    },
+    {
+      title: 'Soporte',
+      features: [
+        { label: 'Soporte por correo', status: 'included', tooltip: 'Respuesta en 48 horas hábiles' },
+      ],
+    },
+  ],
+
+  growth: [
+    {
+      title: 'Tu gimnasio',
+      features: [
+        { label: 'Miembros', status: 'limited', value: 'Hasta 150' },
+        { label: 'Clases grupales', status: 'included', value: 'Ilimitadas' },
+        { label: 'Check-in digital', status: 'included' },
+        { label: 'Control de pagos', status: 'included' },
+        { label: 'Exportar datos', status: 'included' },
+        { label: 'Tu logo y colores', status: 'included', tooltip: 'Personaliza la plataforma con tu marca' },
+      ],
+    },
+    {
+      title: 'Tu equipo',
+      features: [
+        { label: 'Administradores', status: 'limited', value: '5' },
+        { label: 'Entrenadores', status: 'included', value: 'Ilimitados' },
+      ],
+    },
+    {
+      title: 'Comunicación',
+      features: [
+        { label: 'Correos a miembros', status: 'limited', value: '2,000/mes' },
+        { label: 'WhatsApp a miembros', status: 'limited', value: '200/mes' },
+        { label: 'App móvil para miembros', status: 'included' },
+      ],
+    },
+    {
+      title: 'Inteligencia artificial',
+      features: [
+        { label: 'Generación de rutinas con IA', status: 'limited', value: '300 rutinas/mes' },
+      ],
+    },
+    {
+      title: 'Reportes',
+      features: [
+        { label: 'Reportes avanzados', status: 'included', tooltip: 'Análisis detallado de tu negocio' },
+      ],
+    },
+    {
+      title: 'Soporte',
+      features: [
+        { label: 'Soporte por correo', status: 'included' },
+      ],
+    },
+  ],
+
+  pro: [
+    {
+      title: 'Tu gimnasio',
+      features: [
+        { label: 'Miembros', status: 'included', value: 'Ilimitados' },
+        { label: 'Clases grupales', status: 'included', value: 'Ilimitadas' },
+        { label: 'Múltiples sucursales', status: 'limited', value: 'Hasta 3', tooltip: 'Gestiona varias ubicaciones desde una cuenta' },
+        { label: 'Check-in digital', status: 'included' },
+        { label: 'Control de pagos', status: 'included' },
+        { label: 'Exportar datos', status: 'included' },
+        { label: 'Tu logo y colores', status: 'included' },
+      ],
+    },
+    {
+      title: 'Tu equipo',
+      features: [
+        { label: 'Administradores', status: 'included', value: 'Ilimitados' },
+        { label: 'Entrenadores', status: 'included', value: 'Ilimitados' },
+      ],
+    },
+    {
+      title: 'Comunicación',
+      features: [
+        { label: 'Correos a miembros', status: 'limited', value: '5,000/mes' },
+        { label: 'WhatsApp a miembros', status: 'limited', value: '500/mes' },
+        { label: 'App móvil para miembros', status: 'included' },
+      ],
+    },
+    {
+      title: 'Inteligencia artificial',
+      features: [
+        { label: 'IA avanzada para rutinas', status: 'limited', value: '1,000 rutinas/mes', tooltip: 'Rutinas más precisas con tecnología de última generación' },
+      ],
+    },
+    {
+      title: 'Reportes',
+      features: [
+        { label: 'Reportes avanzados', status: 'included' },
+      ],
+    },
+    {
+      title: 'Soporte',
+      features: [
+        { label: 'Soporte prioritario', status: 'included', tooltip: 'Respuesta en menos de 24 horas' },
+      ],
+    },
+  ],
+
+  enterprise: [
+    {
+      title: 'Tu gimnasio',
+      features: [
+        { label: 'Miembros', status: 'included', value: 'Ilimitados' },
+        { label: 'Clases grupales', status: 'included', value: 'Ilimitadas' },
+        { label: 'Sucursales', status: 'included', value: 'Ilimitadas' },
+        { label: 'Tu marca al 100%', status: 'included', tooltip: 'Plataforma completamente personalizada con tu identidad' },
+        { label: 'Check-in digital', status: 'included' },
+        { label: 'Control de pagos', status: 'included' },
+        { label: 'Exportar datos', status: 'included' },
+      ],
+    },
+    {
+      title: 'Tu equipo',
+      features: [
+        { label: 'Administradores', status: 'included', value: 'Ilimitados' },
+        { label: 'Entrenadores', status: 'included', value: 'Ilimitados' },
+      ],
+    },
+    {
+      title: 'Comunicación',
+      features: [
+        { label: 'Correos a miembros', status: 'included', value: 'Ilimitados' },
+        { label: 'WhatsApp a miembros', status: 'included', value: 'Ilimitados' },
+        { label: 'App móvil para miembros', status: 'included' },
+      ],
+    },
+    {
+      title: 'Inteligencia artificial',
+      features: [
+        { label: 'IA avanzada para rutinas', status: 'included', value: 'Ilimitadas' },
+      ],
+    },
+    {
+      title: 'Reportes',
+      features: [
+        { label: 'Reportes avanzados', status: 'included' },
+        { label: 'Reportes personalizados', status: 'included' },
+      ],
+    },
+    {
+      title: 'Soporte',
+      features: [
+        { label: 'Soporte dedicado 24/7', status: 'included' },
+        { label: 'Gerente de cuenta', status: 'included' },
+        { label: 'Onboarding personalizado', status: 'included' },
+      ],
+    },
+  ],
+}
+
+/**
+ * Coming Soon features to show across all plans
+ * Only features valuable to gym owners (not technical)
+ */
+export const COMING_SOON_FEATURES = [
+  {
+    label: 'Notificaciones push',
+    description: 'Envía recordatorios directamente al celular de tus miembros',
+  },
+  {
+    label: 'Rutinas AI personalizadas',
+    description: 'Generación automática de planes de entrenamiento',
+  },
+  {
+    label: 'Analíticas avanzadas',
+    description: 'Dashboards con métricas clave de tu negocio',
+  },
+]
+
+// =============================================================================
+// PRICING PLANS (simplified for UI)
 // =============================================================================
 
 export const PRICING_PLANS: PricingPlan[] = [
@@ -353,22 +620,16 @@ export const PRICING_PLANS: PricingPlan[] = [
     limits: PLAN_LIMITS.free,
     features: [
       'Hasta 15 miembros',
-      '1 usuario admin',
-      '2 entrenadores',
       'Clases ilimitadas',
-      'Gestión de miembros',
-      'Control de pagos',
       'Check-in digital',
-      '10 consultas AI/mes',
-      '100 emails/mes',
-      'App para miembros',
-      'Soporte comunidad',
+      'Control de pagos',
+      'Generación de rutinas con IA',
+      'App móvil para miembros',
     ],
     notIncluded: [
       'WhatsApp',
-      'Branding personalizado',
+      'Tu logo y colores',
       'Reportes avanzados',
-      'Acceso API',
     ],
   },
   {
@@ -376,105 +637,85 @@ export const PRICING_PLANS: PricingPlan[] = [
     name: 'Starter',
     description: 'Ideal para gimnasios pequeños o boxes que inician.',
     priceMonthlyUSD: 19,
-    priceYearlyUSD: 182, // ~$15.17/mo (20% off)
+    priceYearlyUSD: 182,
     priceMonthlyMXN: 349,
-    priceYearlyMXN: 3350, // ~20% off
+    priceYearlyMXN: 3350,
     limits: PLAN_LIMITS.starter,
     features: [
       'Hasta 50 miembros',
-      '2 usuarios del sistema',
       'Entrenadores ilimitados',
       'Clases ilimitadas',
-      'Gestión de miembros',
-      'Control de pagos',
       'Check-in digital',
-      '100 consultas AI/mes',
-      '500 emails/mes',
-      '50 mensajes WhatsApp/mes',
+      'WhatsApp a miembros',
+      'Más rutinas con IA',
       'Exportar datos',
-      'App para miembros',
-      'Soporte por email',
+      'Soporte por correo',
     ],
     notIncluded: [
-      'Branding personalizado',
+      'Tu logo y colores',
       'Reportes avanzados',
-      'Acceso API',
-      'Multi-ubicación',
+      'Múltiples sucursales',
     ],
   },
   {
     id: 'growth',
     name: 'Growth',
-    description: 'Para gimnasios en crecimiento con más miembros y comunicación.',
+    description: 'Para gimnasios en crecimiento que necesitan más.',
     priceMonthlyUSD: 39,
-    priceYearlyUSD: 374, // ~$31.17/mo (20% off)
+    priceYearlyUSD: 374,
     priceMonthlyMXN: 699,
-    priceYearlyMXN: 6710, // ~20% off
+    priceYearlyMXN: 6710,
     limits: PLAN_LIMITS.growth,
     popular: true,
     features: [
       'Hasta 150 miembros',
-      '5 usuarios del sistema',
       'Entrenadores ilimitados',
-      'Clases ilimitadas',
-      '300 consultas AI/mes',
-      '2,000 emails/mes',
-      '200 mensajes WhatsApp/mes',
-      'Branding personalizado',
+      'Tu logo y colores',
       'Reportes avanzados',
+      'Más WhatsApp y correos',
+      'Más rutinas con IA',
       'Exportar datos',
-      'Soporte por email',
     ],
     notIncluded: [
-      'Acceso API',
-      'Multi-ubicación',
+      'Múltiples sucursales',
     ],
   },
   {
     id: 'pro',
     name: 'Pro',
-    description: 'Todo ilimitado para gimnasios establecidos y múltiples ubicaciones.',
+    description: 'Todo ilimitado para gimnasios establecidos.',
     priceMonthlyUSD: 59,
-    priceYearlyUSD: 566, // ~$47.17/mo (20% off)
+    priceYearlyUSD: 566,
     priceMonthlyMXN: 999,
-    priceYearlyMXN: 9590, // ~20% off
+    priceYearlyMXN: 9590,
     limits: PLAN_LIMITS.pro,
     features: [
       'Miembros ilimitados',
-      'Usuarios ilimitados',
-      'Entrenadores ilimitados',
-      'Clases ilimitadas',
-      '1,000 consultas AI/mes (GPT-4)',
-      '5,000 emails/mes',
-      '500 mensajes WhatsApp/mes',
+      'Equipo ilimitado',
+      'Hasta 3 sucursales',
+      'IA avanzada para rutinas',
+      'Comunicación ampliada',
       'Reportes avanzados',
-      'Acceso API (1,000 req/día)',
-      'Webhooks (5 endpoints)',
-      'Hasta 3 ubicaciones',
       'Soporte prioritario',
     ],
   },
   {
     id: 'enterprise',
     name: 'Enterprise',
-    description: 'Solución completa para cadenas de gimnasios y franquicias.',
-    priceMonthlyUSD: 0, // Custom pricing
+    description: 'Solución completa para cadenas y franquicias.',
+    priceMonthlyUSD: 0,
     priceYearlyUSD: 0,
     priceMonthlyMXN: 0,
     priceYearlyMXN: 0,
     limits: PLAN_LIMITS.enterprise,
     features: [
       'Todo en Pro, más:',
-      'AI ilimitado (GPT-4)',
-      'Comunicaciones ilimitadas',
-      'White-label completo',
-      'API sin límites',
-      'Webhooks ilimitados',
-      'Ubicaciones ilimitadas',
-      'SLA garantizado 99.9%',
+      'Sucursales ilimitadas',
+      'Tu marca al 100%',
+      'Comunicación ilimitada',
+      'IA ilimitada',
       'Soporte dedicado 24/7',
       'Onboarding personalizado',
-      'Integraciones custom',
     ],
   },
 ]

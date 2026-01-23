@@ -52,7 +52,7 @@ export function SelectPlanClient() {
 
   const formatPrice = (plan: typeof PRICING_PLANS[0]) => {
     if (plan.id === 'enterprise') {
-      return 'Personalizado'
+      return 'A medida'
     }
 
     if (plan.id === 'free') {
@@ -163,7 +163,10 @@ export function SelectPlanClient() {
                   {/* Price */}
                   <div className="mb-6">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-3xl sm:text-4xl font-bold tracking-tight">
+                      <span className={cn(
+                        "font-bold tracking-tight",
+                        isEnterprise ? "text-xl sm:text-2xl" : "text-3xl sm:text-4xl"
+                      )}>
                         {formatPrice(plan)}
                       </span>
                       {!isEnterprise && plan.id !== 'free' && (
@@ -194,25 +197,20 @@ export function SelectPlanClient() {
                     )}
                   </div>
 
-                  {/* Features */}
+                  {/* Features - Clean, user-friendly list */}
                   <ul className="space-y-2.5 flex-1 mb-6">
-                    {plan.features.slice(0, 8).map((feature, idx) => (
+                    {plan.features.slice(0, 7).map((feature, idx) => (
                       <li key={idx} className="flex items-start gap-2 text-sm">
                         <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                         <span className="text-muted-foreground">{feature}</span>
                       </li>
                     ))}
-                    {plan.features.length > 8 && (
-                      <li className="text-xs text-muted-foreground pl-6">
-                        +{plan.features.length - 8} más...
-                      </li>
-                    )}
                   </ul>
 
-                  {/* Not Included (for lower tiers) */}
+                  {/* Not Included (for lower tiers) - User-friendly language */}
                   {plan.notIncluded && plan.notIncluded.length > 0 && (
                     <div className="mb-6 pt-4 border-t">
-                      <p className="text-xs text-muted-foreground mb-2">No incluido:</p>
+                      <p className="text-xs text-muted-foreground mb-2">Disponible en planes superiores:</p>
                       <ul className="space-y-1">
                         {plan.notIncluded.map((item, idx) => (
                           <li key={idx} className="text-xs text-muted-foreground/70 flex items-center gap-1.5">

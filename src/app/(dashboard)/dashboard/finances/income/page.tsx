@@ -1,5 +1,6 @@
 import { getIncome } from '@/actions/finance.actions'
 import { IncomeDataTable } from '@/components/finances/income-data-table'
+import { getCurrentLocationId } from '@/lib/auth/get-current-location'
 
 export const metadata = {
   title: 'Ingresos | GymGo',
@@ -21,9 +22,14 @@ export default async function IncomePage({ searchParams }: PageProps) {
   const page = params.page ? parseInt(params.page) : 1
   const pageSize = params.pageSize ? parseInt(params.pageSize) : 20
 
+  // Get current location from cookie for filtering
+  const locationId = await getCurrentLocationId()
+
   const { data: income, count, error } = await getIncome({
     query: params.search,
     category: params.filter_category,
+    location_id: locationId || undefined,
+    include_org_wide: true, // Include org-wide income when filtering by location
     page,
     per_page: pageSize,
   })

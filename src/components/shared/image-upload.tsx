@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { Upload, X, Loader2, Image as ImageIcon, Film } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,7 @@ import {
   ALLOWED_FILE_TYPES,
   MAX_FILE_SIZES,
 } from '@/lib/storage'
+import { checkOrgFileSizeLimit, checkOrgStorageLimit } from '@/actions/storage.actions'
 
 interface ImageUploadProps {
   value?: string | null
@@ -43,7 +44,17 @@ export function ImageUpload({
   const [isUploading, setIsUploading] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [planMaxSizeMB, setPlanMaxSizeMB] = useState<number | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Fetch plan-based max file size on mount
+  useEffect(() => {
+    checkOrgFileSizeLimit(0).then((result) => {
+      if (result.maxSizeMB) {
+        setPlanMaxSizeMB(result.maxSizeMB)
+      }
+    })
+  }, [])
 
   // Determinar tipos permitidos
   const getAllowedTypes = () => {
@@ -62,20 +73,36 @@ export function ImageUpload({
   const handleUpload = useCallback(async (file: File) => {
     setError(null)
 
-    // Validar archivo
-    const validation = validateFile(file, {
-      maxSizeMB,
+    // Validar tipo de archivo (local validation - fast)
+    const typeValidation = validateFile(file, {
+      maxSizeMB: 500, // High limit for type check only
       allowedTypes,
     })
 
-    if (!validation.valid) {
-      setError(validation.error || 'Archivo invalido')
+    if (!typeValidation.valid && typeValidation.error?.includes('Tipo')) {
+      setError(typeValidation.error || 'Tipo de archivo no permitido')
       return
     }
 
     setIsUploading(true)
 
     try {
+      // Validate file size against plan limits (server-side)
+      const fileSizeCheck = await checkOrgFileSizeLimit(file.size)
+      if (!fileSizeCheck.allowed) {
+        setError(fileSizeCheck.message || `El archivo excede el límite de ${fileSizeCheck.maxSizeMB}MB de tu plan`)
+        setIsUploading(false)
+        return
+      }
+
+      // Check storage limits
+      const storageCheck = await checkOrgStorageLimit(file.size)
+      if (!storageCheck.allowed) {
+        setError(storageCheck.message || 'Límite de almacenamiento alcanzado')
+        setIsUploading(false)
+        return
+      }
+
       // Si hay una imagen existente, eliminarla primero
       if (value) {
         const oldPath = extractPathFromUrl(value, bucket)
@@ -101,7 +128,7 @@ export function ImageUpload({
     } finally {
       setIsUploading(false)
     }
-  }, [value, bucket, folder, organizationId, maxSizeMB, allowedTypes, onChange])
+  }, [value, bucket, folder, organizationId, allowedTypes, onChange])
 
   // Manejar eliminacion
   const handleRemove = async () => {
@@ -274,7 +301,7 @@ export function ImageUpload({
               {placeholder}
             </p>
             <p className="text-xs text-muted-foreground/70 mt-1">
-              Max {maxSizeMB}MB
+              Max {planMaxSizeMB ?? maxSizeMB}MB
             </p>
           </div>
         )}

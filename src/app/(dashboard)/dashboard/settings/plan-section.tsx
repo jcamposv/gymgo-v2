@@ -14,7 +14,8 @@ import {
 } from '@/components/ui/card'
 import { UpgradePlanDialog } from '@/components/billing/upgrade-plan-dialog'
 import { getLatestUpgradeRequest } from '@/actions/upgrade-request.actions'
-import { PRICING_PLANS, type PlanTier } from '@/lib/pricing.config'
+import { PRICING_PLANS, PLAN_FEATURE_SECTIONS, type PlanTier } from '@/lib/pricing.config'
+import { PlanFeaturesDisplay } from '@/components/billing/plan-features-display'
 import type { UpgradeRequest } from '@/schemas/upgrade-request.schema'
 
 // =============================================================================
@@ -138,18 +139,15 @@ export function PlanSection({ currentPlan, userEmail, userName }: PlanSectionPro
                 </div>
               </div>
 
-              {/* Plan Features (top 5) */}
-              {currentPlanInfo && (
+              {/* Plan Features - User-friendly display */}
+              {currentPlanInfo && PLAN_FEATURE_SECTIONS[currentPlan] && (
                 <div>
-                  <h4 className="text-sm font-medium mb-3">Incluye:</h4>
-                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {currentPlanInfo.features.slice(0, 6).map((feature, idx) => (
-                      <li key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Check className="h-4 w-4 text-primary shrink-0" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
+                  <h4 className="text-sm font-medium mb-3">Tu plan incluye:</h4>
+                  <PlanFeaturesDisplay
+                    planId={currentPlan}
+                    variant="compact"
+                    maxFeatures={8}
+                  />
                 </div>
               )}
 

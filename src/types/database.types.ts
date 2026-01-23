@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       ai_alternatives_cache: {
@@ -757,6 +732,7 @@ export type Database = {
           expense_date: string | null
           id: string
           is_recurring: boolean | null
+          location_id: string | null
           notes: string | null
           organization_id: string
           receipt_url: string | null
@@ -773,6 +749,7 @@ export type Database = {
           expense_date?: string | null
           id?: string
           is_recurring?: boolean | null
+          location_id?: string | null
           notes?: string | null
           organization_id: string
           receipt_url?: string | null
@@ -789,6 +766,7 @@ export type Database = {
           expense_date?: string | null
           id?: string
           is_recurring?: boolean | null
+          location_id?: string | null
           notes?: string | null
           organization_id?: string
           receipt_url?: string | null
@@ -801,6 +779,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
           {
@@ -906,6 +891,7 @@ export type Database = {
           description: string
           id: string
           income_date: string | null
+          location_id: string | null
           notes: string | null
           organization_id: string
           updated_at: string | null
@@ -919,6 +905,7 @@ export type Database = {
           description: string
           id?: string
           income_date?: string | null
+          location_id?: string | null
           notes?: string | null
           organization_id: string
           updated_at?: string | null
@@ -932,6 +919,7 @@ export type Database = {
           description?: string
           id?: string
           income_date?: string | null
+          location_id?: string | null
           notes?: string | null
           organization_id?: string
           updated_at?: string | null
@@ -945,7 +933,82 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "income_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "income_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locations: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          description: string | null
+          email: string | null
+          id: string
+          is_active: boolean | null
+          is_primary: boolean | null
+          name: string
+          organization_id: string
+          phone: string | null
+          postal_code: string | null
+          slug: string
+          state: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          description?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_primary?: boolean | null
+          name: string
+          organization_id: string
+          phone?: string | null
+          postal_code?: string | null
+          slug: string
+          state?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          description?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_primary?: boolean | null
+          name?: string
+          organization_id?: string
+          phone?: string | null
+          postal_code?: string | null
+          slug?: string
+          state?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "locations_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -1300,6 +1363,7 @@ export type Database = {
           invitation_accepted_at: string | null
           invitation_sent_at: string | null
           last_check_in: string | null
+          location_id: string
           medical_conditions: string | null
           membership_end_date: string | null
           membership_start_date: string | null
@@ -1340,6 +1404,7 @@ export type Database = {
           invitation_accepted_at?: string | null
           invitation_sent_at?: string | null
           last_check_in?: string | null
+          location_id: string
           medical_conditions?: string | null
           membership_end_date?: string | null
           membership_start_date?: string | null
@@ -1380,6 +1445,7 @@ export type Database = {
           invitation_accepted_at?: string | null
           invitation_sent_at?: string | null
           last_check_in?: string | null
+          location_id?: string
           medical_conditions?: string | null
           membership_end_date?: string | null
           membership_start_date?: string | null
@@ -1401,6 +1467,13 @@ export type Database = {
             columns: ["current_plan_id"]
             isOneToOne: false
             referencedRelation: "membership_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "members_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
           {
@@ -1844,6 +1917,7 @@ export type Database = {
           created_by: string | null
           currency: string | null
           id: string
+          location_id: string | null
           member_id: string
           notes: string | null
           organization_id: string
@@ -1864,6 +1938,7 @@ export type Database = {
           created_by?: string | null
           currency?: string | null
           id?: string
+          location_id?: string | null
           member_id: string
           notes?: string | null
           organization_id: string
@@ -1884,6 +1959,7 @@ export type Database = {
           created_by?: string | null
           currency?: string | null
           id?: string
+          location_id?: string | null
           member_id?: string
           notes?: string | null
           organization_id?: string
@@ -1904,6 +1980,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
           {
@@ -2523,6 +2606,10 @@ export type Database = {
           success: boolean
         }[]
       }
+      count_organization_locations: {
+        Args: { org_id: string }
+        Returns: number
+      }
       disable_organization: {
         Args: { org_id: string; reason?: string }
         Returns: boolean
@@ -2564,6 +2651,20 @@ export type Database = {
           status: Database["public"]["Enums"]["upgrade_request_status"]
         }[]
       }
+      get_location_expenses: {
+        Args: {
+          end_date?: string
+          include_shared?: boolean
+          loc_id: string
+          start_date?: string
+        }
+        Returns: number
+      }
+      get_location_member_count: { Args: { loc_id: string }; Returns: number }
+      get_location_revenue: {
+        Args: { end_date?: string; loc_id: string; start_date?: string }
+        Returns: number
+      }
       get_member_daily_booking_count: {
         Args: {
           p_exclude_booking_id?: string
@@ -2574,6 +2675,7 @@ export type Database = {
         }
         Returns: number
       }
+      get_primary_location: { Args: { org_id: string }; Returns: string }
       get_storage_remaining: {
         Args: { p_organization_id: string }
         Returns: {
@@ -2890,9 +2992,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       ai_plan_tier: ["free", "pro", "business", "enterprise"],

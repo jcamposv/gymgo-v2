@@ -1,5 +1,6 @@
 import { getPayments } from '@/actions/finance.actions'
 import { PaymentsDataTable } from '@/components/finances/payments-data-table'
+import { getCurrentLocationId } from '@/lib/auth/get-current-location'
 
 export const metadata = {
   title: 'Pagos | GymGo',
@@ -22,9 +23,13 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
   const page = params.page ? parseInt(params.page) : 1
   const pageSize = params.pageSize ? parseInt(params.pageSize) : 20
 
+  // Get current location from cookie for filtering
+  const locationId = await getCurrentLocationId()
+
   const { data: payments, count, error } = await getPayments({
     query: params.search,
     status: params.filter_status,
+    location_id: locationId || undefined,
     page,
     per_page: pageSize,
   })
