@@ -953,6 +953,74 @@ export type Database = {
           },
         ]
       }
+      locations: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          description: string | null
+          email: string | null
+          id: string
+          is_active: boolean | null
+          is_primary: boolean | null
+          name: string
+          organization_id: string
+          phone: string | null
+          postal_code: string | null
+          slug: string
+          state: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          description?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_primary?: boolean | null
+          name: string
+          organization_id: string
+          phone?: string | null
+          postal_code?: string | null
+          slug: string
+          state?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          description?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_primary?: boolean | null
+          name?: string
+          organization_id?: string
+          phone?: string | null
+          postal_code?: string | null
+          slug?: string
+          state?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "locations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_measurements: {
         Row: {
           arm_cm: number | null
@@ -2523,6 +2591,10 @@ export type Database = {
           success: boolean
         }[]
       }
+      count_organization_locations: {
+        Args: { org_id: string }
+        Returns: number
+      }
       disable_organization: {
         Args: { org_id: string; reason?: string }
         Returns: boolean
@@ -2574,6 +2646,7 @@ export type Database = {
         }
         Returns: number
       }
+      get_primary_location: { Args: { org_id: string }; Returns: string }
       get_storage_remaining: {
         Args: { p_organization_id: string }
         Returns: {
