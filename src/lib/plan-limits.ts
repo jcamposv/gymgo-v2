@@ -848,6 +848,104 @@ export async function checkClassLimit(
 }
 
 // =============================================================================
+// PUSH NOTIFICATION LIMITS
+// =============================================================================
+
+export async function checkPushNotificationLimit(
+  organizationId: string
+): Promise<LimitCheckResult & { resetDate?: string }> {
+  const supabase = await createClient()
+
+  const limits = await getOrganizationLimits(organizationId)
+  if (!limits) {
+    return { allowed: false, current: 0, limit: 0, message: 'Organización no encontrada' }
+  }
+
+  const planLimits = PLAN_LIMITS[limits.plan]
+
+  // Unlimited check
+  if (planLimits.pushNotificationsPerMonth === -1) {
+    return { allowed: true, current: 0, limit: -1 }
+  }
+
+  // Get current month usage
+  const now = new Date()
+
+  // Try to get usage from organization_push_usage table (may not exist yet)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('organization_push_usage')
+    .select('notifications_this_period')
+    .eq('organization_id', organizationId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) {
+    // Table might not exist yet - allow by default
+    console.error('Error checking push notification limit:', error)
+    return { allowed: true, current: 0, limit: planLimits.pushNotificationsPerMonth }
+  }
+
+  const currentUsage = (data as { notifications_this_period?: number } | null)?.notifications_this_period || 0
+
+  // Calculate reset date (first of next month)
+  const resetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+  const resetDateStr = resetDate.toLocaleDateString('es-MX', { day: 'numeric', month: 'long' })
+
+  if (currentUsage >= planLimits.pushNotificationsPerMonth) {
+    return {
+      allowed: false,
+      current: currentUsage,
+      limit: planLimits.pushNotificationsPerMonth,
+      message: `Has alcanzado el límite de ${planLimits.pushNotificationsPerMonth} notificaciones push/mes de tu plan. Se reinicia el ${resetDateStr}.`,
+      resetDate: resetDateStr,
+    }
+  }
+
+  return {
+    allowed: true,
+    current: currentUsage,
+    limit: planLimits.pushNotificationsPerMonth,
+    resetDate: resetDateStr,
+  }
+}
+
+export async function consumePushNotification(
+  organizationId: string,
+  count: number = 1
+): Promise<{ success: boolean; remaining: number }> {
+  const supabase = await createClient()
+
+  const limits = await getOrganizationLimits(organizationId)
+  if (!limits) {
+    return { success: false, remaining: 0 }
+  }
+
+  const planLimits = PLAN_LIMITS[limits.plan]
+
+  // Try to use RPC if available
+  try {
+    const { data, error } = await callRpc(supabase, 'consume_push_notification', {
+      p_organization_id: organizationId,
+      p_count: count,
+    })
+
+    if (error) {
+      console.error('Error consuming push notification:', error)
+      // RPC might not exist - return success to not block notifications
+      return { success: true, remaining: planLimits.pushNotificationsPerMonth }
+    }
+
+    const result = data as { success: boolean; remaining: number } | null
+    return result || { success: true, remaining: planLimits.pushNotificationsPerMonth }
+  } catch {
+    // RPC doesn't exist yet - allow by default
+    return { success: true, remaining: planLimits.pushNotificationsPerMonth }
+  }
+}
+
+// =============================================================================
 // FILE SIZE LIMIT
 // =============================================================================
 

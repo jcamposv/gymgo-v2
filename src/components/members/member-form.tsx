@@ -62,6 +62,8 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
+import { usePlanLimit, isPlanLimitError } from '@/hooks/use-plan-limit'
+import { PlanLimitDialog } from '@/components/shared/plan-limit-dialog'
 
 // =============================================================================
 // TYPES
@@ -153,6 +155,14 @@ export function MemberForm({ member, mode, accountStatus, profileRole, canEditRo
   const [isRolePending, startRoleTransition] = useTransition()
   const [roleFeedback, setRoleFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
+  // Plan limit error handling
+  const {
+    showLimitDialog,
+    limitErrorData,
+    handleResult: handlePlanLimitResult,
+    clearLimitError,
+  } = usePlanLimit()
+
   // Get today's date for default start date
   const today = new Date().toISOString().split('T')[0]
 
@@ -225,6 +235,14 @@ export function MemberForm({ member, mode, accountStatus, profileRole, canEditRo
     startRoleTransition(async () => {
       const result = await updateMemberProfileRole(member.id, newRole)
 
+      // Check for plan limit errors first - show dialog for blocking actions
+      if (isPlanLimitError(result)) {
+        handlePlanLimitResult(result, { useDialog: true })
+        setRoleFeedback({ type: 'error', message: 'Límite alcanzado' })
+        setTimeout(() => setRoleFeedback(null), 3000)
+        return
+      }
+
       if (result.success) {
         setSelectedRole(newRole)
         setRoleFeedback({ type: 'success', message: 'Rol actualizado' })
@@ -246,11 +264,25 @@ export function MemberForm({ member, mode, accountStatus, profileRole, canEditRo
         ? await createMemberData(memberData as MemberFormData)
         : await updateMemberData(member!.id, memberData as MemberFormData)
 
+      // Check for plan limit errors - show dialog for blocking member creation
+      if (isPlanLimitError(result)) {
+        handlePlanLimitResult(result, { useDialog: true })
+        return
+      }
+
       if (result.success) {
         // If creating and invitation toggle is on, send invitation with role
         if (mode === 'create' && send_invitation && result.data) {
           const memberId = (result.data as { id: string }).id
           const inviteResult = await sendMemberInvitation(memberId, role)
+
+          // Check for plan limit errors on invitation (e.g., role limit)
+          if (isPlanLimitError(inviteResult)) {
+            toast.success('Miembro creado')
+            handlePlanLimitResult(inviteResult, { useDialog: true })
+            router.push('/dashboard/members')
+            return
+          }
 
           if (inviteResult.success) {
             toast.success('Miembro creado e invitacion enviada correctamente')
@@ -1056,6 +1088,12 @@ export function MemberForm({ member, mode, accountStatus, profileRole, canEditRo
           </div>
         </div>
       </form>
+      {/* Plan Limit Dialog - shown when limit exceeded */}
+      <PlanLimitDialog
+        open={showLimitDialog}
+        onOpenChange={clearLimitError}
+        data={limitErrorData}
+      />
     </Form>
   )
 }
