@@ -13,7 +13,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Dialog,
   DialogContent,
@@ -134,15 +133,15 @@ export function ExerciseSelector({ onSelect, selectedIds = [], trigger }: Exerci
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="w-[95vw] max-w-2xl max-h-[85vh] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle>Seleccionar ejercicio</DialogTitle>
-          <DialogDescription>
-            Busca y selecciona un ejercicio para agregar a la rutina
+      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-xl md:max-w-2xl max-h-[85dvh] overflow-hidden p-3 sm:p-6 flex flex-col">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-base sm:text-lg">Seleccionar ejercicio</DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm">
+            Busca y selecciona un ejercicio
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col sm:flex-row gap-2 mb-4">
+        <div className="flex flex-col sm:flex-row gap-2 mb-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -171,7 +170,7 @@ export function ExerciseSelector({ onSelect, selectedIds = [], trigger }: Exerci
           </Select>
         </div>
 
-        <ScrollArea className="h-[350px] sm:h-[400px]">
+        <div className="flex-1 min-h-0 -mx-3 sm:-mx-6 px-3 sm:px-6 overflow-y-auto">
           {loading && exercises.length === 0 ? (
             <div className="flex items-center justify-center h-32">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -189,7 +188,7 @@ export function ExerciseSelector({ onSelect, selectedIds = [], trigger }: Exerci
               </p>
             </div>
           ) : (
-            <div className="space-y-2 pr-4">
+            <div className="space-y-2 pr-3">
               {exercises.map((exercise) => {
                 const isSelected = selectedIds.includes(exercise.id)
                 const thumbnail = getExerciseThumbnail(exercise)
@@ -198,76 +197,58 @@ export function ExerciseSelector({ onSelect, selectedIds = [], trigger }: Exerci
                 return (
                   <div
                     key={exercise.id}
-                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors ${
+                    className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors ${
                       isSelected ? 'border-primary bg-primary/5 cursor-default' : ''
                     }`}
                     onClick={() => !isSelected && handleSelect(exercise)}
                   >
                     {/* Thumbnail */}
-                    <div className="flex-shrink-0">
-                      {thumbnail ? (
-                        isVideo ? (
-                          <video
-                            src={thumbnail}
-                            className="w-12 h-12 object-cover rounded bg-muted"
-                            muted
-                            playsInline
-                            preload="metadata"
-                          />
-                        ) : (
-                          <img
-                            src={thumbnail}
-                            alt={exercise.name}
-                            className="w-12 h-12 object-cover rounded bg-muted"
-                          />
-                        )
+                    {thumbnail ? (
+                      isVideo ? (
+                        <video
+                          src={thumbnail}
+                          className="size-10 object-cover rounded bg-muted flex-none"
+                          muted
+                          playsInline
+                          preload="metadata"
+                        />
                       ) : (
-                        <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
-                          <span className="text-xs text-muted-foreground">N/A</span>
-                        </div>
-                      )}
-                    </div>
+                        <img
+                          src={thumbnail}
+                          alt={exercise.name}
+                          className="size-10 object-cover rounded bg-muted flex-none"
+                        />
+                      )
+                    ) : (
+                      <div className="size-10 bg-muted rounded flex items-center justify-center flex-none">
+                        <span className="text-[10px] text-muted-foreground">N/A</span>
+                      </div>
+                    )}
 
                     {/* Content */}
-                    <div className="flex-1 min-w-0 overflow-hidden">
-                      <p className="font-medium truncate text-sm sm:text-base">
-                        {exercise.name}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-1 mt-1">
-                        {exercise.category && (
-                          <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 py-0">
-                            {categoryLabels[exercise.category] || exercise.category}
-                          </Badge>
-                        )}
-                        {exercise.difficulty && (
-                          <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0 hidden sm:inline-flex">
-                            {difficultyLabels[exercise.difficulty] || exercise.difficulty}
-                          </Badge>
-                        )}
-                        {exercise.muscle_groups?.slice(0, 1).map((muscle) => (
-                          <Badge key={muscle} variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0">
-                            {muscleGroupLabels[muscle] || muscle}
-                          </Badge>
-                        ))}
-                      </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm leading-tight line-clamp-2">{exercise.name}</p>
+                      {exercise.category && (
+                        <Badge variant="outline" className="text-[10px] px-1 py-0 mt-1">
+                          {categoryLabels[exercise.category] || exercise.category}
+                        </Badge>
+                      )}
                     </div>
 
                     {/* Action */}
-                    <div className="flex-shrink-0">
-                      {isSelected ? (
-                        <Badge className="text-xs">Agregado</Badge>
-                      ) : (
-                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
+                    {isSelected ? (
+                      <Badge variant="secondary" className="text-[10px] flex-none">OK</Badge>
+                    ) : (
+                      <div className="size-8 flex items-center justify-center flex-none">
+                        <Plus className="size-4 text-muted-foreground" />
+                      </div>
+                    )}
                   </div>
                 )
               })}
             </div>
           )}
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   )
