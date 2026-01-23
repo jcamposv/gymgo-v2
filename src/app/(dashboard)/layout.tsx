@@ -47,19 +47,20 @@ export default async function DashboardLayout({
     redirect(ROUTES.ONBOARDING)
   }
 
-  // Get organization status
+  // Get organization status - check subscription_started_at (nullable, no default)
+  // This field is set when user explicitly selects a plan
   const { data: orgData } = await supabase
     .from('organizations')
-    .select('subscription_plan')
+    .select('subscription_started_at')
     .eq('id', profile.organization_id)
     .single()
 
   const org = orgData as {
-    subscription_plan: string | null
+    subscription_started_at: string | null
   } | null
 
-  // Check if user needs to select a plan
-  if (org && !org.subscription_plan) {
+  // Check if user needs to select a plan (subscription_started_at is null until plan is selected)
+  if (!org?.subscription_started_at) {
     redirect(ROUTES.SELECT_PLAN)
   }
 

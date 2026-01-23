@@ -59,11 +59,12 @@ export default function OnboardingStep4() {
   })
 
   // Redirect to step1 if no name/slug set
+  // Skip this check when submitting to avoid race condition with clearData()
   useEffect(() => {
-    if (isHydrated && (!data.name || !data.slug)) {
+    if (isHydrated && !isSubmitting && (!data.name || !data.slug)) {
       router.replace('/onboarding/step1')
     }
-  }, [isHydrated, data, router])
+  }, [isHydrated, isSubmitting, data, router])
 
   // Hydrate form with context data
   useEffect(() => {
