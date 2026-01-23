@@ -270,7 +270,7 @@ function loadCsvData(): CsvExercise[] {
 
   const exercises: CsvExercise[] = []
 
-  for (const record of records) {
+  for (const record of records as Record<string, string>[]) {
     const ejercicio = record.ejercicio?.trim() || ''
     if (ejercicio && ejercicio.length > 3) {
       exercises.push({
