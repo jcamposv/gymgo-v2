@@ -182,17 +182,50 @@ export async function generateAIRoutine(
 
     const { routine, tokensUsed, model } = await generateRoutine(supabase, context, request)
 
-    // 5. Save routine to database
-    // Convert week_plan exercises to flat array for single routine
-    // Each day becomes a separate routine entry
-    const savedRoutines: string[] = []
+    // 5. Save as a structured program with parent + child records
+    const daysPerWeek = routine.week_plan.length
+    const durationWeeks = 8 // Default to 8 weeks for AI-generated programs
 
+    // Create parent program record
+    // NOTE: Uses new columns from migration 027_training_programs.sql
+    const programInsert = {
+      organization_id: user!.organizationId,
+      name: routine.name,
+      description: routine.description,
+      workout_type: 'program',
+      exercises: [] as unknown as Json, // Parent has no exercises
+      duration_weeks: durationWeeks,
+      days_per_week: daysPerWeek,
+      assigned_to_member_id: validated.data.memberId || null,
+      assigned_by_id: user!.id,
+      is_template: !validated.data.memberId,
+      is_active: true,
+      program_start_date: validated.data.memberId ? new Date().toISOString().split('T')[0] : null,
+    }
+
+    const { data: savedProgram, error: programError } = await supabase
+      .from('workouts')
+      .insert(programInsert)
+      .select('id')
+      .single()
+
+    if (programError) {
+      console.error('Error saving program:', programError)
+      throw new Error(`Error al guardar el programa: ${programError.message}`)
+    }
+
+    const programId = savedProgram.id
+    const savedRoutines: string[] = [programId]
+
+    // Create child day records
     for (const day of routine.week_plan) {
-      const insertData: TablesInsert<'workouts'> = {
+      const dayInsert = {
         organization_id: user!.organizationId,
-        name: `${routine.name} - ${day.day_name}`,
-        description: `${routine.description}\n\nEnfoque: ${day.focus}`,
-        workout_type: routine.workout_type,
+        program_id: programId,
+        day_number: day.day_number,
+        name: day.day_name,
+        description: day.focus,
+        workout_type: 'routine',
         exercises: day.exercises.map((ex, idx) => ({
           exercise_id: ex.exercise_id,
           exercise_name: ex.exercise_name,
@@ -204,23 +237,24 @@ export async function generateAIRoutine(
         })) as unknown as Json,
         assigned_to_member_id: validated.data.memberId || null,
         assigned_by_id: user!.id,
-        scheduled_date: null,
-        is_template: !validated.data.memberId, // Template if no member assigned
+        is_template: false,
         is_active: true,
       }
 
-      const { data: savedRoutine, error: saveError } = await supabase
+      const { data: savedDay, error: dayError } = await supabase
         .from('workouts')
-        .insert(insertData as never)
+        .insert(dayInsert)
         .select('id')
         .single()
 
-      if (saveError) {
-        console.error('Error saving routine:', saveError)
-        throw new Error(`Error al guardar la rutina: ${saveError.message}`)
+      if (dayError) {
+        console.error('Error saving program day:', dayError)
+        // Rollback: delete the program if day creation fails
+        await supabase.from('workouts').delete().eq('id', programId)
+        throw new Error(`Error al guardar el dia ${day.day_number}: ${dayError.message}`)
       }
 
-      savedRoutines.push(savedRoutine.id)
+      savedRoutines.push(savedDay.id)
     }
 
     // 6. Consume AI tokens after successful generation
@@ -306,8 +340,7 @@ export async function getAIUsageStats(): Promise<ActionResult<AIUsageStats>> {
     const plan = (org.subscription_plan as string) || 'free'
 
     // Get AI usage from database
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: usage, error: usageError } = await (supabase as any)
+    const { data: usage } = await supabase
       .from('organization_ai_usage')
       .select('*')
       .eq('organization_id', user!.organizationId)

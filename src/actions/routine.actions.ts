@@ -69,6 +69,7 @@ export async function getRoutines(params?: RoutineSearchParams): Promise<{
       member:members!assigned_to_member_id(id, full_name, email)
     `, { count: 'exact' })
     .eq('organization_id', user.organizationId)
+    .is('program_id', null) // Exclude program day records (children) - only show parent programs and standalone routines
     .order(sortBy, { ascending })
     .range(from, to)
 
@@ -136,7 +137,131 @@ export async function getRoutine(id: string): Promise<{
     return { data: null, error: dbError.message }
   }
 
+  // Fetch exercise media URLs if the routine has exercises
+  const exercises = (data.exercises as ExerciseItem[]) || []
+  if (exercises.length > 0) {
+    const exerciseIds = exercises.map(ex => ex.exercise_id).filter(Boolean)
+
+    if (exerciseIds.length > 0) {
+      const { data: exerciseDetails } = await supabase
+        .from('exercises')
+        .select('id, thumbnail_url, gif_url, video_url')
+        .in('id', exerciseIds)
+
+      if (exerciseDetails) {
+        const mediaMap = new Map<string, { thumbnail_url?: string | null; gif_url?: string | null; video_url?: string | null }>()
+        for (const ex of exerciseDetails) {
+          mediaMap.set(ex.id, {
+            thumbnail_url: ex.thumbnail_url,
+            gif_url: ex.gif_url,
+            video_url: ex.video_url,
+          })
+        }
+
+        // Merge media URLs into exercises
+        const exercisesWithMedia = exercises.map(ex => ({
+          ...ex,
+          ...mediaMap.get(ex.exercise_id),
+        }))
+
+        // Update the data object with exercises including media
+        data.exercises = exercisesWithMedia as unknown as Json
+      }
+    }
+  }
+
   return { data: data as WorkoutWithMember, error: null }
+}
+
+// =============================================================================
+// GET PROGRAM DAYS (for staff)
+// =============================================================================
+
+export type ExerciseItemWithMedia = ExerciseItem & {
+  thumbnail_url?: string | null
+  gif_url?: string | null
+  video_url?: string | null
+}
+
+export type ProgramDayWithExercises = {
+  id: string
+  day_number: number | null
+  name: string
+  description: string | null
+  exercises: ExerciseItemWithMedia[]
+}
+
+/**
+ * Get all days for a program (staff view).
+ * This is different from the member version - uses staff auth.
+ * Includes exercise media URLs (thumbnail, gif, video).
+ */
+export async function getProgramDaysForStaff(programId: string): Promise<{
+  data: ProgramDayWithExercises[] | null
+  error: string | null
+}> {
+  const { authorized, user, error } = await requireAnyPermission(['view_any_member_routines', 'manage_any_member_routines'])
+
+  if (!authorized || !user) {
+    return { data: null, error: error || 'No autorizado' }
+  }
+
+  const supabase = await createClient()
+
+  const { data: days, error: daysError } = await supabase
+    .from('workouts')
+    .select('id, day_number, name, description, exercises')
+    .eq('program_id', programId)
+    .eq('organization_id', user.organizationId)
+    .order('day_number', { ascending: true })
+
+  if (daysError) {
+    return { data: null, error: daysError.message }
+  }
+
+  // Collect all unique exercise IDs from all days
+  const allExerciseIds = new Set<string>()
+  for (const day of days || []) {
+    const exercises = (day.exercises as ExerciseItem[]) || []
+    for (const ex of exercises) {
+      if (ex.exercise_id) {
+        allExerciseIds.add(ex.exercise_id)
+      }
+    }
+  }
+
+  // Fetch exercise media from exercises table
+  const exerciseMediaMap = new Map<string, { thumbnail_url?: string | null; gif_url?: string | null; video_url?: string | null }>()
+
+  if (allExerciseIds.size > 0) {
+    const { data: exerciseDetails } = await supabase
+      .from('exercises')
+      .select('id, thumbnail_url, gif_url, video_url')
+      .in('id', Array.from(allExerciseIds))
+
+    if (exerciseDetails) {
+      for (const ex of exerciseDetails) {
+        exerciseMediaMap.set(ex.id, {
+          thumbnail_url: ex.thumbnail_url,
+          gif_url: ex.gif_url,
+          video_url: ex.video_url,
+        })
+      }
+    }
+  }
+
+  const programDays: ProgramDayWithExercises[] = (days || []).map(day => ({
+    id: day.id,
+    day_number: day.day_number,
+    name: day.name,
+    description: day.description,
+    exercises: ((day.exercises as ExerciseItem[]) || []).map(ex => ({
+      ...ex,
+      ...exerciseMediaMap.get(ex.exercise_id),
+    })),
+  }))
+
+  return { data: programDays, error: null }
 }
 
 // =============================================================================
@@ -388,7 +513,10 @@ export async function assignRoutineToMember(
 
   const routineData = routine as Tables<'workouts'>
 
-  // Create assigned copy
+  // Check if this is a program (has days_per_week or workout_type is 'program')
+  const isProgram = routineData.workout_type === 'program' || routineData.days_per_week
+
+  // Create assigned copy of the parent routine/program
   const insertData: TablesInsert<'workouts'> = {
     organization_id: user!.organizationId,
     name: routineData.name,
@@ -402,6 +530,10 @@ export async function assignRoutineToMember(
     scheduled_date: scheduledDate || null,
     is_template: false,
     is_active: true,
+    // Program-specific fields
+    duration_weeks: routineData.duration_weeks,
+    days_per_week: routineData.days_per_week,
+    program_start_date: isProgram ? new Date().toISOString().split('T')[0] : null,
   }
 
   const { data: assignedRoutine, error: dbError } = await supabase
@@ -414,8 +546,57 @@ export async function assignRoutineToMember(
     return errorResult(dbError.message)
   }
 
+  const newProgramId = (assignedRoutine as Tables<'workouts'>).id
+
+  // If this is a program, also copy all the program days
+  if (isProgram) {
+    const { data: programDays, error: daysError } = await supabase
+      .from('workouts')
+      .select('*')
+      .eq('program_id', routineId)
+      .order('day_number', { ascending: true })
+
+    if (daysError) {
+      // Rollback: delete the program
+      await supabase.from('workouts').delete().eq('id', newProgramId)
+      return errorResult('Error al obtener los días del programa')
+    }
+
+    // Copy each day and link to the new program
+    for (const day of (programDays || [])) {
+      const dayData = day as Tables<'workouts'>
+      const dayInsert: TablesInsert<'workouts'> = {
+        organization_id: user!.organizationId,
+        program_id: newProgramId, // Link to the NEW program
+        day_number: dayData.day_number,
+        name: dayData.name,
+        description: dayData.description,
+        workout_type: dayData.workout_type,
+        exercises: dayData.exercises,
+        assigned_to_member_id: memberId,
+        assigned_by_id: user!.id,
+        is_template: false,
+        is_active: true,
+      }
+
+      const { error: dayError } = await supabase
+        .from('workouts')
+        .insert(dayInsert as never)
+
+      if (dayError) {
+        // Rollback: delete the program and any days already created
+        await supabase.from('workouts').delete().eq('program_id', newProgramId)
+        await supabase.from('workouts').delete().eq('id', newProgramId)
+        return errorResult(`Error al copiar el día ${dayData.day_number}`)
+      }
+    }
+  }
+
   revalidatePath('/dashboard/routines')
-  return successResult('Rutina asignada exitosamente', assignedRoutine)
+  return successResult(
+    isProgram ? 'Programa asignado exitosamente' : 'Rutina asignada exitosamente',
+    assignedRoutine
+  )
 }
 
 // =============================================================================
@@ -528,12 +709,14 @@ export async function getMyRoutines(): Promise<{
   const memberData = member as { id: string }
 
   // Get routines assigned to this member
+  // Exclude program child records (they're accessed via their parent program)
   const { data: routines, error: dbError } = await supabase
     .from('workouts')
     .select('*')
     .eq('organization_id', profileData.organization_id)
     .eq('assigned_to_member_id', memberData.id)
     .eq('is_active', true)
+    .is('program_id', null) // Only get parent programs and standalone routines
     .order('scheduled_date', { ascending: true, nullsFirst: false })
 
   if (dbError) {

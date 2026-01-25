@@ -85,7 +85,19 @@ export const routineColumns: ColumnDef<WorkoutWithMember>[] = [
     id: 'exercises_count',
     header: 'Ejercicios',
     cell: ({ row }) => {
-      const exercises = (row.original.exercises as ExerciseItem[]) || []
+      const routine = row.original
+      const isProgram = routine.workout_type === 'program' || routine.days_per_week
+
+      if (isProgram) {
+        // For programs, show days per week
+        return (
+          <Badge variant="outline">
+            {routine.days_per_week || '?'} días/semana
+          </Badge>
+        )
+      }
+
+      const exercises = (routine.exercises as ExerciseItem[]) || []
       return (
         <Badge variant="outline">
           {exercises.length} ejercicio{exercises.length !== 1 ? 's' : ''}

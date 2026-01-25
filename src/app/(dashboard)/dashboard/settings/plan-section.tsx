@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { UpgradePlanDialog } from '@/components/billing/upgrade-plan-dialog'
+import { AIUsageSection } from '@/components/ai/ai-usage-section'
 import { getLatestUpgradeRequest } from '@/actions/upgrade-request.actions'
 import { PRICING_PLANS, PLAN_FEATURE_SECTIONS, type PlanTier } from '@/lib/pricing.config'
 import { PlanFeaturesDisplay } from '@/components/billing/plan-features-display'
@@ -221,6 +222,9 @@ export function PlanSection({ currentPlan, userEmail, userName }: PlanSectionPro
             </CardContent>
           </Card>
         ) : null}
+
+        {/* AI Usage Section */}
+        <AIUsageSection />
       </div>
 
       {/* Upgrade Dialog */}

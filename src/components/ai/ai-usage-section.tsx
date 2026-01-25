@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Sparkles, Loader2, ArrowUpRight, Dumbbell, Repeat, MessageSquare } from 'lucide-react'
+import { Sparkles, Loader2, ArrowUpRight, Dumbbell, Repeat, MessageSquare, Info, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 
 import { getAIUsageStats, type AIUsageStats } from '@/actions/ai.actions'
@@ -16,6 +16,13 @@ import {
 } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 // =============================================================================
 // Plan Labels
@@ -27,6 +34,35 @@ const PLAN_LABELS: Record<string, string> = {
   growth: 'Growth',
   pro: 'Pro',
   enterprise: 'Enterprise',
+}
+
+// =============================================================================
+// Tooltip Content
+// =============================================================================
+
+const TOOLTIP_CONTENT = {
+  generalRequests: 'Cada acción que usa inteligencia artificial consume 1 request.',
+  routineGenerations: 'Cada rutina generada automáticamente consume 1 generación.',
+  exerciseAlternatives: 'Cada búsqueda de alternativas consume 1 uso de AI.',
+}
+
+// =============================================================================
+// Helper Component: Info Tooltip
+// =============================================================================
+
+function InfoTooltip({ content }: { content: string }) {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-[200px]">
+          <p className="text-xs">{content}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  )
 }
 
 // =============================================================================
@@ -79,9 +115,18 @@ export function AIUsageSection() {
 
   const getProgressColor = (percentage: number) => {
     if (percentage >= 90) return 'bg-destructive'
-    if (percentage >= 70) return 'bg-yellow-500'
+    if (percentage >= 80) return 'bg-yellow-500'
     return 'bg-primary'
   }
+
+  // Check if any quota is at 80% or more (but not unlimited)
+  const quotasNearLimit = [
+    { name: 'consultas de IA', ...stats.generalRequests },
+    { name: 'generaciones de rutina', ...stats.routineGenerations },
+    { name: 'alternativas de ejercicio', ...stats.exerciseAlternatives },
+  ].filter((q) => q.limit !== -1 && q.percentage >= 80 && q.percentage < 100)
+
+  const showWarning = quotasNearLimit.length > 0
 
   return (
     <Card>
@@ -102,12 +147,29 @@ export function AIUsageSection() {
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* 80% Warning Alert */}
+        {showWarning && (
+          <Alert variant="default" className="border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20">
+            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+            <AlertDescription className="text-yellow-800 dark:text-yellow-200">
+              Has usado el 80% o más de tu cuota de{' '}
+              {quotasNearLimit.map((q) => q.name).join(', ')}.{' '}
+              {stats.plan !== 'enterprise' && (
+                <Link href="/dashboard/settings?tab=plan" className="underline font-medium">
+                  Considera actualizar tu plan
+                </Link>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* General AI Requests */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium">Consultas de IA</span>
+              <InfoTooltip content={TOOLTIP_CONTENT.generalRequests} />
             </div>
             <span className="text-sm text-muted-foreground">
               {stats.generalRequests.used} / {formatLimit(stats.generalRequests.limit)}
@@ -127,6 +189,7 @@ export function AIUsageSection() {
             <div className="flex items-center gap-2">
               <Dumbbell className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium">Generación de rutinas</span>
+              <InfoTooltip content={TOOLTIP_CONTENT.routineGenerations} />
             </div>
             <span className="text-sm text-muted-foreground">
               {stats.routineGenerations.used} / {formatLimit(stats.routineGenerations.limit)}
@@ -146,6 +209,7 @@ export function AIUsageSection() {
             <div className="flex items-center gap-2">
               <Repeat className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium">Alternativas de ejercicios</span>
+              <InfoTooltip content={TOOLTIP_CONTENT.exerciseAlternatives} />
             </div>
             <span className="text-sm text-muted-foreground">
               {stats.exerciseAlternatives.used} / {formatLimit(stats.exerciseAlternatives.limit)}
@@ -167,7 +231,7 @@ export function AIUsageSection() {
         {/* Upgrade CTA for non-enterprise plans */}
         {stats.plan !== 'enterprise' && (
           <Button variant="outline" size="sm" className="w-full" asChild>
-            <Link href="/dashboard/settings">
+            <Link href="/dashboard/settings?tab=plan">
               Ver opciones de plan
               <ArrowUpRight className="ml-2 h-3 w-3" />
             </Link>
