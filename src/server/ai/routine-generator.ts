@@ -239,7 +239,7 @@ async function fetchCandidateExercises(
   equipment: string[],
   experienceLevel: ExperienceLevel
 ): Promise<ExerciseCandidate[]> {
-  // Map experience level to difficulty
+  // Map experience level to difficulty - include null for exercises without difficulty set
   const difficultyMap: Record<ExperienceLevel, string[]> = {
     beginner: ['beginner'],
     intermediate: ['beginner', 'intermediate'],
@@ -247,16 +247,14 @@ async function fetchCandidateExercises(
   }
   const allowedDifficulties = difficultyMap[experienceLevel]
 
-  // Build query
-  let query = supabase
+  // Build query - get global exercises (is_global=true) OR org-specific exercises
+  // Use is_global column for global exercises, which is more reliable than checking organization_id
+  const { data, error } = await supabase
     .from('exercises')
     .select('id, name, name_es, category, muscle_groups, equipment, difficulty, movement_pattern')
     .eq('is_active', true)
-    .or(`organization_id.is.null,organization_id.eq.${organizationId}`)
-    .in('difficulty', allowedDifficulties)
-    .limit(100)
-
-  const { data, error } = await query
+    .or(`is_global.eq.true,organization_id.eq.${organizationId}`)
+    .limit(200)
 
   if (error) {
     console.error('Error fetching exercises:', error)
@@ -265,10 +263,21 @@ async function fetchCandidateExercises(
 
   const exercises = (data || []) as ExerciseCandidate[]
 
+  console.log(`[AI] Found ${exercises.length} exercises from database`)
+
+  // Filter by difficulty (client-side to include exercises without difficulty set)
+  const filteredByDifficulty = exercises.filter((exercise) => {
+    // Include exercises without difficulty set (null)
+    if (!exercise.difficulty) return true
+    return allowedDifficulties.includes(exercise.difficulty)
+  })
+
+  console.log(`[AI] After difficulty filter: ${filteredByDifficulty.length} exercises`)
+
   // Filter by available equipment
   const normalizedEquipment = equipment.map((e) => e.toLowerCase())
 
-  return exercises.filter((exercise) => {
+  const finalExercises = filteredByDifficulty.filter((exercise) => {
     const requiredEquipment = exercise.equipment || []
 
     // No equipment required = always valid
@@ -282,6 +291,10 @@ async function fetchCandidateExercises(
       normalizedEquipment.includes(eq.toLowerCase())
     )
   })
+
+  console.log(`[AI] After equipment filter: ${finalExercises.length} exercises for equipment: ${equipment.join(', ')}`)
+
+  return finalExercises
 }
 
 // =============================================================================
@@ -330,16 +343,39 @@ IMPORTANTE: Solo puedes usar ejercicios de la lista proporcionada. Usa los IDs e
 
   // Validate exercise IDs exist in our database
   const exerciseIds = new Set(exercises.map((e) => e.id))
-  const validatedWeekPlan = data.week_plan.map((day) => ({
-    ...day,
-    exercises: day.exercises.filter((ex) => {
+
+  console.log(`[AI] Generated routine with ${data.week_plan.length} days`)
+
+  let totalGenerated = 0
+  let totalValid = 0
+
+  const validatedWeekPlan = data.week_plan.map((day) => {
+    const originalCount = day.exercises.length
+    const validExercises = day.exercises.filter((ex) => {
       const isValid = exerciseIds.has(ex.exercise_id)
       if (!isValid) {
-        console.warn(`AI generated invalid exercise ID: ${ex.exercise_id}`)
+        console.warn(`[AI] Invalid exercise ID: ${ex.exercise_id} (name: ${ex.exercise_name})`)
       }
       return isValid
-    }),
-  }))
+    })
+
+    totalGenerated += originalCount
+    totalValid += validExercises.length
+
+    console.log(`[AI] Day ${day.day_number}: ${validExercises.length}/${originalCount} valid exercises`)
+
+    return {
+      ...day,
+      exercises: validExercises,
+    }
+  })
+
+  console.log(`[AI] Total exercises: ${totalValid}/${totalGenerated} valid`)
+
+  // Warn if too many exercises were invalid
+  if (totalValid === 0 && totalGenerated > 0) {
+    console.error('[AI] All generated exercise IDs were invalid! Check if exercises exist in database.')
+  }
 
   return {
     routine: {

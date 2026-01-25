@@ -1692,6 +1692,7 @@ export type Database = {
           alert_threshold_percent: number
           cost_per_extra_request: number
           created_at: string
+          exercise_alternatives_used: number | null
           extra_requests_per_user: number
           id: string
           limit_reached_at: string | null
@@ -1703,6 +1704,7 @@ export type Database = {
           period_start_date: string
           requests_per_user_monthly: number
           requests_this_period: number
+          routine_generations_used: number | null
           tokens_used_this_period: number
           updated_at: string
         }
@@ -1713,6 +1715,7 @@ export type Database = {
           alert_threshold_percent?: number
           cost_per_extra_request?: number
           created_at?: string
+          exercise_alternatives_used?: number | null
           extra_requests_per_user?: number
           id?: string
           limit_reached_at?: string | null
@@ -1724,6 +1727,7 @@ export type Database = {
           period_start_date?: string
           requests_per_user_monthly?: number
           requests_this_period?: number
+          routine_generations_used?: number | null
           tokens_used_this_period?: number
           updated_at?: string
         }
@@ -1734,6 +1738,7 @@ export type Database = {
           alert_threshold_percent?: number
           cost_per_extra_request?: number
           created_at?: string
+          exercise_alternatives_used?: number | null
           extra_requests_per_user?: number
           id?: string
           limit_reached_at?: string | null
@@ -1745,6 +1750,7 @@ export type Database = {
           period_start_date?: string
           requests_per_user_monthly?: number
           requests_this_period?: number
+          routine_generations_used?: number | null
           tokens_used_this_period?: number
           updated_at?: string
         }
@@ -2234,30 +2240,36 @@ export type Database = {
       user_ai_usage: {
         Row: {
           created_at: string
+          exercise_alternatives_used: number | null
           id: string
           organization_id: string
           period_month: string
           requests_this_month: number
+          routine_generations_used: number | null
           tokens_used_this_month: number
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          exercise_alternatives_used?: number | null
           id?: string
           organization_id: string
           period_month?: string
           requests_this_month?: number
+          routine_generations_used?: number | null
           tokens_used_this_month?: number
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          exercise_alternatives_used?: number | null
           id?: string
           organization_id?: string
           period_month?: string
           requests_this_month?: number
+          routine_generations_used?: number | null
           tokens_used_this_month?: number
           updated_at?: string
           user_id?: string
@@ -2404,6 +2416,67 @@ export type Database = {
           },
         ]
       }
+      workout_completions: {
+        Row: {
+          completed_at: string
+          completed_date: string
+          created_at: string | null
+          duration_minutes: number | null
+          id: string
+          member_id: string
+          notes: string | null
+          organization_id: string
+          program_week: number | null
+          workout_id: string
+        }
+        Insert: {
+          completed_at?: string
+          completed_date?: string
+          created_at?: string | null
+          duration_minutes?: number | null
+          id?: string
+          member_id: string
+          notes?: string | null
+          organization_id: string
+          program_week?: number | null
+          workout_id: string
+        }
+        Update: {
+          completed_at?: string
+          completed_date?: string
+          created_at?: string | null
+          duration_minutes?: number | null
+          id?: string
+          member_id?: string
+          notes?: string | null
+          organization_id?: string
+          program_week?: number | null
+          workout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_completions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_completions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_completions_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workout_exercise_overrides: {
         Row: {
           created_at: string
@@ -2473,13 +2546,18 @@ export type Database = {
           assigned_by_id: string | null
           assigned_to_member_id: string | null
           created_at: string | null
+          day_number: number | null
+          days_per_week: number | null
           description: string | null
+          duration_weeks: number | null
           exercises: Json | null
           id: string
           is_active: boolean | null
           is_template: boolean | null
           name: string
           organization_id: string
+          program_id: string | null
+          program_start_date: string | null
           scheduled_date: string | null
           updated_at: string | null
           wod_time_cap: number | null
@@ -2490,13 +2568,18 @@ export type Database = {
           assigned_by_id?: string | null
           assigned_to_member_id?: string | null
           created_at?: string | null
+          day_number?: number | null
+          days_per_week?: number | null
           description?: string | null
+          duration_weeks?: number | null
           exercises?: Json | null
           id?: string
           is_active?: boolean | null
           is_template?: boolean | null
           name: string
           organization_id: string
+          program_id?: string | null
+          program_start_date?: string | null
           scheduled_date?: string | null
           updated_at?: string | null
           wod_time_cap?: number | null
@@ -2507,13 +2590,18 @@ export type Database = {
           assigned_by_id?: string | null
           assigned_to_member_id?: string | null
           created_at?: string | null
+          day_number?: number | null
+          days_per_week?: number | null
           description?: string | null
+          duration_weeks?: number | null
           exercises?: Json | null
           id?: string
           is_active?: boolean | null
           is_template?: boolean | null
           name?: string
           organization_id?: string
+          program_id?: string | null
+          program_start_date?: string | null
           scheduled_date?: string | null
           updated_at?: string | null
           wod_time_cap?: number | null
@@ -2542,6 +2630,13 @@ export type Database = {
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "workouts_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "workouts"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
@@ -2557,6 +2652,10 @@ export type Database = {
           p_organization_id: string
         }
         Returns: boolean
+      }
+      check_ai_feature_limit: {
+        Args: { feature_name: string; org_id: string; user_uuid: string }
+        Returns: Json
       }
       check_ai_tokens_available: { Args: { org_id: string }; Returns: boolean }
       check_api_rate_limit: {

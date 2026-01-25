@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { Plus, Sparkles } from 'lucide-react'
+import { Plus, Sparkles, Calendar, ChevronDown } from 'lucide-react'
 
 import type { WorkoutWithMember } from '@/actions/routine.actions'
 import { workoutTypes } from '@/schemas/routine.schema'
@@ -9,6 +9,12 @@ import { DataTable, type FilterConfig } from '@/components/data-table'
 import { routineColumns } from './routines-columns'
 import { AIRoutineGenerator } from '@/components/ai'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface RoutinesDataTableProps {
   routines: WorkoutWithMember[]
@@ -48,8 +54,8 @@ export function RoutinesDataTable({ routines, totalItems }: RoutinesDataTablePro
 
   return (
     <div className="space-y-4">
-      {/* AI Generation Button Row */}
-      <div className="flex justify-end">
+      {/* Action Buttons Row */}
+      <div className="flex items-center justify-end gap-2">
         <AIRoutineGenerator
           trigger={
             <Button variant="outline" className="gap-2">
@@ -58,6 +64,26 @@ export function RoutinesDataTable({ routines, totalItems }: RoutinesDataTablePro
             </Button>
           }
         />
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Crear nuevo
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => router.push('/dashboard/routines/new')}>
+              <Plus className="h-4 w-4 mr-2" />
+              Rutina simple
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push('/dashboard/routines/new-program')}>
+              <Calendar className="h-4 w-4 mr-2" />
+              Programa multi-dia
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <DataTable
@@ -69,12 +95,6 @@ export function RoutinesDataTable({ routines, totalItems }: RoutinesDataTablePro
         searchable
         searchPlaceholder="Buscar rutinas..."
         filters={routineFilters}
-        primaryAction={{
-          id: 'new',
-          label: 'Nueva rutina',
-          icon: Plus,
-          onClick: () => router.push('/dashboard/routines/new'),
-        }}
         emptyTitle="No hay rutinas"
         emptyDescription="Crea tu primera rutina para comenzar a asignarlas a tus miembros"
       />

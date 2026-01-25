@@ -9,6 +9,7 @@ import {
   Play,
   Info,
   History,
+  CheckCircle2,
 } from 'lucide-react'
 
 import { getMyRoutineById } from '@/actions/routine.actions'
@@ -27,6 +28,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { CompleteWorkoutButton } from '@/components/member/complete-workout-button'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -152,6 +154,34 @@ export default async function MemberRoutineDetailPage({ params }: PageProps) {
           </div>
         )}
       </div>
+
+      {/* Complete Workout Section */}
+      {routine.is_active && (
+        <>
+          <Separator />
+          <div className="space-y-4">
+            <Card className="border-lime-200/50 bg-gradient-to-br from-lime-50/30 to-white">
+              <CardContent className="py-6">
+                <div className="text-center space-y-4">
+                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                    <CheckCircle2 className="h-5 w-5" />
+                    <span className="font-medium">Terminaste tu entrenamiento?</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                    Registra tu progreso para ver tus avances semanales y mantener tu racha de entrenamientos.
+                  </p>
+                  <div className="max-w-sm mx-auto">
+                    <CompleteWorkoutButton
+                      workoutId={routine.id}
+                      workoutName={routine.name}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
     </div>
   )
 }

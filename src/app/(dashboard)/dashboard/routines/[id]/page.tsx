@@ -1,9 +1,9 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, Pencil, Calendar, User, Clock, Dumbbell } from 'lucide-react'
+import { ArrowLeft, Pencil, Calendar, User, Dumbbell } from 'lucide-react'
 
-import { getRoutine } from '@/actions/routine.actions'
-import { workoutTypeLabels, wodTypeLabels, type ExerciseItem } from '@/schemas/routine.schema'
+import { getRoutine, getProgramDaysForStaff, type ProgramDayWithExercises, type ExerciseItemWithMedia } from '@/actions/routine.actions'
+import { workoutTypeLabels, wodTypeLabels } from '@/schemas/routine.schema'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -13,7 +13,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { AssignDialog } from '@/components/routines'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
+import { AssignDialog, ExerciseCard } from '@/components/routines'
 
 interface RoutinePageProps {
   params: Promise<{ id: string }>
@@ -35,7 +41,17 @@ export default async function RoutinePage({ params }: RoutinePageProps) {
     notFound()
   }
 
-  const exercises = (routine.exercises as ExerciseItem[]) || []
+  // Check if this is a program (workout_type is 'program' OR has days_per_week, and not a child day)
+  const isProgram = (routine.workout_type === 'program' || routine.days_per_week) && !routine.program_id
+
+  // Fetch program days if this is a program
+  let programDays: ProgramDayWithExercises[] = []
+  if (isProgram) {
+    const { data: days } = await getProgramDaysForStaff(id)
+    programDays = days || []
+  }
+
+  const exercises = (routine.exercises as ExerciseItemWithMedia[]) || []
 
   return (
     <div className="space-y-6">
@@ -144,70 +160,88 @@ export default async function RoutinePage({ params }: RoutinePageProps) {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Ejercicios ({exercises.length})</CardTitle>
-          <CardDescription>
-            Lista de ejercicios en esta rutina
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {exercises.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">
-              No hay ejercicios en esta rutina
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {exercises.map((exercise, index) => (
-                <div
-                  key={`${exercise.exercise_id}-${index}`}
-                  className="flex items-start gap-4 p-4 border rounded-lg"
-                >
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-medium">
-                    {index + 1}
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium">{exercise.exercise_name}</h4>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {exercise.sets && (
-                        <Badge variant="outline">
-                          {exercise.sets} series
-                        </Badge>
-                      )}
-                      {exercise.reps && (
-                        <Badge variant="outline">
-                          {exercise.reps} reps
-                        </Badge>
-                      )}
-                      {exercise.weight && (
-                        <Badge variant="outline">
-                          {exercise.weight}
-                        </Badge>
-                      )}
-                      {exercise.rest_seconds && (
-                        <Badge variant="secondary">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {exercise.rest_seconds}s descanso
-                        </Badge>
-                      )}
-                      {exercise.tempo && (
-                        <Badge variant="secondary">
-                          Tempo: {exercise.tempo}
-                        </Badge>
-                      )}
-                    </div>
-                    {exercise.notes && (
-                      <p className="text-sm text-muted-foreground mt-2">
-                        {exercise.notes}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Program Days (if this is a program) */}
+      {isProgram && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-lime-600" />
+              Dias del programa ({programDays.length})
+            </CardTitle>
+            <CardDescription>
+              {routine.duration_weeks} semanas - {routine.days_per_week} dias por semana
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {programDays.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">
+                No hay dias configurados en este programa
+              </p>
+            ) : (
+              <Accordion type="multiple" className="w-full">
+                {programDays.map((day) => (
+                  <AccordionItem key={day.id} value={day.id}>
+                    <AccordionTrigger className="hover:no-underline">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-lime-100 text-lime-700 font-bold text-sm">
+                          {day.day_number}
+                        </div>
+                        <div className="text-left">
+                          <p className="font-medium">{day.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {day.exercises.length} ejercicios
+                          </p>
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-3 pt-2">
+                        {day.exercises.map((exercise, index) => (
+                          <ExerciseCard
+                            key={`${exercise.exercise_id}-${index}`}
+                            exercise={exercise}
+                            index={index}
+                            variant="compact"
+                          />
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Regular Exercises (for non-program routines) */}
+      {!isProgram && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Ejercicios ({exercises.length})</CardTitle>
+            <CardDescription>
+              Lista de ejercicios en esta rutina
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {exercises.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">
+                No hay ejercicios en esta rutina
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {exercises.map((exercise, index) => (
+                  <ExerciseCard
+                    key={`${exercise.exercise_id}-${index}`}
+                    exercise={exercise}
+                    index={index}
+                  />
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

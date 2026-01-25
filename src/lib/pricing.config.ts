@@ -588,15 +588,15 @@ export const PLAN_FEATURE_SECTIONS: Record<PlanTier, PlanFeatureSection[]> = {
 /**
  * Coming Soon features to show across all plans
  * Only features valuable to gym owners (not technical)
+ *
+ * NOTE: Keep this list updated! Remove features when they become live.
+ * - Rutinas AI personalizadas: REMOVED (implemented Jan 2026)
+ * - Alternativas de ejercicio AI: REMOVED (implemented Jan 2026)
  */
 export const COMING_SOON_FEATURES = [
   {
     label: 'Notificaciones push',
     description: 'Envía recordatorios directamente al celular de tus miembros',
-  },
-  {
-    label: 'Rutinas AI personalizadas',
-    description: 'Generación automática de planes de entrenamiento',
   },
   {
     label: 'Analíticas avanzadas',
