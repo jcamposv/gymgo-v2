@@ -1,8 +1,9 @@
 import { redirect } from 'next/navigation'
+import { CalendarDays } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentOrganization } from '@/actions/organization.actions'
-import { BrandingForm } from './branding-form'
+import { BookingLimitsForm } from '../booking-limits-form'
 import {
   Card,
   CardContent,
@@ -13,10 +14,10 @@ import {
 import type { Tables } from '@/types/database.types'
 
 export const metadata = {
-  title: 'Branding | Configuracion | GymGo',
+  title: 'Clases | Configuracion | GymGo',
 }
 
-export default async function SettingsBrandingPage() {
+export default async function SettingsClassesPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -35,19 +36,20 @@ export default async function SettingsBrandingPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Branding</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <CalendarDays className="h-5 w-5" />
+          Configuracion de Clases
+        </CardTitle>
         <CardDescription>
-          Logo y colores de tu gimnasio
+          Reglas y limites para las reservas de clases
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <BrandingForm
-          organizationId={organization.id}
+        <BookingLimitsForm
           initialData={{
-            logo_url: organization.logo_url,
-            primary_color: organization.primary_color,
-            secondary_color: organization.secondary_color,
+            max_classes_per_day: organization.max_classes_per_day ?? null,
           }}
+          timezone={organization.timezone ?? undefined}
         />
       </CardContent>
     </Card>

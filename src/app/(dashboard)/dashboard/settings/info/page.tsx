@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentOrganization } from '@/actions/organization.actions'
-import { BrandingForm } from './branding-form'
+import { InfoForm } from '../info-form'
 import {
   Card,
   CardContent,
@@ -13,10 +13,10 @@ import {
 import type { Tables } from '@/types/database.types'
 
 export const metadata = {
-  title: 'Branding | Configuracion | GymGo',
+  title: 'Informacion | Configuracion | GymGo',
 }
 
-export default async function SettingsBrandingPage() {
+export default async function SettingsInfoPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -35,18 +35,24 @@ export default async function SettingsBrandingPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Branding</CardTitle>
+        <CardTitle>Informacion del gimnasio</CardTitle>
         <CardDescription>
-          Logo y colores de tu gimnasio
+          Datos de contacto y direccion
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <BrandingForm
-          organizationId={organization.id}
+        <InfoForm
           initialData={{
-            logo_url: organization.logo_url,
-            primary_color: organization.primary_color,
-            secondary_color: organization.secondary_color,
+            name: organization.name,
+            email: organization.email,
+            phone: organization.phone,
+            website: organization.website,
+            address_line1: organization.address_line1,
+            address_line2: organization.address_line2,
+            city: organization.city,
+            state: organization.state,
+            postal_code: organization.postal_code,
+            country: organization.country,
           }}
         />
       </CardContent>

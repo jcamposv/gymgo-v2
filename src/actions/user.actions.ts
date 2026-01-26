@@ -431,6 +431,280 @@ export async function updateMemberProfileRole(
 }
 
 // =============================================================================
+// STAFF TRAINING PROFILE MANAGEMENT
+// =============================================================================
+
+export interface StaffTrainingStatus {
+  canTrain: boolean
+  memberId: string | null
+}
+
+/**
+ * Checks if a staff member has a training profile (member record).
+ * This determines if they can be assigned routines and book classes.
+ */
+export async function getStaffTrainingStatus(userId: string): Promise<{
+  data: StaffTrainingStatus | null
+  error: string | null
+}> {
+  const { authorized, user, error } = await requirePermission('view_staff')
+
+  if (!authorized || !user) {
+    return { data: null, error: error || 'No autorizado' }
+  }
+
+  const supabase = await createClient()
+
+  // Get the staff member's profile
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, email, full_name, organization_id')
+    .eq('id', userId)
+    .eq('organization_id', user.organizationId)
+    .single()
+
+  if (profileError || !profile) {
+    return { data: null, error: 'Usuario no encontrado' }
+  }
+
+  const profileData = profile as { id: string; email: string; full_name: string | null; organization_id: string }
+
+  // Check if they have a member record (by email match or profile_id)
+  const { data: member } = await supabase
+    .from('members')
+    .select('id')
+    .eq('organization_id', profileData.organization_id)
+    .or(`profile_id.eq.${profileData.id},email.eq.${profileData.email}`)
+    .single()
+
+  return {
+    data: {
+      canTrain: !!member,
+      memberId: member?.id || null,
+    },
+    error: null,
+  }
+}
+
+/**
+ * Enables training for a staff member by creating their member record.
+ * This allows them to be assigned routines and book classes.
+ */
+export async function enableStaffTraining(userId: string): Promise<ActionResult> {
+  const { authorized, user, error } = await requireAdmin()
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
+  }
+
+  const supabase = await createClient()
+
+  // Get the staff member's profile
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, email, full_name, organization_id')
+    .eq('id', userId)
+    .eq('organization_id', user!.organizationId)
+    .single()
+
+  if (profileError || !profile) {
+    return errorResult('Usuario no encontrado')
+  }
+
+  const profileData = profile as { id: string; email: string; full_name: string | null; organization_id: string }
+
+  // Check if member already exists
+  const { data: existingMember } = await supabase
+    .from('members')
+    .select('id')
+    .eq('organization_id', profileData.organization_id)
+    .or(`profile_id.eq.${profileData.id},email.eq.${profileData.email}`)
+    .single()
+
+  if (existingMember) {
+    // Member exists, just make sure profile_id is linked
+    await supabase
+      .from('members')
+      .update({ profile_id: profileData.id } as never)
+      .eq('id', existingMember.id)
+
+    return successResult('El usuario ya tiene perfil de entrenamiento')
+  }
+
+  // Get the primary location for this organization
+  const { data: primaryLocation } = await supabase
+    .from('locations')
+    .select('id')
+    .eq('organization_id', profileData.organization_id)
+    .eq('is_primary', true)
+    .single()
+
+  if (!primaryLocation) {
+    return errorResult('No se encontró una ubicación configurada. Configura una ubicación primero.')
+  }
+
+  // Create new member record
+  const { error: insertError } = await supabase
+    .from('members')
+    .insert({
+      organization_id: profileData.organization_id,
+      profile_id: profileData.id,
+      email: profileData.email,
+      full_name: profileData.full_name || 'Sin nombre',
+      status: 'active',
+      experience_level: 'intermediate',
+      location_id: primaryLocation.id,
+    } as never)
+
+  if (insertError) {
+    console.error('Error creating member for staff:', insertError)
+    return errorResult('Error al crear perfil de entrenamiento: ' + insertError.message)
+  }
+
+  revalidatePath('/dashboard/settings/team')
+  revalidatePath('/dashboard/members')
+  return successResult('Perfil de entrenamiento creado. Ahora puede recibir rutinas y reservar clases.')
+}
+
+/**
+ * Enables training for the current user (self-service).
+ * Any staff member can enable their own training profile.
+ */
+export async function enableMyTraining(): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return unauthorizedResult('No autenticado')
+  }
+
+  // Get current user's profile
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, email, full_name, organization_id, role')
+    .eq('id', user.id)
+    .single()
+
+  if (profileError || !profile) {
+    return errorResult('Perfil no encontrado')
+  }
+
+  const profileData = profile as {
+    id: string
+    email: string
+    full_name: string | null
+    organization_id: string | null
+    role: string
+  }
+
+  if (!profileData.organization_id) {
+    return errorResult('No perteneces a ninguna organización')
+  }
+
+  // Check if member already exists
+  const { data: existingMember } = await supabase
+    .from('members')
+    .select('id, status')
+    .eq('organization_id', profileData.organization_id)
+    .or(`profile_id.eq.${profileData.id},email.eq.${profileData.email}`)
+    .single()
+
+  if (existingMember) {
+    // If inactive, reactivate
+    if ((existingMember as { status: string }).status === 'inactive') {
+      await supabase
+        .from('members')
+        .update({ status: 'active', profile_id: profileData.id } as never)
+        .eq('id', existingMember.id)
+
+      revalidatePath('/dashboard')
+      return successResult('Perfil de entrenamiento reactivado')
+    }
+
+    // Already has active member record
+    return successResult('Ya tienes perfil de entrenamiento activo')
+  }
+
+  // Get the primary location for this organization
+  const { data: primaryLocation } = await supabase
+    .from('locations')
+    .select('id')
+    .eq('organization_id', profileData.organization_id)
+    .eq('is_primary', true)
+    .single()
+
+  if (!primaryLocation) {
+    return errorResult('No se encontró una ubicación configurada. Configura una ubicación primero.')
+  }
+
+  // Create new member record
+  const { error: insertError } = await supabase
+    .from('members')
+    .insert({
+      organization_id: profileData.organization_id,
+      profile_id: profileData.id,
+      email: profileData.email,
+      full_name: profileData.full_name || 'Sin nombre',
+      status: 'active',
+      experience_level: 'intermediate',
+      location_id: primaryLocation.id,
+    } as never)
+
+  if (insertError) {
+    console.error('Error creating member for self:', insertError)
+    return errorResult('Error al crear perfil de entrenamiento: ' + insertError.message)
+  }
+
+  revalidatePath('/dashboard')
+  revalidatePath('/dashboard/settings/team')
+  return successResult('Perfil de entrenamiento creado. Ahora puedes recibir rutinas y reservar clases.')
+}
+
+/**
+ * Disables training for a staff member by deactivating their member record.
+ * Note: We don't delete the record to preserve history.
+ */
+export async function disableStaffTraining(userId: string): Promise<ActionResult> {
+  const { authorized, user, error } = await requireAdmin()
+
+  if (!authorized) {
+    return user ? forbiddenResult() : unauthorizedResult(error || undefined)
+  }
+
+  const supabase = await createClient()
+
+  // Get the staff member's profile
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, email, organization_id')
+    .eq('id', userId)
+    .eq('organization_id', user!.organizationId)
+    .single()
+
+  if (profileError || !profile) {
+    return errorResult('Usuario no encontrado')
+  }
+
+  const profileData = profile as { id: string; email: string; organization_id: string }
+
+  // Find and deactivate the member record
+  const { error: updateError } = await supabase
+    .from('members')
+    .update({ status: 'inactive' } as never)
+    .eq('organization_id', profileData.organization_id)
+    .or(`profile_id.eq.${profileData.id},email.eq.${profileData.email}`)
+
+  if (updateError) {
+    console.error('Error deactivating member:', updateError)
+    return errorResult('Error al desactivar perfil de entrenamiento')
+  }
+
+  revalidatePath('/dashboard/settings/team')
+  revalidatePath('/dashboard/members')
+  return successResult('Perfil de entrenamiento desactivado')
+}
+
+// =============================================================================
 // GET ROLE OPTIONS (for dropdowns)
 // =============================================================================
 
@@ -520,15 +794,16 @@ export async function getUserViewPreferences(): Promise<{
   const hasAdminDashboard = hasPermission(userWithRole, 'view_admin_dashboard')
   const hasClientDashboard = hasPermission(userWithRole, 'view_client_dashboard')
 
-  // Check if user has a member profile (by email match in members table)
+  // Check if user has a member profile (by profile_id or email match)
   const { data: memberProfile } = await supabase
     .from('members')
-    .select('id')
+    .select('id, status')
     .eq('organization_id', profileData.organization_id)
-    .eq('email', profileData.email)
+    .or(`profile_id.eq.${user.id},email.eq.${profileData.email}`)
     .single()
 
-  const hasMemberProfile = !!memberProfile
+  // Only count as having member profile if status is active
+  const hasMemberProfile = !!memberProfile && (memberProfile as { status: string }).status === 'active'
 
   // User can switch views if they are staff AND have a member profile
   const canSwitchView = hasAdminDashboard && hasMemberProfile
