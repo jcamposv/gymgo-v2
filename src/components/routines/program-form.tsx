@@ -7,9 +7,9 @@ import { toast } from 'sonner'
 import { Loader2, Calendar, Target } from 'lucide-react'
 import { z } from 'zod'
 
-import { createProgram } from '@/actions/program.actions'
+import { createProgram, updateProgram } from '@/actions/program.actions'
 import { ProgramDaysEditor } from './program-days-editor'
-import { exerciseItemSchema } from '@/schemas/routine.schema'
+import { exerciseItemSchema, type ExerciseItem } from '@/schemas/routine.schema'
 import { DURATION_OPTIONS, DAYS_PER_WEEK_OPTIONS } from '@/types/program.types'
 
 import { Button } from '@/components/ui/button'
@@ -75,24 +75,52 @@ type ProgramFormData = z.infer<typeof programFormSchema>
 // COMPONENT
 // =============================================================================
 
+interface ProgramDayData {
+  id?: string
+  dayNumber: number
+  name: string
+  focus?: string
+  exercises: ExerciseItem[]
+}
+
+interface ProgramData {
+  id: string
+  name: string
+  description?: string | null
+  durationWeeks: number
+  daysPerWeek: number
+  isTemplate?: boolean | null
+  isActive?: boolean | null
+  assignedToMemberId?: string | null
+  days: ProgramDayData[]
+}
+
 interface ProgramFormProps {
   memberId?: string
   memberName?: string
+  program?: ProgramData
+  mode?: 'create' | 'edit'
 }
 
-export function ProgramForm({ memberId, memberName }: ProgramFormProps) {
+export function ProgramForm({ memberId, memberName, program, mode = 'create' }: ProgramFormProps) {
   const router = useRouter()
+  const isEditing = mode === 'edit' && program
 
   const form = useForm<ProgramFormData>({
     resolver: zodResolver(programFormSchema),
     defaultValues: {
-      name: '',
-      description: '',
-      durationWeeks: 8,
-      daysPerWeek: 4,
-      days: [],
-      assignedToMemberId: memberId || null,
-      isTemplate: !memberId,
+      name: program?.name || '',
+      description: program?.description || '',
+      durationWeeks: program?.durationWeeks || 8,
+      daysPerWeek: program?.daysPerWeek || 4,
+      days: program?.days?.map(d => ({
+        dayNumber: d.dayNumber,
+        name: d.name,
+        focus: d.focus || '',
+        exercises: d.exercises,
+      })) || [],
+      assignedToMemberId: program?.assignedToMemberId || memberId || null,
+      isTemplate: program?.isTemplate ?? !memberId,
     },
   })
 
@@ -114,24 +142,51 @@ export function ProgramForm({ memberId, memberName }: ProgramFormProps) {
     }
 
     try {
-      const result = await createProgram({
-        name: data.name,
-        description: data.description || undefined,
-        durationWeeks: data.durationWeeks,
-        daysPerWeek: data.daysPerWeek,
-        days: data.days,
-        assignedToMemberId: data.assignedToMemberId || undefined,
-        isTemplate: data.isTemplate,
-      })
+      if (isEditing) {
+        // Update existing program
+        const result = await updateProgram(program!.id, {
+          name: data.name,
+          description: data.description || undefined,
+          durationWeeks: data.durationWeeks,
+          daysPerWeek: data.daysPerWeek,
+          isTemplate: data.isTemplate,
+          isActive: program!.isActive ?? true,
+          days: data.days.map((d, idx) => ({
+            id: program!.days[idx]?.id, // Preserve existing day IDs
+            dayNumber: d.dayNumber,
+            name: d.name,
+            focus: d.focus,
+            exercises: d.exercises,
+          })),
+        })
 
-      if (result.success) {
-        toast.success(result.message)
-        router.push('/dashboard/routines')
+        if (result.success) {
+          toast.success(result.message)
+          router.push(`/dashboard/routines/${program!.id}`)
+        } else {
+          toast.error(result.message)
+        }
       } else {
-        toast.error(result.message)
+        // Create new program
+        const result = await createProgram({
+          name: data.name,
+          description: data.description || undefined,
+          durationWeeks: data.durationWeeks,
+          daysPerWeek: data.daysPerWeek,
+          days: data.days,
+          assignedToMemberId: data.assignedToMemberId || undefined,
+          isTemplate: data.isTemplate,
+        })
+
+        if (result.success) {
+          toast.success(result.message)
+          router.push('/dashboard/routines')
+        } else {
+          toast.error(result.message)
+        }
       }
     } catch {
-      toast.error('Error al crear el programa')
+      toast.error(isEditing ? 'Error al actualizar el programa' : 'Error al crear el programa')
     }
   }
 
@@ -370,10 +425,10 @@ export function ProgramForm({ memberId, memberName }: ProgramFormProps) {
               {form.formState.isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creando...
+                  {isEditing ? 'Guardando...' : 'Creando...'}
                 </>
               ) : (
-                'Crear programa'
+                isEditing ? 'Guardar cambios' : 'Crear programa'
               )}
             </Button>
           </div>

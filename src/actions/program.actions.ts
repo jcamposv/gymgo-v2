@@ -710,6 +710,131 @@ export async function createProgram(input: CreateProgramInput): Promise<ActionRe
 }
 
 // =============================================================================
+// STAFF: UPDATE PROGRAM
+// =============================================================================
+
+interface UpdateProgramInput {
+  name: string
+  description?: string
+  durationWeeks: number
+  daysPerWeek: number
+  isTemplate?: boolean
+  isActive?: boolean
+  days: {
+    id?: string // Existing day ID for update
+    dayNumber: number
+    name: string
+    focus?: string
+    exercises: ExerciseItem[]
+  }[]
+}
+
+/**
+ * Update an existing training program with days (staff action).
+ */
+export async function updateProgram(
+  programId: string,
+  input: UpdateProgramInput
+): Promise<ActionResult<{ programId: string }>> {
+  const { authorized, user, error } = await requirePermission('manage_any_member_routines')
+
+  if (!authorized) {
+    return (user ? forbiddenResult() : unauthorizedResult(error || undefined)) as ActionResult<{ programId: string }>
+  }
+
+  const supabase = await createClient()
+
+  // Get existing program to verify ownership
+  const { data: existingProgram, error: fetchError } = await supabase
+    .from('workouts')
+    .select('id, organization_id, assigned_to_member_id')
+    .eq('id', programId)
+    .eq('organization_id', user!.organizationId)
+    .single()
+
+  if (fetchError || !existingProgram) {
+    return errorResult('Programa no encontrado') as ActionResult<{ programId: string }>
+  }
+
+  // Update parent program record
+  const programUpdate = {
+    name: input.name,
+    description: input.description || null,
+    duration_weeks: input.durationWeeks,
+    days_per_week: input.daysPerWeek,
+    is_template: input.isTemplate,
+    is_active: input.isActive ?? true,
+  }
+
+  const { error: programError } = await supabase
+    .from('workouts')
+    .update(programUpdate)
+    .eq('id', programId)
+
+  if (programError) {
+    return errorResult(programError.message) as ActionResult<{ programId: string }>
+  }
+
+  // Get existing days
+  const { data: existingDays } = await supabase
+    .from('workouts')
+    .select('id, day_number')
+    .eq('program_id', programId)
+
+  const existingDayIds = new Set((existingDays || []).map(d => d.id))
+  const inputDayIds = new Set(input.days.filter(d => d.id).map(d => d.id))
+
+  // Delete days that are no longer in the input
+  const daysToDelete = [...existingDayIds].filter(id => !inputDayIds.has(id))
+  if (daysToDelete.length > 0) {
+    await supabase.from('workouts').delete().in('id', daysToDelete)
+  }
+
+  // Update or create days
+  for (const day of input.days) {
+    const dayData = {
+      organization_id: user!.organizationId,
+      program_id: programId,
+      day_number: day.dayNumber,
+      name: day.name,
+      description: day.focus || null,
+      workout_type: 'routine' as const,
+      exercises: day.exercises as unknown as Json,
+      assigned_to_member_id: (existingProgram as { assigned_to_member_id: string | null }).assigned_to_member_id,
+      assigned_by_id: user!.id,
+      is_template: false,
+      is_active: input.isActive ?? true,
+    }
+
+    if (day.id && existingDayIds.has(day.id)) {
+      // Update existing day
+      const { error: updateError } = await supabase
+        .from('workouts')
+        .update(dayData)
+        .eq('id', day.id)
+
+      if (updateError) {
+        return errorResult(`Error actualizando dia ${day.dayNumber}: ${updateError.message}`) as ActionResult<{ programId: string }>
+      }
+    } else {
+      // Create new day
+      const { error: insertError } = await supabase
+        .from('workouts')
+        .insert(dayData)
+
+      if (insertError) {
+        return errorResult(`Error creando dia ${day.dayNumber}: ${insertError.message}`) as ActionResult<{ programId: string }>
+      }
+    }
+  }
+
+  revalidatePath('/dashboard/routines')
+  revalidatePath(`/dashboard/routines/${programId}`)
+
+  return successResult('Programa actualizado exitosamente', { programId })
+}
+
+// =============================================================================
 // GET MEMBER'S COMPLETION HISTORY
 // =============================================================================
 

@@ -24,7 +24,7 @@ export function ExerciseCard({ exercise, index, variant = 'default' }: ExerciseC
   const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false)
 
   const hasMedia = exercise.gif_url || exercise.video_url
-  const hasThumbnail = exercise.thumbnail_url
+  const thumbnailSrc = exercise.thumbnail_url || exercise.gif_url
 
   const isCompact = variant === 'compact'
 
@@ -42,13 +42,14 @@ export function ExerciseCard({ exercise, index, variant = 'default' }: ExerciseC
           className={`relative flex-shrink-0 ${isCompact ? 'w-12 h-12' : 'w-16 h-16'} rounded-lg overflow-hidden bg-muted cursor-pointer group`}
           onClick={() => hasMedia && setIsMediaDialogOpen(true)}
         >
-          {hasThumbnail ? (
+          {thumbnailSrc ? (
             <Image
-              src={exercise.thumbnail_url!}
+              src={thumbnailSrc}
               alt={exercise.exercise_name}
               fill
               className="object-cover"
               sizes={isCompact ? '48px' : '64px'}
+              unoptimized={thumbnailSrc.includes('.gif')}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">

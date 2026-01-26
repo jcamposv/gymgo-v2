@@ -170,6 +170,44 @@ export async function completeOnboarding(data: OnboardingData): Promise<ActionSt
     return { success: false, message: 'Error al actualizar perfil: ' + profileError.message }
   }
 
+  // Get profile info for member creation
+  const { data: profileData } = await supabase
+    .from('profiles')
+    .select('email, full_name')
+    .eq('id', user.id)
+    .single()
+
+  const profile = profileData as { email: string; full_name: string | null } | null
+
+  // Get the primary location (created by trigger after org insert)
+  const { data: primaryLocation } = await supabase
+    .from('locations')
+    .select('id')
+    .eq('organization_id', organization.id)
+    .eq('is_primary', true)
+    .single()
+
+  // Create member record for the owner so they can train, book classes, etc.
+  // This is important because gym owners often train at their own gym
+  if (profile?.email && primaryLocation?.id) {
+    const { error: memberError } = await supabase
+      .from('members')
+      .insert({
+        organization_id: organization.id,
+        profile_id: user.id,
+        email: profile.email,
+        full_name: profile.full_name || validated.data.name + ' (Owner)',
+        status: 'active',
+        experience_level: 'advanced',
+        location_id: primaryLocation.id,
+      } as never)
+
+    if (memberError) {
+      // Log but don't fail - owner can enable training later
+      console.warn('Could not create member record for owner:', memberError.message)
+    }
+  }
+
   revalidatePath('/', 'layout')
 
   return {

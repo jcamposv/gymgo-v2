@@ -1,8 +1,9 @@
 import { redirect } from 'next/navigation'
+import { Globe } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentOrganization } from '@/actions/organization.actions'
-import { BrandingForm } from './branding-form'
+import { RegionalForm } from '../regional-form'
 import {
   Card,
   CardContent,
@@ -13,10 +14,10 @@ import {
 import type { Tables } from '@/types/database.types'
 
 export const metadata = {
-  title: 'Branding | Configuracion | GymGo',
+  title: 'Regional | Configuracion | GymGo',
 }
 
-export default async function SettingsBrandingPage() {
+export default async function SettingsRegionalPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -35,18 +36,21 @@ export default async function SettingsBrandingPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Branding</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Globe className="h-5 w-5" />
+          Configuracion Regional
+        </CardTitle>
         <CardDescription>
-          Logo y colores de tu gimnasio
+          Pais, moneda, idioma y zona horaria de tu gimnasio
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <BrandingForm
-          organizationId={organization.id}
+        <RegionalForm
           initialData={{
-            logo_url: organization.logo_url,
-            primary_color: organization.primary_color,
-            secondary_color: organization.secondary_color,
+            country: organization.country,
+            currency: organization.currency,
+            language: organization.language,
+            timezone: organization.timezone,
           }}
         />
       </CardContent>
