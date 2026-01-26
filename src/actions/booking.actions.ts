@@ -284,6 +284,31 @@ export async function createBooking(
   }
   // --- FIN VALIDACIÓN ---
 
+  // --- VALIDACIÓN: Membresía activa ---
+  const { data: membershipCheck, error: membershipError } = await supabase
+    .rpc('validate_member_for_booking', {
+      p_member_id: validated.data.member_id,
+      p_organization_id: profile.organization_id,
+      p_class_start_time: classInfo.start_time,
+    })
+    .single()
+
+  if (membershipError) {
+    console.error('Error validating membership:', membershipError)
+    return { success: false, message: 'Error al validar membresía' }
+  }
+
+  if (!membershipCheck.can_book) {
+    return {
+      success: false,
+      message: membershipCheck.error_message || 'Membresía no válida para reservar',
+      data: {
+        code: membershipCheck.error_code || 'MEMBERSHIP_ERROR',
+      },
+    }
+  }
+  // --- FIN VALIDACIÓN MEMBRESÍA ---
+
   // Check if already booked
   const { data: existingBooking } = await supabase
     .from('bookings')

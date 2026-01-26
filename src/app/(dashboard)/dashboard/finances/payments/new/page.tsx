@@ -4,14 +4,19 @@ import { ArrowLeft } from 'lucide-react'
 import { getCurrentOrganization } from '@/actions/onboarding.actions'
 import { getActivePlans } from '@/actions/plan.actions'
 import { getMembers } from '@/actions/member.actions'
-import { PaymentForm } from '@/components/finances'
+import { MembershipPaymentForm } from '@/components/membership'
 import { Button } from '@/components/ui/button'
 
 export const metadata = {
-  title: 'Nuevo Pago | GymGo',
+  title: 'Nuevo Pago de Membresia | GymGo',
 }
 
-export default async function NewPaymentPage() {
+interface PageProps {
+  searchParams: Promise<{ member_id?: string }>
+}
+
+export default async function NewPaymentPage({ searchParams }: PageProps) {
+  const params = await searchParams
   const [orgResult, plansResult, membersResult] = await Promise.all([
     getCurrentOrganization(),
     getActivePlans(),
@@ -19,7 +24,12 @@ export default async function NewPaymentPage() {
   ])
 
   const currency = orgResult.data?.currency ?? 'MXN'
-  const plans = plansResult.data ?? []
+  const plans = (plansResult.data ?? []).map(p => ({
+    id: p.id,
+    name: p.name,
+    price: p.price,
+    duration_days: p.duration_days,
+  }))
   const members = (membersResult.data ?? []).map(m => ({
     id: m.id,
     full_name: m.full_name,
@@ -35,17 +45,18 @@ export default async function NewPaymentPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Registrar pago</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Registrar pago de membresia</h1>
           <p className="text-muted-foreground">
-            Registra un nuevo pago de membresia
+            Registra un nuevo pago y extiende la membresia del miembro
           </p>
         </div>
       </div>
 
-      <PaymentForm
+      <MembershipPaymentForm
         members={members}
         plans={plans}
         currency={currency}
+        preselectedMemberId={params.member_id}
       />
     </div>
   )

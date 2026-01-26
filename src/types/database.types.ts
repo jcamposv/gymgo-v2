@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       ai_alternatives_cache: {
@@ -1492,6 +1517,102 @@ export type Database = {
           },
         ]
       }
+      membership_payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          created_by: string | null
+          currency: string
+          id: string
+          location_id: string | null
+          member_id: string
+          notes: string | null
+          organization_id: string
+          payment_method: string
+          period_end_date: string
+          period_months: number
+          period_start_date: string
+          period_type: Database["public"]["Enums"]["payment_period_type"]
+          plan_id: string | null
+          reference_number: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string
+          id?: string
+          location_id?: string | null
+          member_id: string
+          notes?: string | null
+          organization_id: string
+          payment_method?: string
+          period_end_date: string
+          period_months?: number
+          period_start_date: string
+          period_type?: Database["public"]["Enums"]["payment_period_type"]
+          plan_id?: string | null
+          reference_number?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string
+          id?: string
+          location_id?: string | null
+          member_id?: string
+          notes?: string | null
+          organization_id?: string
+          payment_method?: string
+          period_end_date?: string
+          period_months?: number
+          period_start_date?: string
+          period_type?: Database["public"]["Enums"]["payment_period_type"]
+          plan_id?: string | null
+          reference_number?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_payments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_payments_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_payments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_payments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_payments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "membership_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       membership_plans: {
         Row: {
           access_all_locations: boolean | null
@@ -2644,6 +2765,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_membership_end_date: {
+        Args: { p_period_months: number; p_start_date: string }
+        Returns: string
+      }
       can_member_book_class: {
         Args: {
           p_class_start_time: string
@@ -2714,6 +2839,7 @@ export type Database = {
         Returns: boolean
       }
       enable_organization: { Args: { org_id: string }; Returns: boolean }
+      expire_memberships: { Args: never; Returns: number }
       get_ai_usage_summary: {
         Args: { org_id: string }
         Returns: {
@@ -2773,6 +2899,18 @@ export type Database = {
           p_timezone?: string
         }
         Returns: number
+      }
+      get_membership_status: {
+        Args: { p_member_id: string }
+        Returns: {
+          days_remaining: number
+          end_date: string
+          is_expiring_soon: boolean
+          last_payment_amount: number
+          last_payment_date: string
+          plan_name: string
+          status: string
+        }[]
       }
       get_primary_location: { Args: { org_id: string }; Returns: string }
       get_storage_remaining: {
@@ -2851,6 +2989,15 @@ export type Database = {
         }
         Returns: Json
       }
+      update_member_membership_from_payment: {
+        Args: {
+          p_member_id: string
+          p_period_end: string
+          p_period_start: string
+          p_plan_id: string
+        }
+        Returns: undefined
+      }
       update_storage_usage: {
         Args: {
           p_bytes_change: number
@@ -2862,6 +3009,18 @@ export type Database = {
           limit_reached: boolean
           success: boolean
           total_bytes: number
+        }[]
+      }
+      validate_member_for_booking: {
+        Args: {
+          p_class_start_time?: string
+          p_member_id: string
+          p_organization_id: string
+        }
+        Returns: {
+          can_book: boolean
+          error_code: string
+          error_message: string
         }[]
       }
     }
@@ -2927,6 +3086,13 @@ export type Database = {
         | "read"
         | "failed"
         | "undelivered"
+      payment_period_type:
+        | "monthly"
+        | "bimonthly"
+        | "quarterly"
+        | "semiannual"
+        | "annual"
+        | "custom"
       payment_status: "pending" | "paid" | "failed" | "refunded"
       preferred_view_type: "dashboard" | "member"
       subscription_plan: "starter" | "growth" | "pro" | "enterprise"
@@ -3091,6 +3257,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       ai_plan_tier: ["free", "pro", "business", "enterprise"],
@@ -3160,6 +3329,14 @@ export const Constants = {
         "read",
         "failed",
         "undelivered",
+      ],
+      payment_period_type: [
+        "monthly",
+        "bimonthly",
+        "quarterly",
+        "semiannual",
+        "annual",
+        "custom",
       ],
       payment_status: ["pending", "paid", "failed", "refunded"],
       preferred_view_type: ["dashboard", "member"],
