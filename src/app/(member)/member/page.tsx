@@ -1,7 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dumbbell, Activity, CalendarDays, Trophy } from 'lucide-react'
+import { Dumbbell, Activity, CalendarDays, Trophy, CreditCard } from 'lucide-react'
 import Link from 'next/link'
+import { getMyMembershipStatus } from '@/actions/membership.actions'
+import { MembershipBanner } from '@/components/membership'
 
 export default async function MemberDashboardPage() {
   const supabase = await createClient()
@@ -28,6 +30,10 @@ export default async function MemberDashboardPage() {
     memberData = data
   }
 
+  // Get membership status
+  const membershipResult = await getMyMembershipStatus()
+  const membershipStatus = membershipResult.data
+
   const greeting = getGreeting()
   const displayName = profile?.full_name?.split(' ')[0] || 'Miembro'
 
@@ -43,21 +49,27 @@ export default async function MemberDashboardPage() {
         </p>
       </div>
 
+      {/* Membership Warning Banner */}
+      {membershipStatus && (membershipStatus.status === 'expired' || membershipStatus.status === 'expiring_soon') && (
+        <MembershipBanner status={membershipStatus} dismissible />
+      )}
+
       {/* Quick Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <QuickStatCard
+          title="Mi Membresia"
+          value={membershipStatus?.days_remaining != null ? `${membershipStatus.days_remaining}` : '-'}
+          description={membershipStatus?.status === 'active' ? 'Dias restantes' : membershipStatus?.status === 'expired' ? 'Vencida' : 'Sin membresia'}
+          icon={CreditCard}
+          href="/member/payments"
+          status={membershipStatus?.status}
+        />
         <QuickStatCard
           title="Mis Rutinas"
           value="3"
           description="Rutinas asignadas"
           icon={Dumbbell}
           href="/member/workouts"
-        />
-        <QuickStatCard
-          title="Mi Progreso"
-          value="12"
-          description="Mediciones registradas"
-          icon={Activity}
-          href="/member/progress"
         />
         <QuickStatCard
           title="Clases"
@@ -67,10 +79,10 @@ export default async function MemberDashboardPage() {
           href="/member/classes"
         />
         <QuickStatCard
-          title="Logros"
-          value="8"
-          description="Metas alcanzadas"
-          icon={Trophy}
+          title="Mi Progreso"
+          value="12"
+          description="Mediciones registradas"
+          icon={Activity}
           href="/member/progress"
         />
       </div>
@@ -171,20 +183,28 @@ interface QuickStatCardProps {
   description: string
   icon: React.ElementType
   href: string
+  status?: string
 }
 
-function QuickStatCard({ title, value, description, icon: Icon, href }: QuickStatCardProps) {
+function QuickStatCard({ title, value, description, icon: Icon, href, status }: QuickStatCardProps) {
+  const isExpired = status === 'expired'
+  const isExpiringSoon = status === 'expiring_soon'
+
   return (
     <Link href={href}>
-      <Card className="hover:border-lime-300 transition-colors cursor-pointer">
+      <Card className={`hover:border-lime-300 transition-colors cursor-pointer ${
+        isExpired ? 'border-red-200 bg-red-50/50' : isExpiringSoon ? 'border-yellow-200 bg-yellow-50/50' : ''
+      }`}>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
             {title}
           </CardTitle>
-          <Icon className="h-4 w-4 text-lime-600" />
+          <Icon className={`h-4 w-4 ${isExpired ? 'text-red-600' : isExpiringSoon ? 'text-yellow-600' : 'text-lime-600'}`} />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{value}</div>
+          <div className={`text-2xl font-bold ${isExpired ? 'text-red-600' : isExpiringSoon ? 'text-yellow-600' : ''}`}>
+            {value}
+          </div>
           <p className="text-xs text-muted-foreground">{description}</p>
         </CardContent>
       </Card>

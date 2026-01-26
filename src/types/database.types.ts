@@ -1492,6 +1492,177 @@ export type Database = {
           },
         ]
       }
+      membership_notifications: {
+        Row: {
+          channel: Database["public"]["Enums"]["notification_channel"]
+          created_at: string | null
+          error_message: string | null
+          external_message_id: string | null
+          id: string
+          idempotency_key: string
+          member_id: string
+          membership_end_date: string | null
+          notification_type: Database["public"]["Enums"]["membership_notification_type"]
+          organization_id: string
+          recipient_email: string | null
+          recipient_phone: string | null
+          retry_count: number | null
+          scheduled_at: string | null
+          sent_at: string | null
+          status: Database["public"]["Enums"]["notification_status"]
+          updated_at: string | null
+        }
+        Insert: {
+          channel: Database["public"]["Enums"]["notification_channel"]
+          created_at?: string | null
+          error_message?: string | null
+          external_message_id?: string | null
+          id?: string
+          idempotency_key: string
+          member_id: string
+          membership_end_date?: string | null
+          notification_type: Database["public"]["Enums"]["membership_notification_type"]
+          organization_id: string
+          recipient_email?: string | null
+          recipient_phone?: string | null
+          retry_count?: number | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["notification_status"]
+          updated_at?: string | null
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["notification_channel"]
+          created_at?: string | null
+          error_message?: string | null
+          external_message_id?: string | null
+          id?: string
+          idempotency_key?: string
+          member_id?: string
+          membership_end_date?: string | null
+          notification_type?: Database["public"]["Enums"]["membership_notification_type"]
+          organization_id?: string
+          recipient_email?: string | null
+          recipient_phone?: string | null
+          retry_count?: number | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["notification_status"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_notifications_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_notifications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      membership_payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          created_by: string | null
+          currency: string
+          id: string
+          location_id: string | null
+          member_id: string
+          notes: string | null
+          organization_id: string
+          payment_method: string
+          period_end_date: string
+          period_months: number
+          period_start_date: string
+          period_type: Database["public"]["Enums"]["payment_period_type"]
+          plan_id: string | null
+          reference_number: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string
+          id?: string
+          location_id?: string | null
+          member_id: string
+          notes?: string | null
+          organization_id: string
+          payment_method?: string
+          period_end_date: string
+          period_months?: number
+          period_start_date: string
+          period_type?: Database["public"]["Enums"]["payment_period_type"]
+          plan_id?: string | null
+          reference_number?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string
+          id?: string
+          location_id?: string | null
+          member_id?: string
+          notes?: string | null
+          organization_id?: string
+          payment_method?: string
+          period_end_date?: string
+          period_months?: number
+          period_start_date?: string
+          period_type?: Database["public"]["Enums"]["payment_period_type"]
+          plan_id?: string | null
+          reference_number?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_payments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_payments_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_payments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_payments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_payments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "membership_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       membership_plans: {
         Row: {
           access_all_locations: boolean | null
@@ -2644,6 +2815,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_membership_end_date: {
+        Args: { p_period_months: number; p_start_date: string }
+        Returns: string
+      }
+      call_membership_expiration_cron: { Args: never; Returns: undefined }
       can_member_book_class: {
         Args: {
           p_class_start_time: string
@@ -2714,6 +2890,23 @@ export type Database = {
         Returns: boolean
       }
       enable_organization: { Args: { org_id: string }; Returns: boolean }
+      expire_memberships: { Args: never; Returns: number }
+      expire_memberships_with_notifications: {
+        Args: never
+        Returns: {
+          expired_count: number
+          notifications_queued: number
+        }[]
+      }
+      generate_membership_notification_key: {
+        Args: {
+          p_member_id: string
+          p_notification_type: Database["public"]["Enums"]["membership_notification_type"]
+          p_organization_id: string
+          p_reference_date?: string
+        }
+        Returns: string
+      }
       get_ai_usage_summary: {
         Args: { org_id: string }
         Returns: {
@@ -2774,7 +2967,50 @@ export type Database = {
         }
         Returns: number
       }
+      get_members_needing_expiration_notifications: {
+        Args: { p_organization_id?: string }
+        Returns: {
+          days_until_expiry: number
+          idempotency_key: string
+          member_email: string
+          member_id: string
+          member_name: string
+          member_phone: string
+          membership_end_date: string
+          notification_type: Database["public"]["Enums"]["membership_notification_type"]
+          organization_id: string
+        }[]
+      }
+      get_membership_status: {
+        Args: { p_member_id: string }
+        Returns: {
+          days_remaining: number
+          end_date: string
+          is_expiring_soon: boolean
+          last_payment_amount: number
+          last_payment_date: string
+          plan_name: string
+          status: string
+        }[]
+      }
       get_primary_location: { Args: { org_id: string }; Returns: string }
+      get_queued_notifications: {
+        Args: {
+          p_channel?: Database["public"]["Enums"]["notification_channel"]
+          p_limit?: number
+        }
+        Returns: {
+          channel: Database["public"]["Enums"]["notification_channel"]
+          id: string
+          member_id: string
+          membership_end_date: string
+          notification_type: Database["public"]["Enums"]["membership_notification_type"]
+          organization_id: string
+          recipient_email: string
+          recipient_phone: string
+          retry_count: number
+        }[]
+      }
       get_storage_remaining: {
         Args: { p_organization_id: string }
         Returns: {
@@ -2818,8 +3054,33 @@ export type Database = {
       }
       is_admin_level: { Args: never; Returns: boolean }
       is_admin_or_owner: { Args: never; Returns: boolean }
+      is_notification_sent: {
+        Args: { p_idempotency_key: string }
+        Returns: boolean
+      }
       is_staff: { Args: never; Returns: boolean }
       is_staff_member: { Args: never; Returns: boolean }
+      mark_notification_failed: {
+        Args: { p_error_message: string; p_notification_id: string }
+        Returns: undefined
+      }
+      mark_notification_sent: {
+        Args: { p_external_message_id?: string; p_notification_id: string }
+        Returns: undefined
+      }
+      queue_membership_notification: {
+        Args: {
+          p_channel: Database["public"]["Enums"]["notification_channel"]
+          p_member_id: string
+          p_membership_end_date?: string
+          p_notification_type: Database["public"]["Enums"]["membership_notification_type"]
+          p_organization_id: string
+          p_recipient_email?: string
+          p_recipient_phone?: string
+        }
+        Returns: string
+      }
+      run_membership_expiration_batch: { Args: never; Returns: Json }
       select_subscription_plan: {
         Args: {
           p_billing_period: string
@@ -2851,6 +3112,15 @@ export type Database = {
         }
         Returns: Json
       }
+      update_member_membership_from_payment: {
+        Args: {
+          p_member_id: string
+          p_period_end: string
+          p_period_start: string
+          p_plan_id: string
+        }
+        Returns: undefined
+      }
       update_storage_usage: {
         Args: {
           p_bytes_change: number
@@ -2862,6 +3132,18 @@ export type Database = {
           limit_reached: boolean
           success: boolean
           total_bytes: number
+        }[]
+      }
+      validate_member_for_booking: {
+        Args: {
+          p_class_start_time?: string
+          p_member_id: string
+          p_organization_id: string
+        }
+        Returns: {
+          can_book: boolean
+          error_code: string
+          error_message: string
         }[]
       }
     }
@@ -2911,6 +3193,11 @@ export type Database = {
         | "donation"
         | "other"
       member_status: "active" | "inactive" | "suspended" | "cancelled"
+      membership_notification_type:
+        | "expires_in_3_days"
+        | "expires_in_1_day"
+        | "expires_today"
+        | "expired"
       membership_status: "active" | "expired" | "cancelled" | "frozen"
       note_type:
         | "notes"
@@ -2927,6 +3214,14 @@ export type Database = {
         | "read"
         | "failed"
         | "undelivered"
+      notification_status: "queued" | "sent" | "failed" | "skipped"
+      payment_period_type:
+        | "monthly"
+        | "bimonthly"
+        | "quarterly"
+        | "semiannual"
+        | "annual"
+        | "custom"
       payment_status: "pending" | "paid" | "failed" | "refunded"
       preferred_view_type: "dashboard" | "member"
       subscription_plan: "starter" | "growth" | "pro" | "enterprise"
@@ -3143,6 +3438,12 @@ export const Constants = {
         "other",
       ],
       member_status: ["active", "inactive", "suspended", "cancelled"],
+      membership_notification_type: [
+        "expires_in_3_days",
+        "expires_in_1_day",
+        "expires_today",
+        "expired",
+      ],
       membership_status: ["active", "expired", "cancelled", "frozen"],
       note_type: [
         "notes",
@@ -3160,6 +3461,15 @@ export const Constants = {
         "read",
         "failed",
         "undelivered",
+      ],
+      notification_status: ["queued", "sent", "failed", "skipped"],
+      payment_period_type: [
+        "monthly",
+        "bimonthly",
+        "quarterly",
+        "semiannual",
+        "annual",
+        "custom",
       ],
       payment_status: ["pending", "paid", "failed", "refunded"],
       preferred_view_type: ["dashboard", "member"],

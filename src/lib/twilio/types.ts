@@ -158,6 +158,19 @@ export interface ITwilioContentService {
   ): Promise<ContentApprovalStatus>
 }
 
+export interface SendWhatsAppMessageParams {
+  to: string
+  from: string
+  body: string
+}
+
+export interface SendWhatsAppMessageResult {
+  success: boolean
+  messageSid?: string
+  status?: string
+  error?: string
+}
+
 export interface ITwilioMessagingService {
   /**
    * Send a WhatsApp template message
@@ -166,6 +179,13 @@ export interface ITwilioMessagingService {
     config: TwilioConfig,
     params: SendMessageParams
   ): Promise<SendMessageResult>
+
+  /**
+   * Send a free-form WhatsApp message (for sandbox/testing)
+   */
+  sendWhatsAppMessage(
+    params: SendWhatsAppMessageParams
+  ): Promise<SendWhatsAppMessageResult>
 
   /**
    * Get message delivery status
