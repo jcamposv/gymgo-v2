@@ -436,8 +436,8 @@ export async function processMembershipExpirations(): Promise<BatchResult> {
       if (notification.channel === 'email') {
         sendResult = await sendEmailNotification(notification, {
           name: org.name,
-          email: org.contact_email,
-          phone: org.contact_phone,
+          email: org.contact_email ?? undefined,
+          phone: org.contact_phone ?? undefined,
         })
       } else if (notification.channel === 'whatsapp') {
         sendResult = await sendWhatsAppNotification(notification, {
