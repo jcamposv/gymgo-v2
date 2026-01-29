@@ -12,6 +12,13 @@ export interface MembershipEmailData {
   contactPhone?: string
 }
 
+// =============================================================================
+// CONSTANTS
+// =============================================================================
+
+const BRAND_COLOR = '#84cc16' // lime-500
+const LOGO_URL = `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.gymgo.io'}/icon-app.svg`
+
 /**
  * Get subject line based on notification type
  */
@@ -40,26 +47,26 @@ export function getMembershipExpirationEmailHtml(
   const messages = {
     expires_in_3_days: {
       title: 'Tu membresía está por vencer',
-      message: `Tu membresía vence el <strong>${expirationDate}</strong> (en 3 días).`,
-      cta: 'Renueva ahora para seguir disfrutando de todos los beneficios y reservar clases sin interrupciones.',
+      subtitle: `Tu membresía vence el ${expirationDate} (en 3 días).`,
+      message: 'Renueva ahora para seguir disfrutando de todos los beneficios y reservar clases sin interrupciones.',
       urgency: 'info',
     },
     expires_in_1_day: {
       title: '¡Tu membresía vence mañana!',
-      message: `Tu membresía vence el <strong>${expirationDate}</strong> (mañana).`,
-      cta: 'Renueva hoy para evitar que se bloqueen tus reservas de clases.',
+      subtitle: `Tu membresía vence el ${expirationDate} (mañana).`,
+      message: 'Renueva hoy para evitar que se bloqueen tus reservas de clases.',
       urgency: 'warning',
     },
     expires_today: {
       title: '¡Tu membresía vence HOY!',
-      message: `Tu membresía vence <strong>hoy ${expirationDate}</strong>.`,
-      cta: 'Si no renuevas hoy, no podrás reservar clases a partir de mañana.',
+      subtitle: `Tu membresía vence hoy ${expirationDate}.`,
+      message: 'Si no renuevas hoy, no podrás reservar clases a partir de mañana.',
       urgency: 'danger',
     },
     expired: {
       title: 'Tu membresía ha vencido',
-      message: `Tu membresía venció el <strong>${expirationDate}</strong>.`,
-      cta: 'Renueva tu membresía para volver a reservar clases.',
+      subtitle: `Tu membresía venció el ${expirationDate}.`,
+      message: 'Renueva tu membresía para volver a reservar clases.',
       urgency: 'danger',
     },
   }
@@ -80,86 +87,156 @@ export function getMembershipExpirationEmailHtml(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${content.title}</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>${content.title} - ${gymName}</title>
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
-  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+<body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f4f4f5;">
     <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-          <!-- Header -->
-          <tr>
-            <td style="padding: 32px 32px 24px; text-align: center; background-color: #18181b; border-radius: 12px 12px 0 0;">
-              <h1 style="margin: 0; color: #84cc16; font-size: 24px; font-weight: 700;">${gymName}</h1>
-            </td>
-          </tr>
+      <td style="padding: 40px 20px;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto;">
 
-          <!-- Alert Banner -->
+          <!-- Main Card -->
           <tr>
-            <td style="padding: 0 32px;">
-              <div style="background-color: ${colors.bg}; border-left: 4px solid ${colors.border}; padding: 16px; margin-top: 24px; border-radius: 0 8px 8px 0;">
-                <h2 style="margin: 0 0 8px; color: ${colors.text}; font-size: 18px; font-weight: 600;">${content.title}</h2>
-                <p style="margin: 0; color: ${colors.text}; font-size: 14px;">${content.message}</p>
-              </div>
-            </td>
-          </tr>
+            <td style="background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
 
-          <!-- Greeting -->
-          <tr>
-            <td style="padding: 24px 32px 16px;">
-              <p style="margin: 0; color: #3f3f46; font-size: 16px;">Hola <strong>${memberName}</strong>,</p>
-            </td>
-          </tr>
-
-          <!-- CTA Message -->
-          <tr>
-            <td style="padding: 0 32px 24px;">
-              <p style="margin: 0; color: #52525b; font-size: 15px; line-height: 1.6;">
-                ${content.cta}
-              </p>
-            </td>
-          </tr>
-
-          <!-- Action Button -->
-          <tr>
-            <td style="padding: 0 32px 32px;">
-              <table role="presentation" style="width: 100%;">
+              <!-- Logo Section -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                 <tr>
-                  <td align="center">
-                    <a href="#" style="display: inline-block; padding: 14px 32px; background-color: #84cc16; color: #18181b; text-decoration: none; font-weight: 600; font-size: 16px; border-radius: 8px;">
-                      Contactar para renovar
-                    </a>
+                  <td style="padding: 40px 40px 24px 40px; text-align: center;">
+                    <img
+                      src="${LOGO_URL}"
+                      alt="GymGo"
+                      width="80"
+                      height="80"
+                      style="display: block; margin: 0 auto; max-width: 80px; height: auto;"
+                    />
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Gym Name -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td style="padding: 0 40px 24px 40px; text-align: center;">
+                    <p style="margin: 0; font-size: 14px; font-weight: 600; color: ${BRAND_COLOR}; text-transform: uppercase; letter-spacing: 1px;">
+                      ${gymName}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Alert Banner -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td style="padding: 0 40px 24px 40px;">
+                    <div style="background-color: ${colors.bg}; border-left: 4px solid ${colors.border}; padding: 16px 20px; border-radius: 0 8px 8px 0;">
+                      <h1 style="margin: 0 0 8px 0; font-size: 20px; font-weight: 700; color: ${colors.text};">
+                        ${content.title}
+                      </h1>
+                      <p style="margin: 0; font-size: 15px; color: ${colors.text};">
+                        ${content.subtitle}
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Greeting -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td style="padding: 0 40px 16px 40px;">
+                    <p style="margin: 0; font-size: 18px; color: #3f3f46; line-height: 1.5;">
+                      Hola <strong>${memberName}</strong>,
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Message -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td style="padding: 0 40px 32px 40px;">
+                    <p style="margin: 0; font-size: 16px; color: #52525b; line-height: 1.6;">
+                      ${content.message}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td style="padding: 0 40px 32px 40px; text-align: center;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
+                      <tr>
+                        <td style="border-radius: 8px; background-color: ${BRAND_COLOR};">
+                          <a
+                            href="mailto:${contactEmail || ''}"
+                            style="display: inline-block; padding: 16px 32px; font-size: 16px; font-weight: 600; color: #18181b; text-decoration: none; border-radius: 8px;"
+                          >
+                            Contactar para renovar
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Contact Info -->
+              ${contactEmail || contactPhone ? `
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td style="padding: 0 40px 40px 40px;">
+                    <div style="background-color: #fafafa; padding: 20px; border-radius: 8px; text-align: center;">
+                      <p style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: #3f3f46;">
+                        ¿Necesitas ayuda?
+                      </p>
+                      <p style="margin: 0; font-size: 14px; color: #71717a; line-height: 1.6;">
+                        Contacta directamente al gimnasio:
+                        ${contactEmail ? `<br><a href="mailto:${contactEmail}" style="color: ${BRAND_COLOR};">${contactEmail}</a>` : ''}
+                        ${contactPhone ? `<br><a href="tel:${contactPhone}" style="color: ${BRAND_COLOR};">${contactPhone}</a>` : ''}
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+              ` : ''}
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 32px 40px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td style="text-align: center;">
+                    <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #3f3f46;">
+                      GymGo
+                    </p>
+                    <p style="margin: 0 0 8px 0; font-size: 12px; color: #a1a1aa; line-height: 1.5;">
+                      Enviado por ${gymName}
+                    </p>
+                    <p style="margin: 0; font-size: 11px; color: #d4d4d8;">
+                      &copy; ${new Date().getFullYear()} GymGo. Todos los derechos reservados.
+                    </p>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <!-- Contact Info -->
-          <tr>
-            <td style="padding: 0 32px 32px;">
-              <div style="background-color: #f4f4f5; padding: 20px; border-radius: 8px;">
-                <p style="margin: 0 0 8px; color: #3f3f46; font-size: 14px; font-weight: 600;">¿Necesitas ayuda?</p>
-                <p style="margin: 0; color: #71717a; font-size: 14px;">
-                  Contacta directamente al gimnasio:
-                  ${contactEmail ? `<br>📧 ${contactEmail}` : ''}
-                  ${contactPhone ? `<br>📱 ${contactPhone}` : ''}
-                </p>
-              </div>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="padding: 24px 32px; background-color: #f4f4f5; border-radius: 0 0 12px 12px; text-align: center;">
-              <p style="margin: 0; color: #a1a1aa; font-size: 12px;">
-                Este correo fue enviado automáticamente por ${gymName} a través de GymGo.
-              </p>
-              <p style="margin: 8px 0 0; color: #a1a1aa; font-size: 12px;">
-                © ${new Date().getFullYear()} GymGo - Gestión de gimnasios
-              </p>
-            </td>
-          </tr>
         </table>
       </td>
     </tr>
@@ -211,14 +288,18 @@ Renueva tu membresía para volver a reservar clases.
 
   let text = messages[type]
 
-  text += `
+  if (contactEmail || contactPhone) {
+    text += `
 ---
 ¿Necesitas ayuda? Contacta al gimnasio:
 ${contactEmail ? `Email: ${contactEmail}` : ''}
 ${contactPhone ? `Teléfono: ${contactPhone}` : ''}
+`
+  }
 
+  text += `
 ---
-Este mensaje fue enviado automáticamente por ${gymName} a través de GymGo.
+Enviado por ${gymName} a través de GymGo.
   `
 
   return text.trim()
