@@ -1,11 +1,11 @@
 /**
  * Cron API Route: Membership Expiration
  *
- * Called daily by pg_cron to:
+ * Called daily by Vercel Cron to:
  * 1. Mark expired memberships
  * 2. Queue and send expiration notifications (Email + WhatsApp)
  *
- * Security: Requires CRON_SECRET header to prevent unauthorized access
+ * Security: Vercel Cron uses CRON_SECRET header automatically
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -13,21 +13,16 @@ import { processMembershipExpirations } from '@/lib/notifications/membership-not
 
 const CRON_SECRET = process.env.CRON_SECRET
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    // Verify cron secret
+    // Verify Vercel Cron secret (sent as Authorization header)
     const authHeader = request.headers.get('authorization')
     const providedSecret = authHeader?.replace('Bearer ', '')
 
-    if (!CRON_SECRET) {
-      console.error('[CronMembershipExpiration] CRON_SECRET not configured')
-      return NextResponse.json(
-        { error: 'Cron secret not configured' },
-        { status: 500 }
-      )
-    }
+    // Also check for Vercel's cron header
+    const isVercelCron = request.headers.get('x-vercel-cron') === '1'
 
-    if (providedSecret !== CRON_SECRET) {
+    if (!isVercelCron && CRON_SECRET && providedSecret !== CRON_SECRET) {
       console.warn('[CronMembershipExpiration] Invalid or missing cron secret')
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -67,12 +62,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Also support GET for health checks (without secret for basic status)
-export async function GET() {
-  return NextResponse.json({
-    status: 'ok',
-    endpoint: 'membership-expiration',
-    description: 'Daily cron job for membership expiration notifications',
-    method: 'POST with Authorization: Bearer CRON_SECRET',
-  })
-}
