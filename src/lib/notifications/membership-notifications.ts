@@ -63,12 +63,10 @@ export interface BatchResult {
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return 'N/A'
-  const date = new Date(dateStr)
-  return date.toLocaleDateString('es-MX', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
+  // Parse date parts directly to avoid timezone issues
+  // Input format: YYYY-MM-DD
+  const [year, month, day] = dateStr.split('-')
+  return `${day}/${month}/${year}`
 }
 
 function getDaysRemaining(endDateStr: string | null): number {
@@ -388,10 +386,28 @@ export async function processMembershipExpirations(): Promise<BatchResult> {
     // Step 3: Get gym data for notifications (batch query)
     const orgIds = [...new Set(queuedNotifications.map((n: QueuedNotification) => n.organization_id))]
 
-    const { data: orgsData } = await supabase
-      .from('organizations')
-      .select('id, name, contact_email, contact_phone')
-      .in('id', orgIds)
+    // Query orgs one by one if in() fails (workaround for UUID array issue)
+    let orgsData: { id: string; name: string; contact_email: string | null; contact_phone: string | null }[] = []
+
+    if (orgIds.length === 1) {
+      // Single org - use eq instead of in
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('id, name')
+        .eq('id', orgIds[0])
+      if (data) orgsData = data.map(o => ({ ...o, contact_email: null, contact_phone: null }))
+      if (error) console.error('[MembershipNotifications] Org query error:', error.message)
+    } else if (orgIds.length > 1) {
+      // Multiple orgs
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('id, name')
+        .in('id', orgIds)
+      if (data && data.length > 0) {
+        orgsData = data.map(o => ({ ...o, contact_email: null, contact_phone: null }))
+      }
+      if (error) console.error('[MembershipNotifications] Org query error:', error.message)
+    }
 
     const orgMap = new Map(orgsData?.map((o) => [o.id, o]) || [])
 
@@ -420,8 +436,8 @@ export async function processMembershipExpirations(): Promise<BatchResult> {
       if (notification.channel === 'email') {
         sendResult = await sendEmailNotification(notification, {
           name: org.name,
-          email: org.contact_email,
-          phone: org.contact_phone,
+          email: org.contact_email ?? undefined,
+          phone: org.contact_phone ?? undefined,
         })
       } else if (notification.channel === 'whatsapp') {
         sendResult = await sendWhatsAppNotification(notification, {
