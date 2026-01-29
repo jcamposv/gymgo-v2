@@ -14,7 +14,7 @@ import {
   getMembershipExpirationEmailText,
   type MembershipEmailData,
 } from '@/lib/email/templates/membership'
-import { messagingService, isTwilioConfigured } from '@/lib/twilio'
+import { messagingService, isMessagingConfigured } from '@/lib/messaging'
 import { checkEmailLimit, consumeEmail } from '@/lib/plan-limits'
 
 // =============================================================================
@@ -81,7 +81,41 @@ function getDaysRemaining(endDateStr: string | null): number {
 }
 
 /**
- * Get WhatsApp message content based on notification type
+ * WhatsApp template names for each notification type
+ */
+const WHATSAPP_TEMPLATES: Record<MembershipNotificationType, string> = {
+  expires_in_3_days: 'notification_expire_memberships',
+  expires_in_1_day: 'membership_expires_tomorrow',
+  expires_today: 'membership_expires_today',
+  expired: 'membership_expired',
+}
+
+/**
+ * Get WhatsApp template variables based on notification type
+ * Variables: {{1}} = memberName, {{2}} = gymName, {{3}} = expirationDate (when needed)
+ */
+function getWhatsAppTemplateVariables(
+  type: MembershipNotificationType,
+  memberName: string,
+  gymName: string,
+  expirationDate: string
+): string[] {
+  switch (type) {
+    case 'expires_in_3_days':
+      return [memberName, gymName, expirationDate]
+    case 'expires_in_1_day':
+      return [memberName, gymName, expirationDate]
+    case 'expires_today':
+      return [memberName, gymName]
+    case 'expired':
+      return [memberName, gymName, expirationDate]
+    default:
+      return [memberName, gymName]
+  }
+}
+
+/**
+ * Get WhatsApp message content based on notification type (fallback for non-template)
  */
 function getWhatsAppMessage(
   type: MembershipNotificationType,
@@ -201,23 +235,19 @@ async function sendWhatsAppNotification(
     }
   }
 
-  // Check if Twilio is configured
-  if (!isTwilioConfigured()) {
+  // Check if messaging is configured (Respond.io or Twilio)
+  if (!isMessagingConfigured()) {
     return {
       success: false,
       notificationId: id,
       channel: 'whatsapp',
-      error: 'Twilio not configured',
+      error: 'WhatsApp messaging not configured',
     }
   }
 
   try {
-    const message = getWhatsAppMessage(
-      notification_type,
-      gymData.member_name || 'Estimado miembro',
-      gymData.name,
-      formatDate(membership_end_date)
-    )
+    const memberName = gymData.member_name || 'Estimado miembro'
+    const expirationDate = formatDate(membership_end_date)
 
     // Format phone to E.164 if needed
     let formattedPhone = recipient_phone
@@ -226,11 +256,38 @@ async function sendWhatsAppNotification(
       formattedPhone = `+52${formattedPhone.replace(/\D/g, '')}`
     }
 
-    const result = await messagingService.sendWhatsAppMessage({
+    // Get template name and variables
+    const templateName = WHATSAPP_TEMPLATES[notification_type]
+    const templateVariables = getWhatsAppTemplateVariables(
+      notification_type,
+      memberName,
+      gymData.name,
+      expirationDate
+    )
+
+    // Try to send using template first
+    let result = await messagingService.sendWhatsAppTemplate({
       to: formattedPhone,
-      from: gymData.whatsapp_from || process.env.TWILIO_WHATSAPP_FROM || '',
-      body: message,
+      templateName,
+      templateVariables,
+      firstName: memberName.split(' ')[0],
     })
+
+    // If template fails, fallback to regular message (for testing/sandbox)
+    if (!result.success && result.error?.includes('template')) {
+      console.log(`[WhatsApp] Template failed, falling back to regular message: ${result.error}`)
+      const message = getWhatsAppMessage(
+        notification_type,
+        memberName,
+        gymData.name,
+        expirationDate
+      )
+      result = await messagingService.sendWhatsAppMessage({
+        to: formattedPhone,
+        body: message,
+        firstName: memberName.split(' ')[0],
+      })
+    }
 
     if (!result.success) {
       return {
@@ -245,7 +302,7 @@ async function sendWhatsAppNotification(
       success: true,
       notificationId: id,
       channel: 'whatsapp',
-      externalMessageId: result.messageSid,
+      externalMessageId: result.messageId,
     }
   } catch (err) {
     return {
