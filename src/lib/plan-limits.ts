@@ -372,7 +372,8 @@ export async function checkWhatsAppLimit(
     return { allowed: false, current: 0, limit: 0, message: 'Error al verificar límites' }
   }
 
-  const result = data as { used: number; remaining: number; monthly_limit: number } | null
+  const rawResult = Array.isArray(data) ? data[0] : data
+  const result = rawResult as { used: number; remaining: number; monthly_limit: number } | null
 
   if (!result) {
     return { allowed: true, current: 0, limit: 50 }
@@ -410,7 +411,8 @@ export async function consumeWhatsAppMessage(
     return { success: false, remaining: 0 }
   }
 
-  const result = data as { success: boolean; remaining: number } | null
+  const rawResult = Array.isArray(data) ? data[0] : data
+  const result = rawResult as { success: boolean; remaining: number } | null
   return result || { success: false, remaining: 0 }
 }
 
@@ -432,7 +434,8 @@ export async function checkEmailLimit(
     return { allowed: false, current: 0, limit: 0, message: 'Error al verificar límites' }
   }
 
-  const result = data as { used: number; remaining: number; monthly_limit: number } | null
+  const rawResult = Array.isArray(data) ? data[0] : data
+  const result = rawResult as { used: number; remaining: number; monthly_limit: number } | null
 
   if (!result) {
     return { allowed: true, current: 0, limit: 500 }
@@ -470,7 +473,8 @@ export async function consumeEmail(
     return { success: false, remaining: 0 }
   }
 
-  const result = data as { success: boolean; remaining: number } | null
+  const rawResult = Array.isArray(data) ? data[0] : data
+  const result = rawResult as { success: boolean; remaining: number } | null
   return result || { success: false, remaining: 0 }
 }
 
@@ -500,7 +504,8 @@ export async function checkStorageLimit(
     }
   }
 
-  const result = data as {
+  const rawResult = Array.isArray(data) ? data[0] : data
+  const result = rawResult as {
     used_bytes: number
     remaining_bytes: number
     limit_bytes: number
@@ -552,7 +557,8 @@ export async function updateStorageUsage(
     return { success: false, totalBytes: 0 }
   }
 
-  const result = data as { success: boolean; total_bytes: number } | null
+  const rawResult = Array.isArray(data) ? data[0] : data
+  const result = rawResult as { success: boolean; total_bytes: number } | null
   return {
     success: result?.success ?? false,
     totalBytes: result?.total_bytes ?? 0,
@@ -589,7 +595,9 @@ export async function checkApiRateLimit(
     }
   }
 
-  const result = data as {
+  // RPC returns a TABLE, so data is an array - get first row
+  const rawResult = Array.isArray(data) ? data[0] : data
+  const result = rawResult as {
     allowed: boolean
     used: number
     remaining: number
@@ -650,7 +658,9 @@ export async function consumeApiRequest(
     return { success: false, remaining: 0 }
   }
 
-  const result = data as { success: boolean; remaining: number } | null
+  // RPC returns a TABLE, so data is an array - get first row
+  const rawResult = Array.isArray(data) ? data[0] : data
+  const result = rawResult as { success: boolean; remaining: number } | null
   return result || { success: false, remaining: 0 }
 }
 
@@ -745,7 +755,8 @@ export async function consumeAIRequest(
       return { success: true, remaining: planLimits.aiRequestsPerMonth } // Allow on error
     }
 
-    const result = data as { success?: boolean; remaining?: number } | null
+    const rawResult = Array.isArray(data) ? data[0] : data
+    const result = rawResult as { success?: boolean; remaining?: number } | null
     return {
       success: result?.success ?? true,
       remaining: result?.remaining ?? planLimits.aiRequestsPerMonth,
@@ -946,7 +957,8 @@ export async function consumePushNotification(
       return { success: true, remaining: planLimits.pushNotificationsPerMonth }
     }
 
-    const result = data as { success: boolean; remaining: number } | null
+    const rawResult = Array.isArray(data) ? data[0] : data
+    const result = rawResult as { success: boolean; remaining: number } | null
     return result || { success: true, remaining: planLimits.pushNotificationsPerMonth }
   } catch {
     // RPC doesn't exist yet - allow by default
