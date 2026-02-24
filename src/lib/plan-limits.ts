@@ -4,12 +4,21 @@
  * Utilities for checking and enforcing plan-based limits
  */
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 import { PLAN_LIMITS, type PlanTier } from '@/lib/pricing.config'
+
+/** Create a Supabase client with service role key (bypasses RLS) */
+function createServiceRoleClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+}
 
 // Helper for untyped RPC calls (for functions not yet in database.types.ts)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const callRpc = async (supabase: Awaited<ReturnType<typeof createClient>>, name: string, params?: Record<string, unknown>): Promise<{ data: any; error: any }> => {
+const callRpc = async (supabase: ReturnType<typeof createServiceRoleClient>, name: string, params?: Record<string, unknown>): Promise<{ data: any; error: any }> => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (supabase.rpc as any)(name, params)
 }
@@ -69,7 +78,7 @@ export interface OrganizationLimits {
 export async function getOrganizationLimits(
   organizationId: string
 ): Promise<OrganizationLimits | null> {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   const { data: org } = await supabase
     .from('organizations')
@@ -98,7 +107,7 @@ export async function getOrganizationLimits(
 export async function checkMemberLimit(
   organizationId: string
 ): Promise<LimitCheckResult> {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   // Get org limits
   const limits = await getOrganizationLimits(organizationId)
@@ -153,7 +162,7 @@ const TRAINER_ROLES = ['trainer', 'instructor'] as const
 export async function checkUserLimit(
   organizationId: string
 ): Promise<LimitCheckResult> {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   const limits = await getOrganizationLimits(organizationId)
   if (!limits) {
@@ -202,7 +211,7 @@ export async function checkUserLimit(
 export async function checkTrainerLimit(
   organizationId: string
 ): Promise<LimitCheckResult> {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   const limits = await getOrganizationLimits(organizationId)
   if (!limits) {
@@ -352,7 +361,7 @@ export function formatLimitMessage(
 export async function checkWhatsAppLimit(
   organizationId: string
 ): Promise<LimitCheckResult> {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   const { data, error } = await callRpc(supabase,'get_whatsapp_remaining', {
     p_organization_id: organizationId,
@@ -389,7 +398,7 @@ export async function consumeWhatsAppMessage(
   organizationId: string,
   count: number = 1
 ): Promise<{ success: boolean; remaining: number }> {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   const { data, error } = await callRpc(supabase,'consume_whatsapp_message', {
     p_organization_id: organizationId,
@@ -412,7 +421,7 @@ export async function consumeWhatsAppMessage(
 export async function checkEmailLimit(
   organizationId: string
 ): Promise<LimitCheckResult> {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   const { data, error } = await callRpc(supabase,'get_email_remaining', {
     p_organization_id: organizationId,
@@ -449,7 +458,7 @@ export async function consumeEmail(
   organizationId: string,
   count: number = 1
 ): Promise<{ success: boolean; remaining: number }> {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   const { data, error } = await callRpc(supabase,'consume_email', {
     p_organization_id: organizationId,
@@ -473,7 +482,7 @@ export async function checkStorageLimit(
   organizationId: string,
   additionalBytes: number = 0
 ): Promise<LimitCheckResult & { usedBytes: number; limitBytes: number }> {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   const { data, error } = await callRpc(supabase,'get_storage_remaining', {
     p_organization_id: organizationId,
@@ -530,7 +539,7 @@ export async function updateStorageUsage(
   bytesChange: number,
   fileType: 'image' | 'document' | 'other' = 'other'
 ): Promise<{ success: boolean; totalBytes: number }> {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   const { data, error } = await callRpc(supabase,'update_storage_usage', {
     p_organization_id: organizationId,
@@ -563,7 +572,7 @@ export async function checkApiRateLimit(
   dailyLimit: number
   message?: string
 }> {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   const { data, error } = await callRpc(supabase,'check_api_rate_limit', {
     p_organization_id: organizationId,
@@ -629,7 +638,7 @@ export async function consumeApiRequest(
   organizationId: string,
   isWrite: boolean = false
 ): Promise<{ success: boolean; remaining: number }> {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   const { data, error } = await callRpc(supabase,'consume_api_request', {
     p_organization_id: organizationId,
@@ -652,7 +661,7 @@ export async function consumeApiRequest(
 export async function checkAILimit(
   organizationId: string
 ): Promise<LimitCheckResult & { resetDate?: string }> {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   const limits = await getOrganizationLimits(organizationId)
   if (!limits) {
@@ -713,7 +722,7 @@ export async function consumeAIRequest(
   organizationId: string,
   tokensUsed: number = 0
 ): Promise<{ success: boolean; remaining: number }> {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   const limits = await getOrganizationLimits(organizationId)
   if (!limits) {
@@ -754,7 +763,7 @@ export async function consumeAIRequest(
 export async function checkLocationLimit(
   organizationId: string
 ): Promise<LimitCheckResult> {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   const limits = await getOrganizationLimits(organizationId)
   if (!limits) {
@@ -804,7 +813,7 @@ export async function checkLocationLimit(
 export async function checkClassLimit(
   organizationId: string
 ): Promise<LimitCheckResult> {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   const limits = await getOrganizationLimits(organizationId)
   if (!limits) {
@@ -854,7 +863,7 @@ export async function checkClassLimit(
 export async function checkPushNotificationLimit(
   organizationId: string
 ): Promise<LimitCheckResult & { resetDate?: string }> {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   const limits = await getOrganizationLimits(organizationId)
   if (!limits) {
@@ -915,7 +924,7 @@ export async function consumePushNotification(
   organizationId: string,
   count: number = 1
 ): Promise<{ success: boolean; remaining: number }> {
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient()
 
   const limits = await getOrganizationLimits(organizationId)
   if (!limits) {

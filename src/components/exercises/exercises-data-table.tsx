@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { Plus, Dumbbell } from 'lucide-react'
+import { Plus, Dumbbell, Play } from 'lucide-react'
 
 import type { Tables } from '@/types/database.types'
 import {
@@ -9,6 +9,7 @@ import {
   difficulties,
 } from '@/schemas/exercise.schema'
 import { DataTable, type FilterConfig } from '@/components/data-table'
+import type { MobileCardConfig } from '@/components/data-table/types'
 import { exerciseColumns } from './exercises-columns'
 
 interface ExercisesDataTableProps {
@@ -32,6 +33,45 @@ const exerciseFilters: FilterConfig[] = [
   },
 ]
 
+type Exercise = Tables<'exercises'>
+
+const exerciseMobileCardConfig: MobileCardConfig<Exercise> = {
+  titleField: 'name',
+  primaryFields: ['category', 'muscle_groups'],
+  renderAvatar: (row) => {
+    if (row.thumbnail_url) {
+      return (
+        <img
+          src={row.thumbnail_url}
+          alt={row.name}
+          className="w-12 h-12 object-cover rounded"
+        />
+      )
+    }
+    if (row.gif_url) {
+      return (
+        <img
+          src={row.gif_url}
+          alt={row.name}
+          className="w-12 h-12 object-cover rounded"
+        />
+      )
+    }
+    if (row.video_url) {
+      return (
+        <div className="relative w-12 h-12 bg-muted rounded flex items-center justify-center">
+          <Play className="h-5 w-5 text-muted-foreground" />
+        </div>
+      )
+    }
+    return (
+      <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
+        <Dumbbell className="h-5 w-5 text-muted-foreground" />
+      </div>
+    )
+  },
+}
+
 export function ExercisesDataTable({ exercises, totalItems }: ExercisesDataTableProps) {
   const router = useRouter()
 
@@ -53,6 +93,8 @@ export function ExercisesDataTable({ exercises, totalItems }: ExercisesDataTable
       }}
       emptyTitle="No hay ejercicios"
       emptyDescription="Crea tu primer ejercicio para comenzar a armar rutinas"
+      mobileCardConfig={exerciseMobileCardConfig}
+      onRowClick={(exercise) => router.push(`/dashboard/exercises/${exercise.id}`)}
     />
   )
 }
