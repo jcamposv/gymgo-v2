@@ -40,7 +40,9 @@ interface UpcomingClass {
   instructor_name: string | null
 }
 
-export async function getDashboardMetrics(): Promise<{
+export async function getDashboardMetrics(params?: {
+  location_id?: string
+}): Promise<{
   data: DashboardMetrics | null
   error: string | null
 }> {
@@ -64,6 +66,7 @@ export async function getDashboardMetrics(): Promise<{
   }
 
   const orgId = profile.organization_id
+  const locationId = params?.location_id
   const now = new Date()
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
   const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString()
@@ -71,20 +74,24 @@ export async function getDashboardMetrics(): Promise<{
   const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
   const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0).toISOString()
 
-  // Total members
-  const { count: totalMembers } = await supabase
+  // Total members (filter by location if specified)
+  let totalMembersQuery = supabase
     .from('members')
     .select('*', { count: 'exact', head: true })
     .eq('organization_id', orgId)
+  if (locationId) totalMembersQuery = totalMembersQuery.eq('location_id', locationId)
+  const { count: totalMembers } = await totalMembersQuery
 
   // Active members
-  const { count: activeMembers } = await supabase
+  let activeMembersQuery = supabase
     .from('members')
     .select('*', { count: 'exact', head: true })
     .eq('organization_id', orgId)
     .eq('status', 'active')
+  if (locationId) activeMembersQuery = activeMembersQuery.eq('location_id', locationId)
+  const { count: activeMembers } = await activeMembersQuery
 
-  // Total classes
+  // Total classes (classes don't have location_id yet, skip location filter)
   const { count: totalClasses } = await supabase
     .from('classes')
     .select('*', { count: 'exact', head: true })
@@ -99,7 +106,7 @@ export async function getDashboardMetrics(): Promise<{
     .gte('start_time', todayStart)
     .lt('start_time', todayEnd)
 
-  // Today's check-ins
+  // Today's check-ins (check_ins don't have location_id, skip filter)
   const { count: todayCheckIns } = await supabase
     .from('check_ins')
     .select('*', { count: 'exact', head: true })
@@ -107,36 +114,42 @@ export async function getDashboardMetrics(): Promise<{
     .gte('checked_in_at', todayStart)
     .lt('checked_in_at', todayEnd)
 
-  // This month's revenue
-  const { data: paymentsData } = await supabase
+  // This month's revenue (filter by location if specified)
+  let paymentsQuery = supabase
     .from('payments')
     .select('amount')
     .eq('organization_id', orgId)
     .eq('status', 'paid')
     .gte('paid_at', monthStart)
+  if (locationId) paymentsQuery = paymentsQuery.eq('location_id', locationId)
+  const { data: paymentsData } = await paymentsQuery
 
   const payments = paymentsData as { amount: number }[] | null
   const monthlyRevenue = (payments || []).reduce((sum, p) => sum + Number(p.amount), 0)
 
   // Members trend (new this month vs last month)
-  const { count: newMembersThisMonth } = await supabase
+  let newMembersThisMonthQuery = supabase
     .from('members')
     .select('*', { count: 'exact', head: true })
     .eq('organization_id', orgId)
     .gte('created_at', monthStart)
+  if (locationId) newMembersThisMonthQuery = newMembersThisMonthQuery.eq('location_id', locationId)
+  const { count: newMembersThisMonth } = await newMembersThisMonthQuery
 
-  const { count: newMembersLastMonth } = await supabase
+  let newMembersLastMonthQuery = supabase
     .from('members')
     .select('*', { count: 'exact', head: true })
     .eq('organization_id', orgId)
     .gte('created_at', lastMonthStart)
     .lt('created_at', lastMonthEnd)
+  if (locationId) newMembersLastMonthQuery = newMembersLastMonthQuery.eq('location_id', locationId)
+  const { count: newMembersLastMonth } = await newMembersLastMonthQuery
 
   const membersTrend = (newMembersLastMonth || 0) > 0
     ? (((newMembersThisMonth || 0) - (newMembersLastMonth || 0)) / (newMembersLastMonth || 1)) * 100
     : 0
 
-  // Check-ins trend (today vs yesterday)
+  // Check-ins trend (today vs yesterday) - no location filter for check_ins
   const yesterdayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).toISOString()
   const { count: yesterdayCheckIns } = await supabase
     .from('check_ins')

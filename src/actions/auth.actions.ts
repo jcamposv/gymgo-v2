@@ -72,7 +72,12 @@ export async function signUpAction(
   }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.signUp({
+
+  console.log('=== SIGNUP DEBUG ===')
+  console.log('Email:', validated.data.email)
+  console.log('Redirect URL:', `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`)
+
+  const { data, error } = await supabase.auth.signUp({
     email: validated.data.email,
     password: validated.data.password,
     options: {
@@ -81,7 +86,16 @@ export async function signUpAction(
     },
   })
 
+  console.log('Supabase response data:', JSON.stringify(data, null, 2))
+  console.log('Supabase response error:', JSON.stringify(error, null, 2))
+  console.log('=== END SIGNUP DEBUG ===')
+
   if (error) {
+    console.error('SignUp error details:', {
+      code: error.code,
+      message: error.message,
+      status: error.status,
+    })
     return {
       success: false,
       message: error.message,
@@ -90,7 +104,7 @@ export async function signUpAction(
 
   return {
     success: true,
-    message: 'Check your email to confirm your account',
+    message: 'Revisa tu correo para confirmar tu cuenta',
   }
 }
 
@@ -110,7 +124,7 @@ export async function resetPasswordAction(
   if (!email) {
     return {
       success: false,
-      message: 'Email is required',
+      message: 'El correo es requerido',
     }
   }
 
@@ -120,14 +134,13 @@ export async function resetPasswordAction(
   })
 
   if (error) {
-    return {
-      success: false,
-      message: error.message,
-    }
+    // Don't reveal if user exists or not for security
+    console.error('Error sending reset email:', error)
   }
 
+  // Always return success to not reveal if email exists
   return {
     success: true,
-    message: 'Check your email for the password reset link',
+    message: 'Si existe una cuenta con este correo, recibirás un enlace para restablecer tu contraseña',
   }
 }

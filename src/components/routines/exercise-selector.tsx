@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Search, Plus, X } from 'lucide-react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { Search, Plus, Loader2 } from 'lucide-react'
 
 import { getExercises } from '@/actions/exercise.actions'
 import {
@@ -9,12 +9,10 @@ import {
   difficultyLabels,
   muscleGroupLabels,
 } from '@/schemas/exercise.schema'
-import type { ExerciseItem } from '@/schemas/routine.schema'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Dialog,
   DialogContent,
@@ -38,7 +36,14 @@ interface Exercise {
   muscle_groups: string[] | null
   difficulty: string | null
   gif_url: string | null
+  thumbnail_url: string | null
+  video_url: string | null
   is_global: boolean | null
+}
+
+// Get the best available thumbnail for an exercise
+function getExerciseThumbnail(exercise: Exercise): string | null {
+  return exercise.thumbnail_url || exercise.gif_url || exercise.video_url || null
 }
 
 interface ExerciseSelectorProps {
@@ -47,40 +52,79 @@ interface ExerciseSelectorProps {
   trigger?: React.ReactNode
 }
 
+const DEBOUNCE_MS = 300
+const MIN_QUERY_LENGTH = 2
+const PAGE_SIZE = 30
+
 export function ExerciseSelector({ onSelect, selectedIds = [], trigger }: ExerciseSelectorProps) {
   const [open, setOpen] = useState(false)
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [loading, setLoading] = useState(false)
-  const [query, setQuery] = useState('')
+  const [inputValue, setInputValue] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
   const [category, setCategory] = useState<string>('all')
 
+  // Track current request to ignore stale responses
+  const requestIdRef = useRef(0)
+
+  // Debounce the search query
   useEffect(() => {
-    if (open) {
-      loadExercises()
+    const timer = setTimeout(() => {
+      // Only search if query meets minimum length or is empty (show default list)
+      if (inputValue.length >= MIN_QUERY_LENGTH || inputValue.length === 0) {
+        setDebouncedQuery(inputValue)
+      }
+    }, DEBOUNCE_MS)
+
+    return () => clearTimeout(timer)
+  }, [inputValue])
+
+  // Fetch exercises when debounced query or category changes
+  useEffect(() => {
+    if (!open) return
+
+    const currentRequestId = ++requestIdRef.current
+
+    const loadExercises = async () => {
+      setLoading(true)
+
+      const { data } = await getExercises({
+        query: debouncedQuery || undefined,
+        category: category === 'all' ? undefined : category,
+        is_active: true,
+        include_global: true,
+        page: 1,
+        per_page: PAGE_SIZE,
+      })
+
+      // Only update state if this is still the latest request
+      if (currentRequestId === requestIdRef.current) {
+        setExercises(data || [])
+        setLoading(false)
+      }
     }
-  }, [open, query, category])
 
-  const loadExercises = async () => {
-    setLoading(true)
-    const { data } = await getExercises({
-      query: query || undefined,
-      category: category === 'all' ? undefined : category,
-      is_active: true,
-      include_global: true,
-      page: 1,
-      per_page: 50,
-    })
-    setExercises(data || [])
-    setLoading(false)
-  }
+    loadExercises()
+  }, [open, debouncedQuery, category])
 
-  const handleSelect = (exercise: Exercise) => {
+  // Reset state when dialog closes
+  const handleOpenChange = useCallback((isOpen: boolean) => {
+    setOpen(isOpen)
+    if (!isOpen) {
+      setInputValue('')
+      setDebouncedQuery('')
+      setCategory('all')
+      setExercises([])
+    }
+  }, [])
+
+  const handleSelect = useCallback((exercise: Exercise) => {
     onSelect(exercise)
-    setOpen(false)
-  }
+    handleOpenChange(false)
+  }, [onSelect, handleOpenChange])
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger || (
           <Button type="button" variant="outline">
@@ -89,26 +133,30 @@ export function ExerciseSelector({ onSelect, selectedIds = [], trigger }: Exerci
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh]">
-        <DialogHeader>
-          <DialogTitle>Seleccionar ejercicio</DialogTitle>
-          <DialogDescription>
-            Busca y selecciona un ejercicio para agregar a la rutina
+      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-xl md:max-w-2xl max-h-[85dvh] overflow-hidden p-3 sm:p-6 flex flex-col">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-base sm:text-lg">Seleccionar ejercicio</DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm">
+            Busca y selecciona un ejercicio
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex gap-2 mb-4">
+        <div className="flex flex-col sm:flex-row gap-2 mb-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar ejercicios..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="pl-9"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              className="pl-9 pr-9"
+              autoFocus
             />
+            {loading && (
+              <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+            )}
           </div>
           <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[150px]">
               <SelectValue placeholder="Categoria" />
             </SelectTrigger>
             <SelectContent>
@@ -122,71 +170,85 @@ export function ExerciseSelector({ onSelect, selectedIds = [], trigger }: Exerci
           </Select>
         </div>
 
-        <ScrollArea className="h-[400px] pr-4">
-          {loading ? (
+        <div className="flex-1 min-h-0 -mx-3 sm:-mx-6 px-3 sm:px-6 overflow-y-auto">
+          {loading && exercises.length === 0 ? (
             <div className="flex items-center justify-center h-32">
-              <p className="text-muted-foreground">Cargando...</p>
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : inputValue.length > 0 && inputValue.length < MIN_QUERY_LENGTH ? (
+            <div className="flex items-center justify-center h-32">
+              <p className="text-muted-foreground text-center px-4">
+                Escribe al menos {MIN_QUERY_LENGTH} caracteres para buscar
+              </p>
             </div>
           ) : exercises.length === 0 ? (
             <div className="flex items-center justify-center h-32">
-              <p className="text-muted-foreground">No se encontraron ejercicios</p>
+              <p className="text-muted-foreground">
+                {debouncedQuery ? 'No se encontraron ejercicios' : 'Cargando ejercicios...'}
+              </p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 pr-3">
               {exercises.map((exercise) => {
                 const isSelected = selectedIds.includes(exercise.id)
+                const thumbnail = getExerciseThumbnail(exercise)
+                const isVideo = thumbnail && thumbnail === exercise.video_url
+
                 return (
                   <div
                     key={exercise.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors ${
-                      isSelected ? 'border-primary bg-primary/5' : ''
+                    className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors ${
+                      isSelected ? 'border-primary bg-primary/5 cursor-default' : ''
                     }`}
                     onClick={() => !isSelected && handleSelect(exercise)}
                   >
-                    {exercise.gif_url ? (
-                      <img
-                        src={exercise.gif_url}
-                        alt={exercise.name}
-                        className="w-12 h-12 object-cover rounded"
-                      />
+                    {/* Thumbnail */}
+                    {thumbnail ? (
+                      isVideo ? (
+                        <video
+                          src={thumbnail}
+                          className="size-10 object-cover rounded bg-muted flex-none"
+                          muted
+                          playsInline
+                          preload="metadata"
+                        />
+                      ) : (
+                        <img
+                          src={thumbnail}
+                          alt={exercise.name}
+                          className="size-10 object-cover rounded bg-muted flex-none"
+                        />
+                      )
                     ) : (
-                      <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
-                        <span className="text-xs text-muted-foreground">N/A</span>
+                      <div className="size-10 bg-muted rounded flex items-center justify-center flex-none">
+                        <span className="text-[10px] text-muted-foreground">N/A</span>
                       </div>
                     )}
+
+                    {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{exercise.name}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        {exercise.category && (
-                          <Badge variant="outline" className="text-xs">
-                            {categoryLabels[exercise.category] || exercise.category}
-                          </Badge>
-                        )}
-                        {exercise.difficulty && (
-                          <Badge variant="secondary" className="text-xs">
-                            {difficultyLabels[exercise.difficulty] || exercise.difficulty}
-                          </Badge>
-                        )}
-                        {exercise.muscle_groups?.slice(0, 2).map((muscle) => (
-                          <Badge key={muscle} variant="secondary" className="text-xs">
-                            {muscleGroupLabels[muscle] || muscle}
-                          </Badge>
-                        ))}
-                      </div>
+                      <p className="font-medium text-sm leading-tight line-clamp-2">{exercise.name}</p>
+                      {exercise.category && (
+                        <Badge variant="outline" className="text-[10px] px-1 py-0 mt-1">
+                          {categoryLabels[exercise.category] || exercise.category}
+                        </Badge>
+                      )}
                     </div>
+
+                    {/* Action */}
                     {isSelected ? (
-                      <Badge>Agregado</Badge>
+                      <Badge variant="secondary" className="text-[10px] flex-none">OK</Badge>
                     ) : (
-                      <Button size="sm" variant="ghost">
-                        <Plus className="h-4 w-4" />
-                      </Button>
+                      <div className="size-8 flex items-center justify-center flex-none">
+                        <Plus className="size-4 text-muted-foreground" />
+                      </div>
                     )}
                   </div>
                 )
               })}
             </div>
           )}
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   )

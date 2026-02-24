@@ -1,5 +1,6 @@
 import { getMembers } from '@/actions/member.actions'
 import { MembersDataTable } from '@/components/members'
+import { getCurrentLocationId } from '@/lib/auth/get-current-location'
 
 export const metadata = {
   title: 'Miembros | GymGo',
@@ -22,15 +23,35 @@ export default async function MembersPage({ searchParams }: PageProps) {
   const page = params.page ? parseInt(params.page) : 1
   const pageSize = params.pageSize ? parseInt(params.pageSize) : 20
 
-  const { data: members, count, error } = await getMembers({
+  // Get current location from cookie for filtering
+  const locationId = await getCurrentLocationId()
+
+  // First try with location filter, if it fails try without
+  let membersResult = await getMembers({
     query: params.search,
     status: params.filter_status,
     experience_level: params.filter_experience_level,
+    location_id: locationId || undefined,
     page,
     per_page: pageSize,
     sort_by: params.sortBy,
     sort_dir: params.sortDir,
   })
+
+  // If location filter failed (column might not exist yet), retry without it
+  if (membersResult.error?.includes('location_id')) {
+    membersResult = await getMembers({
+      query: params.search,
+      status: params.filter_status,
+      experience_level: params.filter_experience_level,
+      page,
+      per_page: pageSize,
+      sort_by: params.sortBy,
+      sort_dir: params.sortDir,
+    })
+  }
+
+  const { data: members, count, error } = membersResult
 
   if (error) {
     return (

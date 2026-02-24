@@ -2,11 +2,6 @@ import { notFound } from 'next/navigation'
 
 import { getMemberWithPlan } from '@/actions/member.actions'
 import { MemberDetailsContent } from './member-details-content'
-import {
-  mockReports,
-  mockUpcomingAppointments,
-  mockPastAppointments,
-} from '@/lib/member.mocks'
 import type { MemberExtended } from '@/types/member.types'
 
 export const metadata = {
@@ -35,13 +30,11 @@ export default async function MemberDetailPage({ params }: PageProps) {
     // Plan data comes from the query (current_plan is already included)
   }
 
-  // TODO: These will be replaced with real API calls in the future
-  // For now, using mock data for reports and appointments
-  // Notes are now fetched via useMemberNotes hook in the client component
-  // Measurements are fetched via useMemberMeasurements hook in the client component
-  const reports = mockReports
-  const upcomingAppointments = mockUpcomingAppointments
-  const pastAppointments = mockPastAppointments
+  // Reports and appointments will be implemented with real data in the future
+  // For now, passing empty arrays to show empty states
+  const reports: [] = []
+  const upcomingAppointments: [] = []
+  const pastAppointments: [] = []
 
   return (
     <MemberDetailsContent

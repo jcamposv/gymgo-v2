@@ -1,10 +1,20 @@
 /**
  * OpenAI Exercise Ranker
- * Uses GPT-3.5-turbo to rank exercise alternatives
+ * Uses OpenAI models to rank exercise alternatives
+ * Model selection is based on organization plan tier
  */
 
 import OpenAI from 'openai'
 import type { Exercise, OpenAIRanking } from '@/types/ai.types'
+
+// =============================================================================
+// Types
+// =============================================================================
+
+export interface RankWithOpenAIOptions {
+  model?: string // Default: gpt-3.5-turbo, Pro/Enterprise: gpt-4-turbo
+  timeout?: number // Default: 30000ms
+}
 
 // =============================================================================
 // OpenAI Client
@@ -19,6 +29,8 @@ function getOpenAIClient(): OpenAI {
     }
     openaiClient = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
+      timeout: 30000, // 30 second timeout
+      maxRetries: 1, // One retry on failure
     })
   }
   return openaiClient
@@ -66,14 +78,20 @@ Reglas:
 // =============================================================================
 
 /**
- * Ranks candidate exercises using OpenAI GPT-3.5-turbo
+ * Ranks candidate exercises using OpenAI
+ * Model selection based on plan tier:
+ * - Free/Starter/Growth: gpt-3.5-turbo (default)
+ * - Pro/Enterprise: gpt-4-turbo
+ *
  * Returns rankings sorted by score (highest first)
  */
 export async function rankWithOpenAI(
   sourceExercise: Exercise,
   candidates: Exercise[],
-  availableEquipment: string[]
+  availableEquipment: string[],
+  options: RankWithOpenAIOptions = {}
 ): Promise<OpenAIRanking[]> {
+  const { model = 'gpt-3.5-turbo' } = options
   const openai = getOpenAIClient()
 
   // Format candidates list
@@ -101,7 +119,7 @@ export async function rankWithOpenAI(
     .replace('{candidates_list}', candidatesList)
 
   const response = await openai.chat.completions.create({
-    model: 'gpt-3.5-turbo',
+    model,
     messages: [
       {
         role: 'system',

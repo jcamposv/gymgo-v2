@@ -119,7 +119,7 @@ export function UserProvider({ children, initialUser = null }: UserProviderProps
           .select('id, full_name, email, status, current_plan_id, membership_status')
           .eq('organization_id', profileData.organization_id)
           .eq('email', profileData.email)
-          .single()
+          .maybeSingle() // Use maybeSingle to handle case when user is not a member
 
         if (memberResult) {
           memberData = memberResult as MemberProfile

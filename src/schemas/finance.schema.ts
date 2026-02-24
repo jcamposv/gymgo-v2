@@ -56,6 +56,8 @@ export const expenseSchema = z.object({
   receipt_url: z.string().url().optional().nullable(),
   notes: z.string().max(500).optional().nullable(),
   is_recurring: z.boolean().default(false),
+  // Location attribution (optional - NULL means org-wide expense)
+  location_id: z.string().uuid().optional().nullable(),
 })
 
 export const expenseUpdateSchema = expenseSchema.partial()
@@ -79,6 +81,8 @@ export const incomeSchema = z.object({
   category: incomeCategoryEnum.default('other'),
   income_date: z.coerce.date().default(() => new Date()),
   notes: z.string().max(500).optional().nullable(),
+  // Location attribution (optional - NULL means org-wide income)
+  location_id: z.string().uuid().optional().nullable(),
 })
 
 // =============================================================================

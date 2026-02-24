@@ -226,7 +226,20 @@ export async function POST(request: NextRequest) {
         !(equipmentConfig?.unavailable_equipment || []).includes(eq)
     )
 
-    // 6. Run alternatives engine
+    // 6. Get organization plan for model selection
+    const { data: orgData } = await adminClient
+      .from('organizations')
+      .select('subscription_plan')
+      .eq('id', organizationId)
+      .single()
+
+    const plan = (orgData?.subscription_plan as string) || 'free'
+
+    // Select AI model based on plan
+    // Pro/Enterprise get gpt-4-turbo, others get gpt-3.5-turbo
+    const aiModel = ['pro', 'enterprise'].includes(plan) ? 'gpt-4-turbo' : 'gpt-3.5-turbo'
+
+    // 7. Run alternatives engine
     const aiEnabled =
       usage.ai_enabled &&
       usage.tokens_used_this_period < usage.monthly_token_limit
@@ -238,9 +251,10 @@ export async function POST(request: NextRequest) {
       difficultyFilter: difficulty_filter,
       limit,
       aiEnabled,
+      model: aiModel,
     })
 
-    // 7. Log usage and consume tokens (now tracks per-user)
+    // 8. Log usage and consume tokens (now tracks per-user)
     const responseTimeMs = Date.now() - startTime
 
     const { data: consumeResult, error: consumeError } = await adminClient.rpc('consume_ai_tokens', {
@@ -271,7 +285,7 @@ export async function POST(request: NextRequest) {
     const remainingRequests = consumeData?.user_remaining ?? 0
     console.log('Final remainingRequests:', remainingRequests)
 
-    // 8. Return response
+    // 9. Return response
     return apiSuccess({
       alternatives: result.alternatives,
       was_cached: result.wasCached,

@@ -20,3 +20,6 @@ export * from './api.types'
 
 // Benchmark types
 export * from './benchmark.types'
+
+// Program types
+export * from './program.types'

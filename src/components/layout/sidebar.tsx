@@ -8,6 +8,7 @@ import { useSidebar } from './sidebar-context'
 import { SidebarNav } from './sidebar-nav'
 import { SidebarUserMenu } from './sidebar-user-menu'
 import { AppLogo } from './app-logo'
+import { LocationSwitcher } from './location-switcher'
 import type { FilteredNavigation } from '@/lib/navigation/filter-navigation'
 import type { ViewPreferences } from '@/lib/auth/get-view-preferences'
 
@@ -33,6 +34,11 @@ export function Sidebar({ user, navigation, viewPreferences, className }: Sideba
       {/* Logo */}
       <div className="flex h-14 items-center border-b px-3">
         <AppLogo collapsed={collapsed} />
+      </div>
+
+      {/* Location Switcher */}
+      <div className="border-b px-1 py-2">
+        <LocationSwitcher collapsed={collapsed} />
       </div>
 
       {/* Main Navigation */}

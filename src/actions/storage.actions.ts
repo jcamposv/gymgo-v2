@@ -8,7 +8,12 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { requirePermission } from '@/lib/auth/server-auth'
-import { checkStorageLimit, updateStorageUsage } from '@/lib/plan-limits'
+import {
+  checkStorageLimit,
+  updateStorageUsage,
+  checkFileSizeLimit,
+  PLAN_LIMIT_ERROR_CODE,
+} from '@/lib/plan-limits'
 
 // =============================================================================
 // TYPES
@@ -24,6 +29,24 @@ interface UploadResult {
     path: string
   }
   errors?: Record<string, string[]>
+}
+
+// =============================================================================
+// CHECK FILE SIZE LIMIT (Plan-based)
+// =============================================================================
+
+export async function checkOrgFileSizeLimit(fileSizeBytes: number): Promise<{
+  allowed: boolean
+  maxSizeMB: number
+  message?: string
+}> {
+  const { authorized, user } = await requirePermission('manage_members')
+
+  if (!authorized || !user) {
+    return { allowed: false, maxSizeMB: 0, message: 'No autorizado' }
+  }
+
+  return checkFileSizeLimit(user.organizationId, fileSizeBytes)
 }
 
 // =============================================================================
@@ -147,10 +170,28 @@ export async function uploadFileWithLimitCheck(
     return { success: false, message: 'Archivo y bucket son requeridos' }
   }
 
+  // Check file size limit based on plan
+  const fileSizeCheck = await checkFileSizeLimit(user.organizationId, file.size)
+  if (!fileSizeCheck.allowed) {
+    return {
+      success: false,
+      message: fileSizeCheck.message || 'Archivo excede el límite de tamaño',
+      errors: {
+        [PLAN_LIMIT_ERROR_CODE]: [fileSizeCheck.message || 'Límite de tamaño de archivo alcanzado'],
+      },
+    }
+  }
+
   // Check storage limit before upload
   const limitCheck = await checkStorageLimit(user.organizationId, file.size)
   if (!limitCheck.allowed) {
-    return { success: false, message: limitCheck.message || 'Límite de almacenamiento alcanzado' }
+    return {
+      success: false,
+      message: limitCheck.message || 'Límite de almacenamiento alcanzado',
+      errors: {
+        [PLAN_LIMIT_ERROR_CODE]: [limitCheck.message || 'Límite de almacenamiento alcanzado'],
+      },
+    }
   }
 
   const supabase = await createClient()

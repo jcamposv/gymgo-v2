@@ -4,7 +4,28 @@ import {
   generateInvitationEmailText,
   type InvitationEmailProps,
 } from './templates/invitation'
+import {
+  generateWelcomeEmailHtml,
+  generateWelcomeEmailText,
+  generateResetPasswordEmailHtml as generateAuthResetEmailHtml,
+  generateResetPasswordEmailText as generateAuthResetEmailText,
+  type WelcomeEmailProps,
+  type ResetPasswordEmailProps as AuthResetPasswordEmailProps,
+} from './templates/auth'
 import { checkEmailLimit, consumeEmail } from '@/lib/plan-limits'
+
+// =============================================================================
+// URL HELPER
+// =============================================================================
+
+function getAppUrl(): string {
+  return process.env.NEXT_PUBLIC_APP_URL || 'https://app.gymgo.io'
+}
+
+export function buildAuthUrl(path: string): string {
+  const baseUrl = getAppUrl()
+  return `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`
+}
 
 // =============================================================================
 // EMAIL SERVICE
@@ -250,4 +271,84 @@ Si no solicitaste esto, puedes ignorar este correo.
 
 ${props.gymName}
   `.trim()
+}
+
+// =============================================================================
+// AUTH EMAILS (Welcome/Confirm + Reset Password for GymGo platform)
+// =============================================================================
+
+/**
+ * Sends a welcome/confirmation email for new GymGo signups
+ */
+export async function sendWelcomeEmail(
+  to: string,
+  props: WelcomeEmailProps
+): Promise<SendEmailResult> {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: emailConfig.from,
+      to,
+      replyTo: emailConfig.replyTo,
+      subject: 'Bienvenido a GymGo - Confirma tu correo',
+      html: generateWelcomeEmailHtml(props),
+      text: generateWelcomeEmailText(props),
+    })
+
+    if (error) {
+      console.error('Resend error (welcome):', error)
+      return {
+        success: false,
+        error: error.message,
+      }
+    }
+
+    return {
+      success: true,
+      messageId: data?.id,
+    }
+  } catch (err) {
+    console.error('Email send error (welcome):', err)
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Error al enviar el correo',
+    }
+  }
+}
+
+/**
+ * Sends a password reset email for GymGo platform users
+ */
+export async function sendAuthResetPasswordEmail(
+  to: string,
+  props: AuthResetPasswordEmailProps
+): Promise<SendEmailResult> {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: emailConfig.from,
+      to,
+      replyTo: emailConfig.replyTo,
+      subject: 'Restablecer contraseña - GymGo',
+      html: generateAuthResetEmailHtml(props),
+      text: generateAuthResetEmailText(props),
+    })
+
+    if (error) {
+      console.error('Resend error (reset):', error)
+      return {
+        success: false,
+        error: error.message,
+      }
+    }
+
+    return {
+      success: true,
+      messageId: data?.id,
+    }
+  } catch (err) {
+    console.error('Email send error (reset):', err)
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Error al enviar el correo',
+    }
+  }
 }

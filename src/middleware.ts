@@ -32,9 +32,9 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect authenticated users away from login/register pages
-  // but NOT from onboarding (they might need to complete it)
+  // Use /auth/redirect for instant server-side role-based routing
   if (user && (pathname === ROUTES.LOGIN || pathname === ROUTES.REGISTER)) {
-    return NextResponse.redirect(new URL(ROUTES.DASHBOARD, request.url))
+    return NextResponse.redirect(new URL('/auth/redirect', request.url))
   }
 
   return supabaseResponse

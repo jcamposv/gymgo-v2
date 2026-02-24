@@ -29,7 +29,7 @@ export type PreferredView = 'dashboard' | 'member'
 
 export interface PostLoginRedirectResult {
   redirectTo: string
-  reason: 'onboarding' | 'dashboard' | 'member_dashboard' | 'recovery'
+  reason: 'onboarding' | 'plan_selection' | 'dashboard' | 'member_dashboard' | 'recovery'
   organizationId: string | null
 }
 
@@ -63,8 +63,30 @@ export async function getPostLoginRedirect(): Promise<PostLoginRedirectResult> {
     email: string
   } | null
 
-  // Step 2: If profile has organization_id, redirect based on role and preferences
+  // Step 2: If profile has organization_id, check if plan selection is needed
   if (profileData?.organization_id) {
+    // Check if the organization has explicitly selected a plan
+    // We use subscription_started_at (nullable, no default) to detect this
+    // subscription_started_at is set when user selects a plan, null otherwise
+    const { data: orgData } = await supabase
+      .from('organizations')
+      .select('subscription_started_at')
+      .eq('id', profileData.organization_id)
+      .single()
+
+    const organization = orgData as { subscription_started_at: string | null } | null
+
+    // If subscription_started_at is null, user hasn't selected a plan yet
+    // This happens right after onboarding completion
+    if (!organization?.subscription_started_at) {
+      return {
+        redirectTo: ROUTES.SELECT_PLAN,
+        reason: 'plan_selection',
+        organizationId: profileData.organization_id,
+      }
+    }
+
+    // Plan is selected, redirect based on role and preferences
     return getRedirectByRole(
       supabase,
       profileData.role,

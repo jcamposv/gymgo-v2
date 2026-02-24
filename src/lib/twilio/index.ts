@@ -18,6 +18,8 @@ import type {
   SendMessageParams,
   SendMessageResult,
   MessageStatusResult,
+  SendWhatsAppMessageParams,
+  SendWhatsAppMessageResult,
   ITwilioSubaccountService,
   ITwilioContentService,
   ITwilioMessagingService,
@@ -314,6 +316,38 @@ export const messagingService: ITwilioMessagingService = {
         status: 'failed',
         errorCode: twilioError.code?.toString(),
         errorMessage: twilioError.message || 'Unknown error',
+      }
+    }
+  },
+
+  async sendWhatsAppMessage(
+    params: SendWhatsAppMessageParams
+  ): Promise<SendWhatsAppMessageResult> {
+    try {
+      const { accountSid, authToken } = getMasterCredentials()
+      const client = Twilio(accountSid, authToken)
+
+      // Format phone numbers
+      const toNumber = params.to.startsWith('+') ? params.to : `+${params.to}`
+      const fromNumber = params.from || process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886'
+      const formattedFrom = fromNumber.startsWith('whatsapp:') ? fromNumber : `whatsapp:${fromNumber}`
+
+      const message = await client.messages.create({
+        to: `whatsapp:${toNumber}`,
+        from: formattedFrom,
+        body: params.body,
+      })
+
+      return {
+        success: true,
+        messageSid: message.sid,
+        status: message.status,
+      }
+    } catch (error: unknown) {
+      const twilioError = error as { message?: string; code?: number }
+      return {
+        success: false,
+        error: twilioError.message || 'Unknown error',
       }
     }
   },

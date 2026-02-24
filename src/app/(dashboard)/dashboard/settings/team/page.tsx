@@ -12,8 +12,9 @@ import {
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Users, Shield, UserCog } from 'lucide-react'
+import { Users, Shield, UserCog, Dumbbell } from 'lucide-react'
 import { RoleSelector } from './role-selector'
+import { TrainingToggle } from './training-toggle'
 
 export const metadata = {
   title: 'Equipo | GymGo',
@@ -31,11 +32,8 @@ export default async function TeamSettingsPage() {
 
   if (error) {
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Equipo</h1>
-          <p className="text-muted-foreground">Error al cargar el equipo: {error}</p>
-        </div>
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">Error al cargar el equipo: {error}</p>
       </div>
     )
   }
@@ -53,12 +51,6 @@ export default async function TeamSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Equipo</h1>
-        <p className="text-muted-foreground">
-          Administra los roles y permisos de tu equipo
-        </p>
-      </div>
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">
@@ -107,7 +99,7 @@ export default async function TeamSettingsPage() {
             Personal del Gimnasio
           </CardTitle>
           <CardDescription>
-            Usuarios con permisos de administracion
+            Usuarios con permisos de administracion. Activa <Dumbbell className="inline h-3 w-3" /> para permitir que reciban rutinas y reserven clases.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -151,7 +143,11 @@ export default async function TeamSettingsPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-6">
+                      <TrainingToggle
+                        userId={member.id}
+                        isCurrentUser={member.is_current_user}
+                      />
                       <RoleSelector
                         userId={member.id}
                         currentRole={appRole}

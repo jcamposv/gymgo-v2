@@ -28,6 +28,7 @@ import { hasPermission } from '@/lib/rbac'
 export interface Payment {
   id: string
   organization_id: string
+  location_id: string | null
   member_id: string
   plan_id: string | null
   amount: number
@@ -52,11 +53,16 @@ export interface Payment {
   created_by_profile?: {
     full_name: string
   }
+  location?: {
+    id: string
+    name: string
+  }
 }
 
 export interface Expense {
   id: string
   organization_id: string
+  location_id: string | null
   description: string
   amount: number
   currency: string
@@ -71,11 +77,16 @@ export interface Expense {
   created_by_profile?: {
     full_name: string
   }
+  location?: {
+    id: string
+    name: string
+  }
 }
 
 export interface Income {
   id: string
   organization_id: string
+  location_id: string | null
   description: string
   amount: number
   currency: string
@@ -86,6 +97,10 @@ export interface Income {
   created_at: string
   created_by_profile?: {
     full_name: string
+  }
+  location?: {
+    id: string
+    name: string
   }
 }
 
@@ -138,6 +153,8 @@ export async function getFinanceOverview(params?: {
   compare?: boolean
   compareStartDate?: string
   compareEndDate?: string
+  location_id?: string
+  include_org_wide?: boolean // Include org-wide expenses/income when filtering by location
 }): Promise<{ data: FinanceOverview | null; error: string | null }> {
   const { authorized, user, error } = await requirePermission('view_gym_finances')
 
@@ -161,11 +178,13 @@ export async function getFinanceOverview(params?: {
 
   const currency = (org as { currency: string } | null)?.currency || 'MXN'
   const organizationId = user.organizationId
+  const locationId = params?.location_id
+  const includeOrgWide = params?.include_org_wide ?? true
 
   // Helper function to fetch period data
   async function fetchPeriodData(periodStart: string, periodEnd: string) {
     // Get total payments (membership income)
-    const { data: payments } = await supabase
+    let paymentsQuery = supabase
       .from('payments')
       .select('amount, status')
       .eq('organization_id', organizationId)
@@ -173,27 +192,53 @@ export async function getFinanceOverview(params?: {
       .gte('created_at', periodStart)
       .lte('created_at', periodEnd)
 
+    if (locationId) {
+      paymentsQuery = paymentsQuery.eq('location_id', locationId)
+    }
+
+    const { data: payments } = await paymentsQuery
+
     const membershipIncome = (payments as { amount: number }[] || [])
       .reduce((sum, p) => sum + Number(p.amount), 0)
 
     // Get other income
-    const { data: incomeData } = await supabase
+    let incomeQuery = supabase
       .from('income')
       .select('amount')
       .eq('organization_id', organizationId)
       .gte('income_date', periodStart)
       .lte('income_date', periodEnd)
 
+    if (locationId) {
+      if (includeOrgWide) {
+        incomeQuery = incomeQuery.or(`location_id.eq.${locationId},location_id.is.null`)
+      } else {
+        incomeQuery = incomeQuery.eq('location_id', locationId)
+      }
+    }
+
+    const { data: incomeData } = await incomeQuery
+
     const otherIncome = (incomeData as { amount: number }[] || [])
       .reduce((sum, i) => sum + Number(i.amount), 0)
 
     // Get total expenses
-    const { data: expensesData } = await supabase
+    let expensesQuery = supabase
       .from('expenses')
       .select('amount')
       .eq('organization_id', organizationId)
       .gte('expense_date', periodStart)
       .lte('expense_date', periodEnd)
+
+    if (locationId) {
+      if (includeOrgWide) {
+        expensesQuery = expensesQuery.or(`location_id.eq.${locationId},location_id.is.null`)
+      } else {
+        expensesQuery = expensesQuery.eq('location_id', locationId)
+      }
+    }
+
+    const { data: expensesData } = await expensesQuery
 
     const totalExpenses = (expensesData as { amount: number }[] || [])
       .reduce((sum, e) => sum + Number(e.amount), 0)
@@ -214,11 +259,17 @@ export async function getFinanceOverview(params?: {
   const currentPeriod = await fetchPeriodData(startDate, endDate)
 
   // Get pending payments (always current, not filtered by date)
-  const { data: pendingPaymentsData } = await supabase
+  let pendingQuery = supabase
     .from('payments')
     .select('amount')
     .eq('organization_id', organizationId)
     .eq('status', 'pending')
+
+  if (locationId) {
+    pendingQuery = pendingQuery.eq('location_id', locationId)
+  }
+
+  const { data: pendingPaymentsData } = await pendingQuery
 
   const pendingPayments = (pendingPaymentsData as { amount: number }[] || [])
     .reduce((sum, p) => sum + Number(p.amount), 0)
@@ -271,6 +322,7 @@ export async function getPayments(params?: {
   status?: string
   startDate?: string
   endDate?: string
+  location_id?: string
   page?: number
   per_page?: number
 }): Promise<{ data: Payment[] | null; count: number; error: string | null }> {
@@ -312,6 +364,11 @@ export async function getPayments(params?: {
 
   if (params?.endDate) {
     query = query.lte('created_at', params.endDate)
+  }
+
+  // Filter by location if specified
+  if (params?.location_id) {
+    query = query.eq('location_id', params.location_id)
   }
 
   const { data, count, error: dbError } = await query
@@ -391,6 +448,8 @@ export async function getExpenses(params?: {
   category?: string
   startDate?: string
   endDate?: string
+  location_id?: string
+  include_org_wide?: boolean // Include expenses with no location (org-wide)
   page?: number
   per_page?: number
 }): Promise<{ data: Expense[] | null; count: number; error: string | null }> {
@@ -434,6 +493,16 @@ export async function getExpenses(params?: {
 
   if (params?.endDate) {
     dbQuery = dbQuery.lte('created_at', params.endDate)
+  }
+
+  // Filter by location if specified
+  if (params?.location_id) {
+    if (params?.include_org_wide) {
+      // Include both location-specific AND org-wide expenses
+      dbQuery = dbQuery.or(`location_id.eq.${params.location_id},location_id.is.null`)
+    } else {
+      dbQuery = dbQuery.eq('location_id', params.location_id)
+    }
   }
 
   const { data, count, error: dbError } = await dbQuery
@@ -500,6 +569,8 @@ export async function getIncome(params?: {
   category?: string
   startDate?: string
   endDate?: string
+  location_id?: string
+  include_org_wide?: boolean // Include income with no location (org-wide)
   page?: number
   per_page?: number
 }): Promise<{ data: Income[] | null; count: number; error: string | null }> {
@@ -543,6 +614,16 @@ export async function getIncome(params?: {
 
   if (params?.endDate) {
     dbQuery = dbQuery.lte('created_at', params.endDate)
+  }
+
+  // Filter by location if specified
+  if (params?.location_id) {
+    if (params?.include_org_wide) {
+      // Include both location-specific AND org-wide income
+      dbQuery = dbQuery.or(`location_id.eq.${params.location_id},location_id.is.null`)
+    } else {
+      dbQuery = dbQuery.eq('location_id', params.location_id)
+    }
   }
 
   const { data, count, error: dbError } = await dbQuery
@@ -779,6 +860,8 @@ export interface RevenueKpiResponse {
  */
 export async function getRevenueKpi(params?: {
   range?: 'today' | 'week' | 'month' | 'year'
+  location_id?: string
+  include_org_wide?: boolean
 }): Promise<{ data: RevenueKpiResponse | null; error: string | null }> {
   const { authorized, user, error } = await requirePermission('view_gym_finances')
 
@@ -789,6 +872,8 @@ export async function getRevenueKpi(params?: {
   const supabase = await createClient()
   const now = new Date()
   const range = params?.range || 'month'
+  const locationId = params?.location_id
+  const includeOrgWide = params?.include_org_wide ?? true
 
   // Calculate date ranges based on selected range
   let startDate: Date
@@ -835,7 +920,7 @@ export async function getRevenueKpi(params?: {
   const currency = (org as { currency: string } | null)?.currency || 'MXN'
 
   // Get current period payments (membership income)
-  const { data: currentPayments } = await supabase
+  let currentPaymentsQuery = supabase
     .from('payments')
     .select('amount')
     .eq('organization_id', user.organizationId)
@@ -843,16 +928,32 @@ export async function getRevenueKpi(params?: {
     .gte('created_at', startDate.toISOString())
     .lt('created_at', endDate.toISOString())
 
+  if (locationId) {
+    currentPaymentsQuery = currentPaymentsQuery.eq('location_id', locationId)
+  }
+
+  const { data: currentPayments } = await currentPaymentsQuery
+
   const membershipIncome = (currentPayments as { amount: number }[] || [])
     .reduce((sum, p) => sum + Number(p.amount), 0)
 
   // Get current period other income
-  const { data: currentIncome } = await supabase
+  let currentIncomeQuery = supabase
     .from('income')
     .select('amount')
     .eq('organization_id', user.organizationId)
     .gte('income_date', startDate.toISOString())
     .lt('income_date', endDate.toISOString())
+
+  if (locationId) {
+    if (includeOrgWide) {
+      currentIncomeQuery = currentIncomeQuery.or(`location_id.eq.${locationId},location_id.is.null`)
+    } else {
+      currentIncomeQuery = currentIncomeQuery.eq('location_id', locationId)
+    }
+  }
+
+  const { data: currentIncome } = await currentIncomeQuery
 
   const otherIncome = (currentIncome as { amount: number }[] || [])
     .reduce((sum, i) => sum + Number(i.amount), 0)
@@ -860,7 +961,7 @@ export async function getRevenueKpi(params?: {
   const totalRevenue = membershipIncome + otherIncome
 
   // Get previous period payments
-  const { data: prevPayments } = await supabase
+  let prevPaymentsQuery = supabase
     .from('payments')
     .select('amount')
     .eq('organization_id', user.organizationId)
@@ -868,16 +969,32 @@ export async function getRevenueKpi(params?: {
     .gte('created_at', prevStartDate.toISOString())
     .lt('created_at', prevEndDate.toISOString())
 
+  if (locationId) {
+    prevPaymentsQuery = prevPaymentsQuery.eq('location_id', locationId)
+  }
+
+  const { data: prevPayments } = await prevPaymentsQuery
+
   const prevMembershipIncome = (prevPayments as { amount: number }[] || [])
     .reduce((sum, p) => sum + Number(p.amount), 0)
 
   // Get previous period other income
-  const { data: prevIncome } = await supabase
+  let prevIncomeQuery = supabase
     .from('income')
     .select('amount')
     .eq('organization_id', user.organizationId)
     .gte('income_date', prevStartDate.toISOString())
     .lt('income_date', prevEndDate.toISOString())
+
+  if (locationId) {
+    if (includeOrgWide) {
+      prevIncomeQuery = prevIncomeQuery.or(`location_id.eq.${locationId},location_id.is.null`)
+    } else {
+      prevIncomeQuery = prevIncomeQuery.eq('location_id', locationId)
+    }
+  }
+
+  const { data: prevIncome } = await prevIncomeQuery
 
   const prevOtherIncome = (prevIncome as { amount: number }[] || [])
     .reduce((sum, i) => sum + Number(i.amount), 0)

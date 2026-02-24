@@ -9,6 +9,7 @@ import {
   sendClassUpdatedNotification,
   sendClassCancelledNotification,
 } from '@/lib/firebase/notifications'
+import { checkClassLimit, PLAN_LIMIT_ERROR_CODE } from '@/lib/plan-limits'
 
 export type ActionState = {
   success: boolean
@@ -304,6 +305,18 @@ export async function createClass(
     return { success: false, message: profileError ?? 'No profile found' }
   }
 
+  // Check class limit before creating
+  const limitCheck = await checkClassLimit(profile.organization_id)
+  if (!limitCheck.allowed) {
+    return {
+      success: false,
+      message: limitCheck.message || 'Límite de clases alcanzado',
+      errors: {
+        [PLAN_LIMIT_ERROR_CODE]: [limitCheck.message || 'Límite alcanzado'],
+      },
+    }
+  }
+
   const rawData = {
     name: formData.get('name'),
     description: formData.get('description') || null,
@@ -470,6 +483,18 @@ export async function createClassData(data: ClassFormData): Promise<ActionState>
   const { profile, error: profileError } = await getUserProfile()
   if (profileError || !profile) {
     return { success: false, message: profileError ?? 'No profile found' }
+  }
+
+  // Check class limit before creating
+  const limitCheck = await checkClassLimit(profile.organization_id)
+  if (!limitCheck.allowed) {
+    return {
+      success: false,
+      message: limitCheck.message || 'Límite de clases alcanzado',
+      errors: {
+        [PLAN_LIMIT_ERROR_CODE]: [limitCheck.message || 'Límite alcanzado'],
+      },
+    }
   }
 
   const validated = classSchema.safeParse(data)

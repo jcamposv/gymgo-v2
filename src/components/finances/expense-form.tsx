@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Loader2 } from 'lucide-react'
+import { Loader2, MapPin } from 'lucide-react'
 
 import { createExpense } from '@/actions/finance.actions'
 import {
@@ -14,6 +14,7 @@ import {
   type ExpenseCategory,
 } from '@/schemas/finance.schema'
 import { getCurrencySymbol } from '@/lib/utils'
+import { useLocationContext } from '@/providers/location-provider'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -50,6 +51,7 @@ interface ExpenseFormProps {
 export function ExpenseForm({ currency }: ExpenseFormProps) {
   const router = useRouter()
   const symbol = getCurrencySymbol(currency)
+  const { activeLocationId, activeLocationName, isAllLocationsMode, hasMultipleLocations } = useLocationContext()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<ExpenseFormData>({
@@ -63,12 +65,20 @@ export function ExpenseForm({ currency }: ExpenseFormProps) {
       receipt_url: '',
       notes: '',
       is_recurring: false,
+      // Auto-assign from dashboard context (no selector)
+      location_id: activeLocationId,
     },
   })
 
   const onSubmit = async (data: ExpenseFormData) => {
+    // Ensure location_id is set from context
+    const submitData = {
+      ...data,
+      location_id: activeLocationId,
+    }
+
     try {
-      const result = await createExpense(data)
+      const result = await createExpense(submitData)
 
       if (result.success) {
         toast.success(result.message)
@@ -92,6 +102,27 @@ export function ExpenseForm({ currency }: ExpenseFormProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="space-y-6">
+          {/* Location Context Indicator (read-only) */}
+          {hasMultipleLocations && (
+            <Card className="border-primary/20 bg-primary/5">
+              <CardContent className="py-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 shrink-0">
+                    <MapPin className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">
+                      Se registrara en: {activeLocationName}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Este gasto se asociara a la sucursal actual del dashboard
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle>Informacion del gasto</CardTitle>
@@ -264,7 +295,7 @@ export function ExpenseForm({ currency }: ExpenseFormProps) {
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={form.formState.isSubmitting}>
+            <Button type="submit" disabled={form.formState.isSubmitting || isAllLocationsMode}>
               {form.formState.isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

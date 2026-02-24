@@ -51,7 +51,7 @@ export default function RootLayout({
         <JsonLd data={SOFTWARE_SCHEMA} />
         <JsonLd data={WEBSITE_SCHEMA} />
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.className} overflow-x-hidden`}>
         <SWRProvider>
           {children}
         </SWRProvider>
