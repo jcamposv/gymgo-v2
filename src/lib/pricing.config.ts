@@ -161,11 +161,11 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxClasses: -1, // Unlimited
     maxClassesPerDay: -1, // Unlimited
 
-    // AI Features - Basic
-    aiRequestsPerMonth: 100,
+    // AI Features - Basic (~$2/mo budget)
+    aiRequestsPerMonth: 1000,
     aiModel: 'gpt-3.5-turbo',
-    routineGenerationsPerMonth: 20,
-    exerciseAlternativesPerMonth: 50,
+    routineGenerationsPerMonth: 200,
+    exerciseAlternativesPerMonth: 500,
 
     // Communications
     emailsPerMonth: 500,
@@ -208,11 +208,11 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxClasses: -1, // Unlimited
     maxClassesPerDay: -1, // Unlimited
 
-    // AI Features - Moderate
-    aiRequestsPerMonth: 300,
+    // AI Features - Moderate (~$3/mo budget)
+    aiRequestsPerMonth: 1500,
     aiModel: 'gpt-3.5-turbo',
-    routineGenerationsPerMonth: 50,
-    exerciseAlternativesPerMonth: 150,
+    routineGenerationsPerMonth: 300,
+    exerciseAlternativesPerMonth: 750,
 
     // Communications
     emailsPerMonth: 2000,
@@ -255,11 +255,11 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxClasses: -1, // Unlimited
     maxClassesPerDay: -1, // Unlimited
 
-    // AI Features - Full
-    aiRequestsPerMonth: 1000,
+    // AI Features - Full (~$13/mo budget, ~800K tokens)
+    aiRequestsPerMonth: 800,
     aiModel: 'gpt-4-turbo',
     routineGenerationsPerMonth: 200,
-    exerciseAlternativesPerMonth: 500,
+    exerciseAlternativesPerMonth: 400,
 
     // Communications
     emailsPerMonth: 5000,
@@ -427,7 +427,7 @@ export const PLAN_FEATURE_SECTIONS: Record<PlanTier, PlanFeatureSection[]> = {
     {
       title: 'Inteligencia artificial',
       features: [
-        { label: 'Generación de rutinas con IA', status: 'limited', value: '100 rutinas/mes' },
+        { label: 'Generación de rutinas con IA', status: 'limited', value: '1,000 solicitudes/mes', tooltip: 'Incluye rutinas y alternativas de ejercicios' },
       ],
     },
     {
@@ -468,7 +468,7 @@ export const PLAN_FEATURE_SECTIONS: Record<PlanTier, PlanFeatureSection[]> = {
     {
       title: 'Inteligencia artificial',
       features: [
-        { label: 'Generación de rutinas con IA', status: 'limited', value: '300 rutinas/mes' },
+        { label: 'Generación de rutinas con IA', status: 'limited', value: '1,500 solicitudes/mes', tooltip: 'Incluye rutinas y alternativas de ejercicios' },
       ],
     },
     {
@@ -516,7 +516,7 @@ export const PLAN_FEATURE_SECTIONS: Record<PlanTier, PlanFeatureSection[]> = {
     {
       title: 'Inteligencia artificial',
       features: [
-        { label: 'IA avanzada para rutinas', status: 'limited', value: '1,000 rutinas/mes', tooltip: 'Rutinas más precisas con tecnología de última generación' },
+        { label: 'IA avanzada para rutinas', status: 'limited', value: '800 solicitudes/mes', tooltip: 'Usa GPT-4 Turbo para rutinas más precisas' },
       ],
     },
     {
@@ -730,9 +730,9 @@ export const PRICING_PLANS: PricingPlan[] = [
  */
 export const ESTIMATED_COSTS_USD: Record<PlanTier, number> = {
   free: 1, // ~$1/mo (minimal usage, shared infrastructure)
-  starter: 4, // ~$4/mo (minimal Supabase, few AI calls, minimal email)
-  growth: 10, // ~$10/mo (moderate AI, WhatsApp, shared Supabase)
-  pro: 20, // ~$20/mo (GPT-4 AI, WhatsApp, more storage)
+  starter: 5, // ~$5/mo ($2 AI + minimal Supabase, email)
+  growth: 8, // ~$8/mo ($3 AI + WhatsApp, shared Supabase)
+  pro: 18, // ~$18/mo ($10 AI GPT-4 + WhatsApp, more storage)
   enterprise: 100, // ~$100+/mo (dedicated resources, unlimited usage)
 }
 
