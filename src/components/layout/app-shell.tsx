@@ -39,7 +39,7 @@ export function AppShell({
         <LocationProvider initialLocations={locations} maxLocations={maxLocations}>
           <TooltipProvider delayDuration={0}>
             <SidebarProvider>
-              <div className="flex min-h-screen bg-background">
+              <div className="flex min-h-screen overflow-x-hidden bg-background">
                 {/* Desktop Sidebar - hidden on mobile */}
                 <Sidebar
                   user={user}

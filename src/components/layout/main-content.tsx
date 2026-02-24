@@ -15,7 +15,7 @@ export function MainContent({ children, onMenuClick }: MainContentProps) {
   return (
     <div
       className={cn(
-        'flex flex-1 flex-col transition-all duration-300',
+        'flex flex-1 flex-col min-w-0 transition-all duration-300',
         collapsed ? 'lg:ml-16' : 'lg:ml-64'
       )}
     >
@@ -23,7 +23,7 @@ export function MainContent({ children, onMenuClick }: MainContentProps) {
       <TopBar onMenuClick={onMenuClick} />
 
       {/* Page content */}
-      <main className="flex-1 p-4 lg:p-6">{children}</main>
+      <main className="flex-1 overflow-x-hidden p-4 lg:p-6">{children}</main>
     </div>
   )
 }
