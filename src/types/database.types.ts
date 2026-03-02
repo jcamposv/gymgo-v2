@@ -153,6 +153,62 @@ export type Database = {
           },
         ]
       }
+      billing_history: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          invoice_pdf: string | null
+          invoice_url: string | null
+          organization_id: string
+          paid_at: string | null
+          period_end: string | null
+          period_start: string | null
+          status: string
+          stripe_invoice_id: string | null
+        }
+        Insert: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          invoice_pdf?: string | null
+          invoice_url?: string | null
+          organization_id: string
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string
+          stripe_invoice_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          invoice_pdf?: string | null
+          invoice_url?: string | null
+          organization_id?: string
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string
+          stripe_invoice_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           cancellation_reason: string | null
@@ -2242,6 +2298,53 @@ export type Database = {
           },
         ]
       }
+      push_tokens: {
+        Row: {
+          app_version: string | null
+          created_at: string | null
+          device_id: string | null
+          id: string
+          is_active: boolean | null
+          organization_id: string
+          platform: string
+          token: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          app_version?: string | null
+          created_at?: string | null
+          device_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          organization_id: string
+          platform: string
+          token: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          app_version?: string | null
+          created_at?: string | null
+          device_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string
+          platform?: string
+          token?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_tokens_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       storage_usage: {
         Row: {
           created_at: string | null
@@ -2281,6 +2384,139 @@ export type Database = {
             foreignKeyName: "storage_usage_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stripe_customers: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          stripe_customer_id: string
+          stripe_email: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          stripe_customer_id: string
+          stripe_email?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          stripe_customer_id?: string
+          stripe_email?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_customers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stripe_prices: {
+        Row: {
+          amount_cents: number
+          billing_period: string
+          created_at: string
+          currency: string
+          id: string
+          is_active: boolean | null
+          plan_tier: Database["public"]["Enums"]["subscription_plan"]
+          stripe_price_id: string
+          stripe_product_id: string
+        }
+        Insert: {
+          amount_cents: number
+          billing_period: string
+          created_at?: string
+          currency?: string
+          id?: string
+          is_active?: boolean | null
+          plan_tier: Database["public"]["Enums"]["subscription_plan"]
+          stripe_price_id: string
+          stripe_product_id: string
+        }
+        Update: {
+          amount_cents?: number
+          billing_period?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          is_active?: boolean | null
+          plan_tier?: Database["public"]["Enums"]["subscription_plan"]
+          stripe_price_id?: string
+          stripe_product_id?: string
+        }
+        Relationships: []
+      }
+      stripe_subscriptions: {
+        Row: {
+          billing_period: string
+          cancel_at_period_end: boolean | null
+          cancelled_at: string | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          ended_at: string | null
+          id: string
+          metadata: Json | null
+          organization_id: string
+          plan_tier: Database["public"]["Enums"]["subscription_plan"]
+          status: string
+          stripe_price_id: string
+          stripe_subscription_id: string
+          updated_at: string
+        }
+        Insert: {
+          billing_period: string
+          cancel_at_period_end?: boolean | null
+          cancelled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          ended_at?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id: string
+          plan_tier: Database["public"]["Enums"]["subscription_plan"]
+          status?: string
+          stripe_price_id: string
+          stripe_subscription_id: string
+          updated_at?: string
+        }
+        Update: {
+          billing_period?: string
+          cancel_at_period_end?: boolean | null
+          cancelled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          ended_at?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id?: string
+          plan_tier?: Database["public"]["Enums"]["subscription_plan"]
+          status?: string
+          stripe_price_id?: string
+          stripe_subscription_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_subscriptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -3224,7 +3460,7 @@ export type Database = {
         | "custom"
       payment_status: "pending" | "paid" | "failed" | "refunded"
       preferred_view_type: "dashboard" | "member"
-      subscription_plan: "starter" | "growth" | "pro" | "enterprise"
+      subscription_plan: "free" | "starter" | "growth" | "pro" | "enterprise"
       subscription_status:
         | "trial"
         | "active"
@@ -3473,7 +3709,7 @@ export const Constants = {
       ],
       payment_status: ["pending", "paid", "failed", "refunded"],
       preferred_view_type: ["dashboard", "member"],
-      subscription_plan: ["starter", "growth", "pro", "enterprise"],
+      subscription_plan: ["free", "starter", "growth", "pro", "enterprise"],
       subscription_status: [
         "trial",
         "active",
