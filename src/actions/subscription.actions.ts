@@ -62,9 +62,9 @@ export async function selectSubscriptionPlan(input: SelectPlanInput): Promise<Ac
   // Get plan limits
   const planLimits = PLAN_LIMITS[input.plan]
 
-  // Calculate trial end date (90 days from now)
+  // Calculate trial end date (30 days from now)
   const trialEndsAt = new Date()
-  trialEndsAt.setDate(trialEndsAt.getDate() + 90)
+  trialEndsAt.setDate(trialEndsAt.getDate() + 30)
 
   // Map plan to database enum (free -> starter in DB, since DB doesn't have 'free')
   const dbPlan = input.plan === 'free' ? 'starter' : input.plan
@@ -150,7 +150,7 @@ export async function getSubscriptionInfo(): Promise<{
       billingPeriod: 'monthly' as 'monthly' | 'yearly',
       trialEndsAt: null,
       isActive: true,
-      daysLeftInTrial: 90, // Default 90 days
+      daysLeftInTrial: 30, // Default 30 days
     },
     error: null
   }

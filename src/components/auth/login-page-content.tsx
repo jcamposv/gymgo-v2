@@ -1,12 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { LoginForm } from '@/components/forms/login-form'
 import { ForgotPasswordForm } from '@/components/forms/forgot-password-form'
 
 export function LoginPageContent() {
   const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const searchParams = useSearchParams()
+
+  // Capture plan/interval from URL and save to sessionStorage
+  useEffect(() => {
+    const plan = searchParams.get('plan')
+    const interval = searchParams.get('interval')
+    if (plan) sessionStorage.setItem('gymgo_selected_plan', plan)
+    if (interval) sessionStorage.setItem('gymgo_selected_interval', interval)
+  }, [searchParams])
 
   if (showForgotPassword) {
     return (

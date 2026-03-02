@@ -21,7 +21,7 @@ const navItems = [
   { href: '/dashboard/settings/regional', label: 'Regional', icon: Globe },
   { href: '/dashboard/settings/classes', label: 'Clases', icon: CalendarDays },
   { href: '/dashboard/settings/whatsapp', label: 'WhatsApp', icon: MessageSquare },
-  { href: '/dashboard/settings/plan', label: 'Plan', icon: CreditCard },
+  { href: '/dashboard/billing', label: 'Plan y Facturacion', icon: CreditCard },
   { href: '/dashboard/settings/account', label: 'Mi Cuenta', icon: User },
   { href: '/dashboard/settings/team', label: 'Equipo', icon: Users },
   { href: '/dashboard/settings/locations', label: 'Ubicaciones', icon: MapPin },

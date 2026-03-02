@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -26,6 +27,27 @@ export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const { signUp } = useAuth()
+  const searchParams = useSearchParams()
+
+  const selectedPlan = searchParams.get('plan')
+  const selectedInterval = searchParams.get('interval')
+
+  // Capture plan/interval from URL and save to sessionStorage
+  useEffect(() => {
+    if (selectedPlan) sessionStorage.setItem('gymgo_selected_plan', selectedPlan)
+    if (selectedInterval) sessionStorage.setItem('gymgo_selected_interval', selectedInterval)
+  }, [selectedPlan, selectedInterval])
+
+  const planLabels: Record<string, string> = {
+    free: 'Gratis ($0/mes)',
+    starter: 'Starter ($19/mes)',
+    growth: 'Growth ($39/mes)',
+    pro: 'Pro ($59/mes)',
+  }
+  const intervalLabels: Record<string, string> = {
+    monthly: 'mensual',
+    yearly: 'anual',
+  }
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -89,6 +111,19 @@ export function RegisterForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {selectedPlan && planLabels[selectedPlan] && (
+          <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 text-sm">
+            <p className="font-medium text-primary">
+              Plan seleccionado: {planLabels[selectedPlan]}
+              {selectedInterval ? ` (${intervalLabels[selectedInterval] || selectedInterval})` : ''}
+            </p>
+            <p className="text-muted-foreground text-xs mt-0.5">
+              {selectedPlan === 'free'
+                ? 'Acceso gratuito para siempre. Crea tu cuenta para continuar.'
+                : 'Incluye 30 dias de prueba gratis. Crea tu cuenta para continuar.'}
+            </p>
+          </div>
+        )}
         <FormField
           control={form.control}
           name="name"

@@ -114,11 +114,11 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxClasses: -1, // Unlimited
     maxClassesPerDay: -1, // Unlimited
 
-    // AI Features - Very limited
-    aiRequestsPerMonth: 10,
+    // AI Features - Not included in free
+    aiRequestsPerMonth: 0,
     aiModel: 'gpt-3.5-turbo',
-    routineGenerationsPerMonth: 5,
-    exerciseAlternativesPerMonth: 10,
+    routineGenerationsPerMonth: 0,
+    exerciseAlternativesPerMonth: 0,
 
     // Communications
     emailsPerMonth: 100,
@@ -387,7 +387,7 @@ export const PLAN_FEATURE_SECTIONS: Record<PlanTier, PlanFeatureSection[]> = {
     {
       title: 'Inteligencia artificial',
       features: [
-        { label: 'Generación de rutinas con IA', status: 'limited', value: '10 rutinas/mes', tooltip: 'Crea rutinas personalizadas automáticamente' },
+        { label: 'Generación de rutinas con IA', status: 'not_included' },
       ],
     },
     {
@@ -623,10 +623,10 @@ export const PRICING_PLANS: PricingPlan[] = [
       'Clases ilimitadas',
       'Check-in digital',
       'Control de pagos',
-      'Generación de rutinas con IA',
       'App móvil para miembros',
     ],
     notIncluded: [
+      'Rutinas con IA',
       'WhatsApp',
       'Tu logo y colores',
       'Reportes avanzados',

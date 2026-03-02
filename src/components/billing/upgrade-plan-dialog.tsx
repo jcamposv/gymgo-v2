@@ -1,9 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { AlertCircle, Loader2, Sparkles, Check } from 'lucide-react'
+import { useState } from 'react'
+import { Loader2, Sparkles, Check, CreditCard } from 'lucide-react'
 import { toast } from 'sonner'
 
 import {
@@ -13,34 +11,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 
-import { createUpgradeRequest, getLatestUpgradeRequest } from '@/actions/upgrade-request.actions'
-import {
-  upgradeRequestSchema,
-  type UpgradeRequestFormValues,
-  type UpgradeRequest,
-} from '@/schemas/upgrade-request.schema'
+import { createCheckoutSession } from '@/actions/billing.actions'
 import { PRICING_PLANS, type PlanTier } from '@/lib/pricing.config'
 
 // =============================================================================
@@ -55,6 +30,8 @@ interface UpgradePlanDialogProps {
   userName?: string
 }
 
+type BillingPeriod = 'monthly' | 'yearly'
+
 // =============================================================================
 // COMPONENT
 // =============================================================================
@@ -63,109 +40,48 @@ export function UpgradePlanDialog({
   open,
   onOpenChange,
   currentPlan = 'free',
-  userEmail = '',
-  userName = '',
 }: UpgradePlanDialogProps) {
-  const [loading, setLoading] = useState(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
-  const [existingRequest, setExistingRequest] = useState<UpgradeRequest | null>(null)
-  const [loadingRequest, setLoadingRequest] = useState(false)
+  const [loading, setLoading] = useState<string | null>(null)
+  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('monthly')
 
-  // Get available upgrade plans (plans higher than current)
+  // Get available upgrade plans (plans higher than current, exclude enterprise)
   const planOrder: PlanTier[] = ['free', 'starter', 'growth', 'pro', 'enterprise']
   const currentPlanIndex = planOrder.indexOf(currentPlan)
   const availablePlans = PRICING_PLANS.filter((plan) => {
     const planIndex = planOrder.indexOf(plan.id)
-    return planIndex > currentPlanIndex
+    return planIndex > currentPlanIndex && plan.id !== 'enterprise'
   })
 
-  const form = useForm<UpgradeRequestFormValues>({
-    resolver: zodResolver(upgradeRequestSchema),
-    defaultValues: {
-      requestedPlan: availablePlans[0]?.id || 'pro',
-      seats: undefined,
-      message: '',
-      contactEmail: userEmail,
-      contactName: userName,
-    },
-  })
-
-  // Fetch existing request when dialog opens
-  useEffect(() => {
-    if (open) {
-      setLoadingRequest(true)
-      getLatestUpgradeRequest()
-        .then((result) => {
-          if (result.success && result.data) {
-            setExistingRequest(result.data)
-          } else {
-            setExistingRequest(null)
-          }
-        })
-        .finally(() => setLoadingRequest(false))
+  const handleCheckout = async (planId: string) => {
+    if (planId === 'enterprise') {
+      window.location.href = 'mailto:contact@gymgo.io?subject=Enterprise%20Plan%20Inquiry'
+      return
     }
-  }, [open])
 
-  // Update form when userEmail/userName changes
-  useEffect(() => {
-    if (userEmail) form.setValue('contactEmail', userEmail)
-    if (userName) form.setValue('contactName', userName)
-  }, [userEmail, userName, form])
-
-  const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen) {
-      setSubmitError(null)
-      form.reset()
-    }
-    onOpenChange(isOpen)
-  }
-
-  const handleSubmit = async (data: UpgradeRequestFormValues) => {
-    setLoading(true)
-    setSubmitError(null)
+    setLoading(planId)
 
     try {
-      const result = await createUpgradeRequest(data)
+      const result = await createCheckoutSession({
+        plan: planId as 'starter' | 'growth' | 'pro',
+        billingPeriod,
+      })
 
-      if (result.success) {
-        toast.success('Solicitud enviada', {
-          description: 'Te contactaremos pronto para activar tu nuevo plan.',
-        })
-        // Refresh existing request state
-        setExistingRequest({
-          id: result.data?.id || '',
-          status: result.data?.status || 'pending',
-          requested_plan: data.requestedPlan,
-          contact_email: data.contactEmail,
-          contact_name: data.contactName || null,
-          message: data.message || null,
-          seats: data.seats || null,
-          current_plan: currentPlan,
-          organization_id: '',
-          user_id: '',
-          admin_notes: null,
-          processed_at: null,
-          processed_by: null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        form.reset()
+      if (result.success && result.data?.checkoutUrl) {
+        window.location.href = result.data.checkoutUrl
       } else {
-        setSubmitError(result.message || 'Error al enviar la solicitud')
+        toast.error(result.message || 'Error al crear la sesion de pago')
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error al enviar la solicitud'
-      setSubmitError(errorMessage)
+    } catch {
+      toast.error('Error al procesar. Intentalo de nuevo.')
     } finally {
-      setLoading(false)
+      setLoading(null)
     }
   }
 
   const currentPlanInfo = PRICING_PLANS.find((p) => p.id === currentPlan)
-  const hasPendingRequest = existingRequest?.status === 'pending'
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -173,214 +89,135 @@ export function UpgradePlanDialog({
             Mejorar tu plan
           </DialogTitle>
           <DialogDescription>
-            Envia una solicitud y te contactaremos para activar tu nuevo plan.
+            Selecciona un plan y procede al pago con Stripe.
           </DialogDescription>
         </DialogHeader>
 
-        {loadingRequest ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        {/* Current plan info */}
+        <div className="rounded-lg border p-3 bg-muted/50">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Plan actual</span>
+            <Badge variant="outline">{currentPlanInfo?.name || 'Gratis'}</Badge>
           </div>
-        ) : hasPendingRequest ? (
-          // Show pending request status
-          <div className="space-y-4">
-            <Alert>
-              <Check className="h-4 w-4" />
-              <AlertDescription>
-                Ya tienes una solicitud pendiente para el plan{' '}
-                <strong>
-                  {PRICING_PLANS.find((p) => p.id === existingRequest.requested_plan)?.name ||
-                    existingRequest.requested_plan}
-                </strong>
-                .
-              </AlertDescription>
-            </Alert>
+        </div>
 
-            <div className="rounded-lg border p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Estado</span>
-                <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-                  Pendiente de aprobacion
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Plan solicitado</span>
-                <span className="text-sm font-medium">
-                  {PRICING_PLANS.find((p) => p.id === existingRequest.requested_plan)?.name}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Fecha</span>
-                <span className="text-sm">
-                  {new Date(existingRequest.created_at).toLocaleDateString('es-MX')}
-                </span>
-              </div>
-            </div>
-
-            <p className="text-sm text-muted-foreground text-center">
-              Te contactaremos pronto a <strong>{existingRequest.contact_email}</strong>
-            </p>
-
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => handleOpenChange(false)}
-            >
-              Cerrar
-            </Button>
-          </div>
-        ) : (
-          // Show form
-          <>
-            {/* Current plan info */}
-            <div className="rounded-lg border p-3 bg-muted/50">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Plan actual</span>
-                <Badge variant="outline">{currentPlanInfo?.name || 'Gratis'}</Badge>
-              </div>
-            </div>
-
-            {/* Error Alert */}
-            {submitError && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{submitError}</AlertDescription>
-              </Alert>
+        {/* Billing period toggle */}
+        <div className="flex items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={() => setBillingPeriod('monthly')}
+            className={cn(
+              'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+              billingPeriod === 'monthly'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
             )}
+          >
+            Mensual
+          </button>
+          <button
+            type="button"
+            onClick={() => setBillingPeriod('yearly')}
+            className={cn(
+              'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+              billingPeriod === 'yearly'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            Anual
+            <span className="ml-1 text-xs opacity-80">-20%</span>
+          </button>
+        </div>
 
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                {/* Plan Selection */}
-                <FormField
-                  control={form.control}
-                  name="requestedPlan"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Plan deseado</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecciona un plan" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {availablePlans.map((plan) => (
-                            <SelectItem key={plan.id} value={plan.id}>
-                              <span className="flex items-center gap-2">
-                                {plan.name}
-                                {plan.priceMonthlyUSD > 0 && (
-                                  <span className="text-muted-foreground">
-                                    ${plan.priceMonthlyUSD}/mes
-                                  </span>
-                                )}
-                                {plan.id === 'enterprise' && (
-                                  <span className="text-muted-foreground">Contactar</span>
-                                )}
-                              </span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+        {/* Plan cards */}
+        <div className="space-y-3">
+          {availablePlans.map((plan) => {
+            const price = billingPeriod === 'yearly'
+              ? Math.round(plan.priceYearlyUSD / 12)
+              : plan.priceMonthlyUSD
+            const isLoading = loading === plan.id
 
-                {/* Seats/Members (optional) */}
-                <FormField
-                  control={form.control}
-                  name="seats"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Numero de miembros (opcional)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="ej. 100"
-                          {...field}
-                          value={field.value ?? ''}
-                          onChange={(e) =>
-                            field.onChange(e.target.value ? parseInt(e.target.value) : null)
-                          }
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Indica cuantos miembros planeas tener
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Contact Name */}
-                <FormField
-                  control={form.control}
-                  name="contactName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nombre de contacto</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Tu nombre" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Contact Email */}
-                <FormField
-                  control={form.control}
-                  name="contactEmail"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email de contacto</FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder="tu@email.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Message */}
-                <FormField
-                  control={form.control}
-                  name="message"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Mensaje (opcional)</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Cuentanos mas sobre tus necesidades..."
-                          className="resize-none"
-                          rows={3}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Actions */}
-                <div className="flex justify-end gap-3 pt-2">
+            return (
+              <div
+                key={plan.id}
+                className="rounded-lg border p-4 hover:border-primary/50 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-semibold">{plan.name}</h4>
+                      {plan.popular && (
+                        <Badge variant="secondary" className="text-xs">Popular</Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      {plan.description}
+                    </p>
+                    <div className="mt-2">
+                      <span className="text-2xl font-bold">${price}</span>
+                      <span className="text-sm text-muted-foreground"> USD/mes</span>
+                      {billingPeriod === 'yearly' && (
+                        <span className="text-xs text-muted-foreground ml-1">
+                          (${plan.priceYearlyUSD}/ano)
+                        </span>
+                      )}
+                    </div>
+                    <ul className="mt-2 space-y-1">
+                      {plan.features.slice(0, 3).map((feature, idx) => (
+                        <li key={idx} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Check className="h-3 w-3 text-primary shrink-0" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                   <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => handleOpenChange(false)}
-                    disabled={loading}
+                    size="sm"
+                    className="shrink-0 ml-4"
+                    disabled={!!loading}
+                    onClick={() => handleCheckout(plan.id)}
                   >
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={loading}>
-                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {loading ? 'Enviando...' : 'Solicitar upgrade'}
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <CreditCard className="h-4 w-4 mr-1" />
+                        Pagar
+                      </>
+                    )}
                   </Button>
                 </div>
-              </form>
-            </Form>
-          </>
-        )}
+              </div>
+            )
+          })}
+
+          {/* Enterprise option */}
+          {currentPlan !== 'enterprise' && (
+            <div className="rounded-lg border border-dashed p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-semibold">Enterprise</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Precio personalizado para grandes operaciones.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 ml-4"
+                  onClick={() => handleCheckout('enterprise')}
+                >
+                  Contactar
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <p className="text-xs text-muted-foreground text-center">
+          Incluye 30 dias de prueba gratis. Pago seguro con Stripe.
+        </p>
       </DialogContent>
     </Dialog>
   )
