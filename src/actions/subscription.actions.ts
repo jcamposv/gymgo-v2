@@ -66,8 +66,7 @@ export async function selectSubscriptionPlan(input: SelectPlanInput): Promise<Ac
   const trialEndsAt = new Date()
   trialEndsAt.setDate(trialEndsAt.getDate() + 30)
 
-  // Map plan to database enum (free -> starter in DB, since DB doesn't have 'free')
-  const dbPlan = input.plan === 'free' ? 'starter' : input.plan
+  const dbPlan = input.plan
 
   // Update organization with selected plan
   const { error } = await supabase

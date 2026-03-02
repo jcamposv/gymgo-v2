@@ -16,7 +16,7 @@ function updateOrgPlan(orgId: string, plan: PlanTier, status: string) {
   return admin
     .from('organizations')
     .update({
-      subscription_plan: plan === 'free' ? 'starter' : plan,
+      subscription_plan: plan,
       subscription_status: status,
       max_members: planLimits.maxMembers === -1 ? 999999 : planLimits.maxMembers,
       max_locations: planLimits.maxLocations === -1 ? 999 : planLimits.maxLocations,
