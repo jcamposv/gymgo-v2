@@ -49,7 +49,7 @@ export function SelectPlanClient() {
   const handleSelectPlan = async (planId: PlanTier) => {
     // Enterprise requires contact
     if (planId === 'enterprise') {
-      window.open('mailto:contact@gymgo.io?subject=Enterprise%20Plan%20Inquiry', '_blank')
+      window.open('mailto:jcampos@gymgo.io?subject=Enterprise%20Plan%20Inquiry', '_blank')
       return
     }
 
@@ -325,8 +325,8 @@ export function SelectPlanClient() {
           </p>
           <p className="text-xs text-muted-foreground mt-2">
             ¿Tienes preguntas?{' '}
-            <a href="mailto:contact@gymgo.io" className="text-primary hover:underline">
-              contact@gymgo.io
+            <a href="mailto:jcampos@gymgo.io" className="text-primary hover:underline">
+              jcampos@gymgo.io
             </a>
           </p>
         </div>

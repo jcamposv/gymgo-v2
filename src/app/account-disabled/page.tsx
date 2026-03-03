@@ -65,7 +65,7 @@ export default function AccountDisabledPage() {
               </p>
 
               <Button asChild className="w-full" size="lg">
-                <a href="mailto:contact@gymgo.io?subject=Reactivar%20cuenta%20GymGo">
+                <a href="mailto:jcampos@gymgo.io?subject=Reactivar%20cuenta%20GymGo">
                   <Mail className="h-4 w-4 mr-2" />
                   Contactar soporte
                 </a>
@@ -85,8 +85,8 @@ export default function AccountDisabledPage() {
         <div className="flex items-center justify-center px-4 text-center text-xs sm:text-sm text-muted-foreground">
           <p>
             ¿Necesitas ayuda?{' '}
-            <a href="mailto:contact@gymgo.io" className="text-primary hover:underline">
-              contact@gymgo.io
+            <a href="mailto:jcampos@gymgo.io" className="text-primary hover:underline">
+              jcampos@gymgo.io
             </a>
           </p>
         </div>

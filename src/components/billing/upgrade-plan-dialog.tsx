@@ -54,7 +54,7 @@ export function UpgradePlanDialog({
 
   const handleCheckout = async (planId: string) => {
     if (planId === 'enterprise') {
-      window.location.href = 'mailto:contact@gymgo.io?subject=Enterprise%20Plan%20Inquiry'
+      window.location.href = 'mailto:jcampos@gymgo.io?subject=Enterprise%20Plan%20Inquiry'
       return
     }
 
