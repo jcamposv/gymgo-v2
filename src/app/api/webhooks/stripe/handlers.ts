@@ -9,6 +9,19 @@ import type { StripeSubscriptionStatus } from '@/lib/stripe/types'
 // HELPERS
 // =============================================================================
 
+/** In Stripe SDK v20+, current_period fields are on items, not subscription */
+function getSubscriptionPeriod(sub: Stripe.Subscription) {
+  const item = sub.items.data[0]
+  return {
+    start: item?.current_period_start
+      ? new Date(item.current_period_start * 1000).toISOString()
+      : new Date().toISOString(),
+    end: item?.current_period_end
+      ? new Date(item.current_period_end * 1000).toISOString()
+      : new Date().toISOString(),
+  }
+}
+
 function updateOrgPlan(orgId: string, plan: PlanTier, status: string) {
   const admin = createAdminClient()
   const planLimits = PLAN_LIMITS[plan]
@@ -70,6 +83,7 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session) 
     const stripe = getStripe()
     const sub = await stripe.subscriptions.retrieve(session.subscription)
 
+    const period = getSubscriptionPeriod(sub)
     await repo.upsertSubscription({
       organization_id: orgId,
       stripe_subscription_id: sub.id,
@@ -77,8 +91,8 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session) 
       plan_tier: plan,
       billing_period: billingPeriod || 'monthly',
       status: sub.status as StripeSubscriptionStatus,
-      current_period_start: new Date(sub.current_period_start * 1000).toISOString(),
-      current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
+      current_period_start: period.start,
+      current_period_end: period.end,
       cancel_at_period_end: sub.cancel_at_period_end,
     })
   }
@@ -108,6 +122,7 @@ export async function handleSubscriptionUpdated(subscription: Stripe.Subscriptio
   const plan = (subscription.metadata?.plan_tier || 'starter') as PlanTier
   const billingPeriod = (subscription.metadata?.billing_period || 'monthly') as BillingPeriod
 
+  const period = getSubscriptionPeriod(subscription)
   await repo.upsertSubscription({
     organization_id: orgId,
     stripe_subscription_id: subscription.id,
@@ -115,8 +130,8 @@ export async function handleSubscriptionUpdated(subscription: Stripe.Subscriptio
     plan_tier: plan,
     billing_period: billingPeriod,
     status: subscription.status as StripeSubscriptionStatus,
-    current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-    current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+    current_period_start: period.start,
+    current_period_end: period.end,
     cancel_at_period_end: subscription.cancel_at_period_end,
     cancelled_at: subscription.canceled_at
       ? new Date(subscription.canceled_at * 1000).toISOString()
@@ -144,6 +159,7 @@ export async function handleSubscriptionDeleted(subscription: Stripe.Subscriptio
   const orgId = subscription.metadata?.organization_id
   if (!orgId) return
 
+  const period = getSubscriptionPeriod(subscription)
   await repo.upsertSubscription({
     organization_id: orgId,
     stripe_subscription_id: subscription.id,
@@ -151,8 +167,8 @@ export async function handleSubscriptionDeleted(subscription: Stripe.Subscriptio
     plan_tier: (subscription.metadata?.plan_tier || 'starter') as PlanTier,
     billing_period: (subscription.metadata?.billing_period || 'monthly') as BillingPeriod,
     status: 'canceled',
-    current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-    current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+    current_period_start: period.start,
+    current_period_end: period.end,
     cancel_at_period_end: false,
     ended_at: new Date().toISOString(),
   })

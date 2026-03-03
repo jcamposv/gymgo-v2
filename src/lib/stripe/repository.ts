@@ -75,8 +75,9 @@ export async function upsertSubscription(input: UpsertSubscriptionData): Promise
     .upsert(
       {
         ...input,
+        metadata: input.metadata ? JSON.parse(JSON.stringify(input.metadata)) : null,
         updated_at: new Date().toISOString(),
-      },
+      } as never,
       { onConflict: 'stripe_subscription_id' }
     )
     .select()
