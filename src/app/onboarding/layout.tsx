@@ -69,8 +69,8 @@ export default function OnboardingLayout({
           <div className="flex items-center justify-center px-4 text-center text-xs sm:text-sm text-muted-foreground">
             <p>
               ¿Necesitas ayuda?{' '}
-              <a href="mailto:contact@gymgo.io" className="text-primary hover:underline">
-                contact@gymgo.io
+              <a href="mailto:jcampos@gymgo.io" className="text-primary hover:underline">
+                jcampos@gymgo.io
               </a>
             </p>
           </div>

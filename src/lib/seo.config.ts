@@ -25,7 +25,7 @@ export const BRAND = {
     'GymGo es la plataforma todo-en-uno para administrar tu gimnasio, box de CrossFit o centro fitness. Gestiona miembros, pagos, clases, rutinas y más.',
   shortDescription:
     'Plataforma todo-en-uno para administrar gimnasios, boxes de CrossFit y centros fitness.',
-  email: 'contact@gymgo.io',
+  email: 'jcampos@gymgo.io',
   twitter: '@gymgo_io',
   locale: 'es_MX',
   language: 'es',
