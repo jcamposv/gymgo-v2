@@ -72,9 +72,13 @@ export function useAuth() {
   }, [supabase.auth])
 
   const signOut = useCallback(async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
+    try {
+      await supabase.auth.signOut()
+    } catch {
+      // Ignore signOut errors — session is cleared locally regardless
+    }
     router.push(ROUTES.LOGIN)
+    router.refresh()
   }, [supabase.auth, router])
 
   const refreshSession = useCallback(async () => {

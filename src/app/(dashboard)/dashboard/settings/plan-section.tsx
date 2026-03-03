@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Sparkles, Check, Clock, X, Loader2, CreditCard } from 'lucide-react'
+import { useState } from 'react'
+import { Sparkles, CreditCard } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,10 +14,8 @@ import {
 } from '@/components/ui/card'
 import { UpgradePlanDialog } from '@/components/billing/upgrade-plan-dialog'
 import { AIUsageSection } from '@/components/ai/ai-usage-section'
-import { getLatestUpgradeRequest } from '@/actions/upgrade-request.actions'
 import { PRICING_PLANS, PLAN_FEATURE_SECTIONS, type PlanTier } from '@/lib/pricing.config'
 import { PlanFeaturesDisplay } from '@/components/billing/plan-features-display'
-import type { UpgradeRequest } from '@/schemas/upgrade-request.schema'
 
 // =============================================================================
 // TYPES
@@ -33,65 +31,11 @@ interface PlanSectionProps {
 // COMPONENT
 // =============================================================================
 
-export function PlanSection({ currentPlan, userEmail, userName }: PlanSectionProps) {
+export function PlanSection({ currentPlan }: PlanSectionProps) {
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false)
-  const [latestRequest, setLatestRequest] = useState<UpgradeRequest | null>(null)
-  const [loading, setLoading] = useState(true)
 
   const currentPlanInfo = PRICING_PLANS.find((p) => p.id === currentPlan)
   const isTopPlan = currentPlan === 'enterprise'
-
-  // Fetch latest upgrade request
-  useEffect(() => {
-    getLatestUpgradeRequest()
-      .then((result) => {
-        if (result.success && result.data) {
-          setLatestRequest(result.data)
-        }
-      })
-      .finally(() => setLoading(false))
-  }, [])
-
-  // Refresh after dialog closes
-  const handleDialogChange = (open: boolean) => {
-    setUpgradeDialogOpen(open)
-    if (!open) {
-      // Refresh the request status
-      getLatestUpgradeRequest().then((result) => {
-        if (result.success && result.data) {
-          setLatestRequest(result.data)
-        }
-      })
-    }
-  }
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return (
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-            <Clock className="mr-1 h-3 w-3" />
-            Pendiente
-          </Badge>
-        )
-      case 'approved':
-        return (
-          <Badge variant="secondary" className="bg-green-100 text-green-800">
-            <Check className="mr-1 h-3 w-3" />
-            Aprobado
-          </Badge>
-        )
-      case 'rejected':
-        return (
-          <Badge variant="secondary" className="bg-red-100 text-red-800">
-            <X className="mr-1 h-3 w-3" />
-            Rechazado
-          </Badge>
-        )
-      default:
-        return null
-    }
-  }
 
   return (
     <>
@@ -166,63 +110,6 @@ export function PlanSection({ currentPlan, userEmail, userName }: PlanSectionPro
           </CardContent>
         </Card>
 
-        {/* Latest Upgrade Request */}
-        {loading ? (
-          <Card>
-            <CardContent className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </CardContent>
-          </Card>
-        ) : latestRequest ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Ultima solicitud de upgrade</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">
-                        {PRICING_PLANS.find((p) => p.id === latestRequest.requested_plan)?.name ||
-                          latestRequest.requested_plan}
-                      </span>
-                      {getStatusBadge(latestRequest.status)}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Solicitado el{' '}
-                      {new Date(latestRequest.created_at).toLocaleDateString('es-MX', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                      })}
-                    </p>
-                  </div>
-                </div>
-
-                {latestRequest.status === 'pending' && (
-                  <p className="text-sm text-muted-foreground">
-                    Tu solicitud esta siendo revisada. Te contactaremos pronto a{' '}
-                    <strong>{latestRequest.contact_email}</strong>.
-                  </p>
-                )}
-
-                {latestRequest.status === 'approved' && (
-                  <p className="text-sm text-green-600">
-                    Tu solicitud fue aprobada. El plan ha sido actualizado.
-                  </p>
-                )}
-
-                {latestRequest.status === 'rejected' && latestRequest.admin_notes && (
-                  <p className="text-sm text-muted-foreground">
-                    Nota: {latestRequest.admin_notes}
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ) : null}
-
         {/* AI Usage Section */}
         <AIUsageSection />
       </div>
@@ -230,10 +117,8 @@ export function PlanSection({ currentPlan, userEmail, userName }: PlanSectionPro
       {/* Upgrade Dialog */}
       <UpgradePlanDialog
         open={upgradeDialogOpen}
-        onOpenChange={handleDialogChange}
+        onOpenChange={setUpgradeDialogOpen}
         currentPlan={currentPlan}
-        userEmail={userEmail}
-        userName={userName}
       />
     </>
   )

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Check, Loader2, Sparkles, ArrowRight, Building2 } from 'lucide-react'
@@ -8,6 +8,8 @@ import { cn } from '@/lib/utils'
 
 import { PRICING_PLANS, type PlanTier } from '@/lib/pricing.config'
 import { selectSubscriptionPlan } from '@/actions/subscription.actions'
+import { createCheckoutSession } from '@/actions/billing.actions'
+import { isBillablePlan } from '@/lib/stripe/config'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -25,6 +27,25 @@ export function SelectPlanClient() {
   const [selectedPlan, setSelectedPlan] = useState<PlanTier | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // Pre-select plan from sessionStorage (set by landing page flow)
+  useEffect(() => {
+    try {
+      const savedPlan = sessionStorage.getItem('gymgo_selected_plan') as PlanTier | null
+      const savedInterval = sessionStorage.getItem('gymgo_selected_interval') as 'monthly' | 'yearly' | null
+      if (savedInterval) setBillingPeriod(savedInterval)
+      // Clear after reading
+      sessionStorage.removeItem('gymgo_selected_plan')
+      sessionStorage.removeItem('gymgo_selected_interval')
+      // Auto-trigger checkout if plan was pre-selected from landing
+      if (savedPlan && isBillablePlan(savedPlan)) {
+        handleSelectPlan(savedPlan)
+      }
+    } catch {
+      // sessionStorage may not be available
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleSelectPlan = async (planId: PlanTier) => {
     // Enterprise requires contact
     if (planId === 'enterprise') {
@@ -35,18 +56,48 @@ export function SelectPlanClient() {
     setSelectedPlan(planId)
     setIsSubmitting(true)
 
-    const result = await selectSubscriptionPlan({
+    // Free plan: keep current behavior (set trial, go to dashboard)
+    if (planId === 'free') {
+      const result = await selectSubscriptionPlan({
+        plan: planId,
+        billingPeriod,
+      })
+
+      if (result.success) {
+        toast.success('Plan seleccionado exitosamente')
+        router.push('/dashboard')
+      } else {
+        toast.error(result.message || 'Error al seleccionar el plan')
+        setSelectedPlan(null)
+        setIsSubmitting(false)
+      }
+      return
+    }
+
+    // Paid plans: set trial first, then redirect to Stripe Checkout
+    const trialResult = await selectSubscriptionPlan({
       plan: planId,
       billingPeriod,
     })
 
-    if (result.success) {
-      toast.success('Plan seleccionado exitosamente')
-      router.push('/dashboard')
-    } else {
-      toast.error(result.message || 'Error al seleccionar el plan')
+    if (!trialResult.success) {
+      toast.error(trialResult.message || 'Error al seleccionar el plan')
       setSelectedPlan(null)
       setIsSubmitting(false)
+      return
+    }
+
+    const checkoutResult = await createCheckoutSession({
+      plan: planId as 'starter' | 'growth' | 'pro',
+      billingPeriod,
+    })
+
+    if (checkoutResult.success && checkoutResult.data?.checkoutUrl) {
+      window.location.href = checkoutResult.data.checkoutUrl
+    } else {
+      // If checkout fails, user still has trial — redirect to dashboard
+      toast.success('Plan seleccionado. Podrás configurar el pago desde tu dashboard.')
+      router.push('/dashboard')
     }
   }
 
@@ -187,7 +238,7 @@ export function SelectPlanClient() {
                     )}
                     {!isEnterprise && plan.id !== 'free' && (
                       <p className="text-xs text-primary font-medium mt-1">
-                        3 meses gratis, después ${billingPeriod === 'yearly' ? Math.round(plan.priceYearlyUSD / 12) : plan.priceMonthlyUSD} USD/mes
+                        30 días gratis, después ${billingPeriod === 'yearly' ? Math.round(plan.priceYearlyUSD / 12) : plan.priceMonthlyUSD} USD/mes
                       </p>
                     )}
                     {billingPeriod === 'yearly' && yearlySavings && yearlySavings > 0 && (
@@ -265,12 +316,12 @@ export function SelectPlanClient() {
         <div className="text-center mt-8 sm:mt-12">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full mb-4">
             <Sparkles className="h-4 w-4" />
-            <span className="text-sm font-medium">3 meses de prueba gratis</span>
+            <span className="text-sm font-medium">30 días de prueba gratis en planes de pago</span>
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground max-w-xl mx-auto">
-            Todos los planes incluyen 3 meses de prueba gratis sin compromiso.
-            El cobro inicia al finalizar el período de prueba.
-            Puedes cambiar tu plan en cualquier momento.
+            Los planes de pago incluyen 30 días de prueba gratis sin compromiso.
+            No se realiza ningún cobro durante el período de prueba.
+            Puedes cambiar o cancelar tu plan en cualquier momento.
           </p>
           <p className="text-xs text-muted-foreground mt-2">
             ¿Tienes preguntas?{' '}

@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/tooltip'
 import { useSidebar } from './sidebar-context'
 import { useOrganizationContext } from '@/providers'
-import { useUser } from '@/contexts/user-context'
 import { UpgradePlanDialog } from '@/components/billing/upgrade-plan-dialog'
 import type { PlanTier } from '@/lib/pricing.config'
 
@@ -21,7 +20,6 @@ interface TopBarProps {
 export function TopBar({ onMenuClick }: TopBarProps) {
   const { collapsed, toggleCollapsed } = useSidebar()
   const { organization } = useOrganizationContext()
-  const { user } = useUser()
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false)
 
   // Determine current plan and if upgrade should be shown
@@ -89,8 +87,6 @@ export function TopBar({ onMenuClick }: TopBarProps) {
         open={upgradeDialogOpen}
         onOpenChange={setUpgradeDialogOpen}
         currentPlan={currentPlan}
-        userEmail={user?.email || ''}
-        userName={user?.user_metadata?.full_name || user?.user_metadata?.name || ''}
       />
     </>
   )
