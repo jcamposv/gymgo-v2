@@ -103,8 +103,8 @@ export interface PricingPlan {
 export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
   free: {
     // Members
-    maxMembers: 15,
-    maxActiveMembers: 15,
+    maxMembers: 5,
+    maxActiveMembers: 5,
 
     // Team
     maxUsers: 1,
@@ -363,7 +363,7 @@ export const PLAN_FEATURE_SECTIONS: Record<PlanTier, PlanFeatureSection[]> = {
     {
       title: 'Tu gimnasio',
       features: [
-        { label: 'Miembros', status: 'limited', value: 'Hasta 15' },
+        { label: 'Miembros', status: 'limited', value: 'Hasta 5' },
         { label: 'Clases grupales', status: 'included', value: 'Ilimitadas' },
         { label: 'Check-in digital', status: 'included' },
         { label: 'Control de pagos', status: 'included' },
@@ -619,7 +619,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     priceYearlyMXN: 0,
     limits: PLAN_LIMITS.free,
     features: [
-      'Hasta 15 miembros',
+      'Hasta 5 miembros',
       'Clases ilimitadas',
       'Check-in digital',
       'Control de pagos',
